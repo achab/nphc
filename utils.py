@@ -1,4 +1,4 @@
-from scipy.linalg import sqtm, inv
+from scipy.linalg import sqrt, inv
 
 # Computation of \Sigma^{1/2}
 def empirical_mean(estim):
