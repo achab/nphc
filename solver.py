@@ -1,4 +1,3 @@
-imoprt numpy as np
+import numpy as np
 
-def admm(X0, Z0, rho=0.1, alpha=0.99):
-    pass
+def admm(X1_0, X4_0, rho=0.1, alpha=0.99):
