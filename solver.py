@@ -2,7 +2,7 @@ import numpy as np
 from utils import empirical_mean, empirical_cross_corr
 from updates import *
 
-def admm(data, prox, X1_0, X4_0, rho=0.1, alpha=0.99, maxiter=100):
+def admm(data, prox_fun, X1_0, X4_0, rho=0.1, alpha=0.99, maxiter=100):
 
     # compute diagA, diagD, O, B and C
     diagA = empirical_mean(data)
@@ -24,7 +24,7 @@ def admm(data, prox, X1_0, X4_0, rho=0.1, alpha=0.99, maxiter=100):
     U5 = np.zeros_like(X1_0)
 
     for _ in range(maxiter):
-        X1[:] = update_X1(prox, X2, Y1, U2, U4, diagA, rho=rho)
+        X1[:] = update_X1(prox_fun, X2, Y1, U2, U4, diagA, rho=rho)
         X2[:] = update_X2(X1, X3, U2, U3)
         X3[:] = update_X3(X2, U3, alpha=alpha)
         X4[:] = update_X4(Y2, U5, B)
