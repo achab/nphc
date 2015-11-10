@@ -1,10 +1,10 @@
 import numpy as np
 from numpy.polynomial.legendre import leggauss
-from numba import jit
+from numba import double, int_, jit
 
 
 # Computation of integral of claw
-def compute_ints_claw(estim, n_quad=50, xmax=40, method='gauss'):
+def integrated_claw(estim, n_quad=50, xmax=40, method='gauss'):
     """ (Estim) -> float
     Computes the integral of the conditional law ij at the
     difference of quadrature points using linear interpolation
@@ -72,6 +72,13 @@ def compute_ints_claw(estim, n_quad=50, xmax=40, method='gauss'):
         return linc(estim.IG2[index],t2)-linc(estim.IG2[index],t1)
 
     # Fill the matrix to return with integrated claws
-    @jit
-    def 
+    def fill_matrix_integrated_claw(d):
+        C = np.zeros((d,d))
+        for i in range(d):
+            for j in range(d):
+                C[i][j] = DIG(i, j, 0, 0, estim.quad_x[-1])
+        return C
 
+    fast_fill_matrix_integrated_claw = jit(double[:,:](int_))(fill_matrix_integrated_claw)
+
+    return fast_fill_matrix_integrated_claw(len(estim.lam))
