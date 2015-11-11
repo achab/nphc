@@ -1,12 +1,17 @@
 import numpy as np
-from utils import empirical_mean, empirical_cross_corr
+from utils import empirical_sqrt_mean, empirical_sqrt_cross_corr
 from updates import *
+from numba import autojit
 
-def admm(data, prox_fun, X1_0, X4_0, rho=0.1, alpha=0.99, maxiter=100):
+@autojit
+def admm(estim, prox_fun, X1_0, X4_0, rho=0.1, alpha=0.99, maxiter=100):
+    """
+    ADMM framework to minimize a prox-capable objective over the matrix of kernel norms.
+    """
 
     # compute diagA, diagD, O, B and C
-    diagA = empirical_mean(data)
-    diagD, O = empirical_cross_corr(data)
+    diagA = empirical_sqrt_mean(estim.lam)
+    diagD, O = empirical_sqrt_cross_corr(estim)
     B = np.dot(O.T,np.dot(np.diag(diagD,O)))
     C = np.diag(1. / diagA)
 
@@ -35,3 +40,5 @@ def admm(data, prox_fun, X1_0, X4_0, rho=0.1, alpha=0.99, maxiter=100):
         U3[:] = update_U3(U3, X2, X3)
         U4[:] = update_U4(U4, X1, Y1, diagA)
         U5[:] = update_U5(U5, X4, Y2, B)
+
+    return X1

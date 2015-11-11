@@ -1,13 +1,16 @@
 import numpy as np
 import scipy as sp
 import mlpp.pp.hawles as hk
+from numba import autojit
 
+@autojit
 def simulate_mu(d, mu=None):
     if mu is None:
         return np.random.rand(d)
     else:
         return mu * np.ones(d)
 
+@autojit
 def simulate_A(d, blocks=None, kernel_type='exp'):
     if blocks is not None:
         assert(blocks.sum() == d)
@@ -23,6 +26,7 @@ def simulate_A(d, blocks=None, kernel_type='exp'):
     beta = np.random.rand(d)
     return [[hk.HawkesKernelExp(a, b) for (a, b) in zip(a_list, b_list)] for (a_list, b_list) in zip(alpha, beta)]
 
+@autojit
 def simulate(kernels, mus, n=1000):
     h = hk.Hawkes(kernels=kernels, mus=mus)
     h.simulate(n)

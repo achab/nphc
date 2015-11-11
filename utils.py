@@ -1,15 +1,21 @@
 import numpy as np
-from scipy.linalg import sqrt, inv
+from scipy.linalg import sqrtm
+from numba import autojit
+from cumulants import integrated_claw
 
 
 # Computation of \Sigma^{1/2}
-def empirical_mean(estim):
-    Sigma_sq_root = sqrt(inv(np.diag(estim)))
-    return Sigma_sq_root
+@autojit
+def empirical_sqrt_mean(lam):
+    return np.diag(np.sqrt(lam))
 
-# Computation of ||c||^{-1/2}
-def empirical_cross_corr(estim):
-    pass
+# Computation of ||C||^{1/2}
+@autojit
+def empirical_sqrt_cross_corr(estim):
+    G = integrated_claw(estim)
+    np.fill_diagonal(G, G.diagonal()+1)
+    C = np.einsum('i,ij->ij', np.array(estim.lam), G.T)
+    return sqrtm(C)
 
 
 # # the following function is incomplete
