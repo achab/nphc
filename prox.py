@@ -16,6 +16,7 @@ def orthogonality(X, relaxed=True):
     if relaxed:
         return stability(X, alpha=1.)
     else:
+        # another formula exists: X (X^T X)^{-1/2}
         U, _, V = np.linalg.svd(X)
         return np.dot(U,V)
 

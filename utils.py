@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.linalg import sqrtm
+from scipy.linalg import eig, inv
 from numba import autojit
 from admm_hawkes.cumulants import integrated_claw
 
@@ -15,7 +15,13 @@ def empirical_sqrt_cross_corr(estim):
     G = integrated_claw(estim)
     np.fill_diagonal(G, G.diagonal()+1)
     C = np.einsum('i,ij->ij', np.array(estim.lam), G.T)
-    return sqrtm(C)
+    print(C)
+    # C should be symmetric
+    assert np.allclose(C, C.T), "C should be symmetric !"
+    diagD, O = eig(C)
+    # O should be orthogonal
+    assert np.allclose(O.T, inv(O)), "O should be an orthogonal matrix !"
+    return np.sqrt(diagD), O
 
 
 # # the following function is incomplete

@@ -10,11 +10,12 @@ def admm(estim, prox_fun, X1_0, X4_0, rho=0.1, alpha=0.99, maxiter=100):
     """
 
     # compute diagA, diagD, O, B and C
-    print 'je suis la'
     diagA = empirical_sqrt_mean(estim.lam)
     diagD, O = empirical_sqrt_cross_corr(estim)
-    B = np.dot(O.T,np.dot(np.diag(diagD,O)))
+    B = np.dot(O,np.dot(np.diag(diagD),O.T))
     C = np.diag(1. / diagA)
+
+    print('je suis ici')
 
     # initialize parameters
     X1 = X1_0.copy()
