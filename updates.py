@@ -1,5 +1,5 @@
 import numpy as np
-import prox
+import admm_hawkes.prox as prox
 from numba import autojit
 
 @autojit

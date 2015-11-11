@@ -1,13 +1,13 @@
 import numpy as np
 from scipy.linalg import sqrtm
 from numba import autojit
-from cumulants import integrated_claw
+from admm_hawkes.cumulants import integrated_claw
 
 
 # Computation of \Sigma^{1/2}
 @autojit
 def empirical_sqrt_mean(lam):
-    return np.diag(np.sqrt(lam))
+    return np.sqrt(lam)
 
 # Computation of ||C||^{1/2}
 @autojit

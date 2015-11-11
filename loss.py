@@ -1,6 +1,5 @@
 import numpy as np
 
-
 def l1_norm(X):
     return np.linalg.norm(X.reshape(len(X)**2,),ord=1)
 

@@ -1,6 +1,6 @@
 import numpy as np
 import scipy as sp
-import mlpp.pp.hawles as hk
+import mlpp.pp.hawkes as hk
 from numba import autojit
 
 @autojit
