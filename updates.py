@@ -4,7 +4,7 @@ from numba import autojit
 
 @autojit
 def update_X1(prox_fun, X2, Y1, U2, U4, diagA, rho=0.1):
-    return prox_fun(0.5 * (X2 - U2 + np.dot(np.diag(diagA),Y1) + U4), rho=rho)
+    return prox_fun(0.5 * (X2 - U2 + np.dot(np.diag(diagA),Y1) + U4), lbd=rho)
 
 @autojit
 def update_X2(X1, X3, U2, U3):
@@ -24,7 +24,7 @@ def update_Y1(X1, Y2, U1, U4, diagA, C):
 
 @autojit
 def update_Y2(X4, Y1, U1, U5, diagD, O, B, C):
-    return np.dot(np.dot(O,np.dot(np.diag(1. / (1. + diagD ** 2)),O.T)),np.dot((X4 - U5),B) - Y1 + C - U1)
+    return np.dot(np.dot((X4 - U5),B) - Y1 + C - U1,np.dot(O,np.dot(np.diag(1. / (1. + diagD ** 2)),O.T)))
 
 @autojit
 def update_U1(U1, Y1, Y2, C):

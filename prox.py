@@ -6,10 +6,10 @@ def nonnegativity(X):
     return np.maximum(X,0)
 
 @autojit
-def stability(X, alpha=0.99):
+def stability(X, alpha=0.9):
     U, S, V = np.linalg.svd(X)
     S[S > alpha] = alpha
-    return np.dot(U,np.dot(S,V))
+    return np.dot(U,np.dot(np.diag(S),V))
 
 @autojit
 def orthogonality(X, relaxed=True):
@@ -23,7 +23,7 @@ def orthogonality(X, relaxed=True):
 @autojit
 def l1(X, lbd=1.):
     X_abs = np.abs(X)
-    return np.sign(X) *(X_abs - lbd) * (X_abs > lbd)
+    return np.sign(X) * (X_abs - lbd) * (X_abs > lbd)
 
 @autojit
 def l2(X, lbd=1.):

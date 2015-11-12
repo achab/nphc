@@ -12,10 +12,11 @@ def empirical_sqrt_mean(lam):
 # Computation of ||C||^{1/2}
 @autojit
 def empirical_sqrt_cross_corr(estim):
-    G = integrated_claw(estim)
+    G = integrated_claw(estim, method='lin')
     np.fill_diagonal(G, G.diagonal()+1)
     C = np.einsum('i,ij->ij', np.array(estim.lam), G.T)
-    print(C)
+    # THE FOLLOWING LINE IS A TOTAL HACK
+    C = .5 * (C + C.T)
     # C should be symmetric
     assert np.allclose(C, C.T), "C should be symmetric !"
     diagD, O = eig(C)
