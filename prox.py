@@ -6,10 +6,10 @@ def nonnegativity(X):
     return np.maximum(X,0)
 
 @autojit
-def stability(X, alpha=0.9):
-    U, S, V = np.linalg.svd(X)
-    S[S > alpha] = alpha
-    return np.dot(U,np.dot(np.diag(S),V))
+def stability(X, alpha=0.999):
+    U, s, V = np.linalg.svd(X)
+    s[s > alpha] = alpha
+    return np.dot(U,np.dot(np.diag(s),V))
 
 @autojit
 def orthogonality(X, relaxed=True):
@@ -40,4 +40,10 @@ def frob(X, lbd=1.):
 @autojit
 def sq_frob(X, lbd=1.):
     return 1. / (1. + lbd) * X
+
+@autojit
+def nuclear(X, lbd=1.):
+    U, s, V = np.linalg.svd(X)
+    s_thres = l1(s, lbd=lbd)
+    return np.dot(U,np.dot(np.diag(s_thres),V))
 
