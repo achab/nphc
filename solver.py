@@ -70,11 +70,11 @@ def admm(estim, prox_fun, X1_0, X4_0, alpha_truth, rho=0.1, alpha=0.99, maxiter=
     print("||U4|| = ", np.linalg.norm(U4))
     print("||U5|| = ", np.linalg.norm(U5))
 
-    plt.figure()
+#    plt.figure()
 #    plt.xscale('log')
-    plt.yscale('log')
+#    plt.yscale('log')
 #    plt.plot(loss)
-    plt.plot(error)
-    plt.show()
+#    plt.plot(error)
+#    plt.show()
 
     return X1
