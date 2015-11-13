@@ -1,3 +1,4 @@
+.DS_*
 __pycache_*
 .idea/
 .ipynb*
