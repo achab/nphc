@@ -24,6 +24,16 @@ def empirical_sqrt_cross_corr(estim):
     assert np.allclose(O.T, inv(O)), "O should be an orthogonal matrix !"
     return np.sqrt(diagD), O
 
+# Computation of \hat{\nu}(0)
+@autojit
+def corr_matrix(estim):
+    G = integrated_claw(estim, method='lin')
+    C = np.einsum('i,ij->ij', np.array(estim.lam), G.T)
+    # THE FOLLOWING LINE IS A TOTAL HACK
+    C = .5 * (C + C.T)
+    # C should be symmetric
+    return C
+
 
 # # the following function is incomplete
 # def inspector(loss_fun, x_real, n_iter, norm, verbose=False):
