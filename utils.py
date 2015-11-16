@@ -5,12 +5,12 @@ from admm_hawkes.cumulants import integrated_claw
 
 
 # Computation of \Sigma^{1/2}
-@autojit
+#@autojit
 def empirical_sqrt_mean(lam):
     return np.sqrt(lam)
 
 # Computation of ||C||^{1/2}
-@autojit
+#@autojit
 def empirical_sqrt_cross_corr(estim):
     G = integrated_claw(estim, method='lin')
     np.fill_diagonal(G, G.diagonal()+1)
@@ -25,7 +25,7 @@ def empirical_sqrt_cross_corr(estim):
     return np.sqrt(diagD), O
 
 # Computation of \hat{\nu}(0)
-@autojit
+#@autojit
 def corr_matrix(estim):
     G = integrated_claw(estim, method='lin')
     C = np.einsum('i,ij->ij', np.array(estim.lam), G.T)

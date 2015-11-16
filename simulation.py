@@ -3,14 +3,14 @@ import scipy as sp
 import mlpp.pp.hawkes as hk
 from numba import autojit
 
-@autojit
+#@autojit
 def simulate_mu(d, mu=None):
     if mu is None:
         return np.random.rand(d)
     else:
         return mu * np.ones(d)
 
-@autojit
+#@autojit
 def simulate_A(d, blocks=None, kernel_type='exp'):
     if blocks is not None:
         assert sum(blocks) == d, "The sum of block lengths is not equal to the dimension."
@@ -27,7 +27,7 @@ def simulate_A(d, blocks=None, kernel_type='exp'):
     #return [[hk.HawkesKernelExp(a, b) for (a, b) in zip(a_list, b_list)] for (a_list, b_list) in zip(alpha, beta)]
     return alpha
 
-@autojit
+#@autojit
 def simulate(kernels, mus, n=1000):
     h = hk.Hawkes(kernels=kernels, mus=mus)
     h.simulate(n)
