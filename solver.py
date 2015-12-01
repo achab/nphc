@@ -1,7 +1,7 @@
 import numpy as np
-from admm_hawkes.utils import empirical_sqrt_mean, empirical_sqrt_cross_corr
-import admm_hawkes.updates as upd
-from admm_hawkes.loss import l1_norm, sq_frobenius
+from whma.utils import empirical_sqrt_mean, empirical_sqrt_cross_corr
+import whma.updates as upd
+from whma.loss import l1_norm, sq_frobenius
 import matplotlib.pyplot as plt
 from numba import autojit
 

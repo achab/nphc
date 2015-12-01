@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.linalg import eig, inv
 from numba import autojit
-from admm_hawkes.cumulants import integrated_claw
+from whma.cumulants import integrated_claw
 
 
 # Computation of \Sigma^{1/2}

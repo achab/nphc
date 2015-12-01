@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from pylab import rcParams
 from mlpp.hawkesnoparam.estim import Estim
 import mlpp.pp.hawkes as hk
-import admm_hawkes.simulation as simu
+import whma.simulation as simu
 from mlpp.base.utils import TimeFunction
 
 # simulation of Hawkes processes
