@@ -1,7 +1,7 @@
 import numpy as np
-from whma.utils import empirical_sqrt_mean, empirical_sqrt_cross_corr
-import whma.updates as upd
-from whma.loss import l1_norm, sq_frobenius
+from utils import empirical_sqrt_mean, empirical_sqrt_cross_corr
+import updates as upd
+from loss import l1_norm, sq_frobenius
 import matplotlib.pyplot as plt
 from numba import autojit
 
@@ -67,3 +67,36 @@ def admm(estim, prox_fun, X1_0, X4_0, alpha_truth, rho=0.1, alpha=0.99, maxiter=
 #    plt.show()
 
     return X1
+
+if __name__ == "__main__":
+    import numpy as np
+    import scipy
+    import matplotlib.pyplot as plt
+    from pylab import rcParams
+    from mlpp.hawkesnoparam.estim import Estim
+    import mlpp.pp.hawkes as hk
+    import simulation as simu
+    from mlpp.base.utils import TimeFunction
+    from metrics import rel_err, rank_corr
+
+    d = 2
+    mu = np.array([0.2, 0.3])
+    mus = simu.simulate_mu(d, mu=mu)
+    Alpha_truth = np.array(
+    [[0.7, 0.3],
+    [0.5, 0.2]])
+    Beta = 0.2 * np.ones((d,d))
+
+    kernels = [[hk.HawkesKernelExp(a, b) for (a, b) in zip(a_list, b_list)] for (a_list, b_list) in zip(Alpha_truth, Beta)]
+    h = hk.Hawkes(kernels=kernels, mus=list(mus))
+    h.simulate(10000)
+    estim = Estim(h, n_threads=8)
+
+    import prox
+    X0 = np.eye(d)
+    #X0 = np.ones(d**2).reshape(d,d)
+    rho = 0.01
+    maxiter = 1000
+
+    # main step
+    X_ = admm(estim, prox.sq_frob, X0, X0, Alpha_truth, rho=rho, maxiter=maxiter)

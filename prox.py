@@ -38,7 +38,7 @@ def l2(X, lbd=1.):
 
 #@autojit
 def enet(X, lbd=1., alpha=.5):
-    return alpha * l1(X, lbd=lbd) + (1. - alpha) * sq_frob(X, lbd=lbd)
+    return alpha * l1(X, lbd=lbd) / (1. + lbd * (1. - alpha))
 
 #@autojit
 def frob(X, lbd=1.):

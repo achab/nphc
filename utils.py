@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.linalg import eig, inv
 from numba import autojit
-from whma.cumulants import integrated_claw
+from cumulants import integrated_claw
 
 
 # Computation of \Sigma^{1/2}
@@ -20,6 +20,8 @@ def empirical_sqrt_cross_corr(estim):
     # C should be symmetric
     assert np.allclose(C, C.T), "C should be symmetric !"
     diagD, O = eig(C)
+    # we cast the imaginary part since it equals zero
+    diagD = np.array([x.real for x in diagD])
     # O should be orthogonal
     assert np.allclose(O.T, inv(O)), "O should be an orthogonal matrix !"
     return np.sqrt(diagD), O
