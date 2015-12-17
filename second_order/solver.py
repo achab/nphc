@@ -1,9 +1,6 @@
-import numpy as np
+from second_order import updates as upd
 from utils import empirical_sqrt_mean, empirical_sqrt_cross_corr
-import updates as upd
-from loss import l1_norm, sq_frobenius
-import matplotlib.pyplot as plt
-from numba import autojit
+
 
 #@autojit
 def admm(estim, prox_fun, X1_0, X4_0, alpha_truth, rho=0.1, alpha=0.99, maxiter=100):
@@ -32,10 +29,6 @@ def admm(estim, prox_fun, X1_0, X4_0, alpha_truth, rho=0.1, alpha=0.99, maxiter=
     U4 = np.zeros_like(X1_0)
     U5 = np.zeros_like(X1_0)
 
-    loss = []
-    error = []
-    norm_alpha_truth = sq_frobenius(alpha_truth)
-
     for _ in range(maxiter):
         X1[:] = upd.update_X1(prox_fun, X2, Y1, U2, U4, diagA, rho=rho)
         X2[:] = upd.update_X2(X1, X3, U2, U3)
@@ -48,8 +41,6 @@ def admm(estim, prox_fun, X1_0, X4_0, alpha_truth, rho=0.1, alpha=0.99, maxiter=
         U3[:] = upd.update_U3(U3, X2, X3)
         U4[:] = upd.update_U4(U4, X1, Y1, diagA)
         U5[:] = upd.update_U5(U5, X4, Y2, B)
-#        loss.append(objective(X1))
-        error.append(sq_frobenius(X1-alpha_truth)/norm_alpha_truth)
 
     print("||X1 - X_2|| = ", np.linalg.norm(X1-X2))
     print("||X2 - X_3|| = ", np.linalg.norm(X2-X3))
@@ -59,25 +50,13 @@ def admm(estim, prox_fun, X1_0, X4_0, alpha_truth, rho=0.1, alpha=0.99, maxiter=
     print("||U4|| = ", np.linalg.norm(U4))
     print("||U5|| = ", np.linalg.norm(U5))
 
-#    plt.figure()
-#    plt.xscale('log')
-#    plt.yscale('log')
-#    plt.plot(loss)
-#    plt.plot(error)
-#    plt.show()
-
     return X1
 
 if __name__ == "__main__":
     import numpy as np
-    import scipy
-    import matplotlib.pyplot as plt
-    from pylab import rcParams
     from mlpp.hawkesnoparam.estim import Estim
     import mlpp.pp.hawkes as hk
     import simulation as simu
-    from mlpp.base.utils import TimeFunction
-    from metrics import rel_err, rank_corr
 
     d = 2
     mu = np.array([0.2, 0.3])
