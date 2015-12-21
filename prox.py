@@ -8,20 +8,14 @@ def nonnegativity(X):
 
 #@autojit
 def stability(X, alpha=0.999):
-    try:
-        U, s, V = np.linalg.svd(X)
-        s[s > alpha] = alpha
-        return np.dot(U,np.dot(np.diag(s),V))
-    except LinAlgError:
-        print("le pb vient de stability")
+    U, s, V = np.linalg.svd(X)
+    s[s > alpha] = alpha
+    return np.dot(U,np.dot(np.diag(s),V))
 
 #@autojit
 def orthogonality(X, relaxed=True):
     if relaxed:
-        try:
-            return stability(X, alpha=1.)
-        except LinAlgError:
-            print("le pb vient de orthogonality")
+        return stability(X, alpha=1.)
     else:
         # another formula exists: X (X^T X)^{-1/2}
         U, _, V = np.linalg.svd(X)

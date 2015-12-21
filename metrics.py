@@ -19,11 +19,8 @@ def rank_corr(A_true, A_pred):
 def l1_norm(X):
     return np.linalg.norm(X.reshape(len(X)**2,),ord=1)
 
-def l2_norm(X):
-    """
-    To penalize the total influence provided or received by one guy
-    """
-    pass
+def frob(X):
+    return np.linalg.norm(X,ord='fro')
 
 def elastic_net(X, alpha=.5):
     return alpha * l1_norm(X) + (1.-alpha) * sq_frobenius(X)
