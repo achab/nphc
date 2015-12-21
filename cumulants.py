@@ -3,6 +3,10 @@ from numpy.polynomial.legendre import leggauss
 from numba import double, int_, jit
 
 
+class Cumulants:
+    # cumulants is a super class of Estim
+    pass
+
 # Computation of integral of claw
 def integrated_claw(estim, n_quad=50, xmax=40, method='gauss'):
     """ (Estim) -> float
@@ -82,3 +86,4 @@ def integrated_claw(estim, n_quad=50, xmax=40, method='gauss'):
     fast_fill_matrix_integrated_claw = jit(double[:,:](int_))(fill_matrix_integrated_claw)
 
     return fast_fill_matrix_integrated_claw(estim._dim)
+

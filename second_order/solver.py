@@ -1,5 +1,5 @@
 from second_order import updates as upd
-from utils import empirical_sqrt_mean, empirical_sqrt_cross_corr
+from transform import empirical_sqrt_mean, empirical_cross_corr
 
 
 #@autojit
@@ -10,8 +10,9 @@ def admm(estim, prox_fun, X1_0, X4_0, alpha_truth, rho=0.1, alpha=0.99, maxiter=
 
     # compute diagA, diagD, O, B and C
     diagA = empirical_sqrt_mean(estim.lam)
-    diagD, O = empirical_sqrt_cross_corr(estim)
-    B = np.dot(O,np.dot(np.diag(diagD),O.T))
+    diagD, O = empirical_cross_corr(estim)
+    sqrt_diagD = np.sqrt(diagD)
+    B = np.dot(O,np.dot(np.diag(sqrt_diagD),O.T))
     C = np.diag(1. / diagA)
 
     # initialize parameters
@@ -21,7 +22,7 @@ def admm(estim, prox_fun, X1_0, X4_0, alpha_truth, rho=0.1, alpha=0.99, maxiter=
     X4 = X4_0.copy()
     Y1 = np.dot(np.diag(1. / diagA), X1_0)
     #Y1 = X1_0.copy()
-    Y2 = np.dot(X4_0, np.dot(O,np.dot(np.diag(1. / diagD),O.T)))
+    Y2 = np.dot(X4_0, np.dot(O,np.dot(np.diag(1. / sqrt_diagD),O.T)))
     #Y2 = X1_0.copy()
     U1 = np.zeros_like(X1_0)
     U2 = np.zeros_like(X1_0)
@@ -35,7 +36,7 @@ def admm(estim, prox_fun, X1_0, X4_0, alpha_truth, rho=0.1, alpha=0.99, maxiter=
         X3[:] = upd.update_X3(X2, U3, alpha=alpha)
         X4[:] = upd.update_X4(Y2, U5, B)
         Y1[:] = upd.update_Y1(X1, Y2, U1, U4, diagA, C)
-        Y2[:] = upd.update_Y2(X4, Y1, U1, U5, diagD, O, B, C)
+        Y2[:] = upd.update_Y2(X4, Y1, U1, U5, sqrt_diagD, O, B, C)
         U1[:] = upd.update_U1(U1, Y1, Y2, C)
         U2[:] = upd.update_U2(U2, X1, X2)
         U3[:] = upd.update_U3(U3, X2, X3)

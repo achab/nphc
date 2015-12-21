@@ -11,7 +11,7 @@ def empirical_sqrt_mean(lam):
 
 # Computation of ||C||^{1/2}
 #@autojit
-def empirical_sqrt_cross_corr(estim):
+def empirical_cross_corr(estim):
     G = integrated_claw(estim, method='lin')
     np.fill_diagonal(G, G.diagonal()+1)
     C = np.einsum('i,ij->ij', np.array(estim.lam), G.T)
@@ -24,7 +24,7 @@ def empirical_sqrt_cross_corr(estim):
     diagD = np.array([x.real for x in diagD])
     # O should be orthogonal
     assert np.allclose(O.T, inv(O)), "O should be an orthogonal matrix !"
-    return np.sqrt(diagD), O
+    return diagD, O
 
 # Computation of \hat{\nu}(0)
 #@autojit
