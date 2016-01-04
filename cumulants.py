@@ -1,5 +1,5 @@
 import numpy as np
-from transform import empirical_sqrt_mean, empirical_cross_corr, integrated_claw
+from .transform import empirical_sqrt_mean, empirical_cross_corr, integrated_claw
 from mlpp.hawkesnoparam import Estim
 
 
@@ -24,7 +24,7 @@ class Cumulants(Estim):
 
 def get_C(estim):
     G = integrated_claw(estim, method='lin')
-    C = np.einsum('i,ij->ij', estim.L, G.T)
+    C = np.einsum('i,ij->ij', estim.lam, G.T)
     # the following line cancels the edge effects
     C = .5 * (C + C.T)
     return C

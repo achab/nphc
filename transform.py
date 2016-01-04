@@ -119,6 +119,12 @@ def integrated_claw(estim, n_quad=50, xmax=40, method='gauss'):
     return fast_fill_matrix_integrated_claw(estim._dim)
 
 
+def empirical_third_order(estim):
+    pass
+
+def empirical_partial_third_order(estim):
+    pass
+
 
 # # the following function is incomplete
 # def inspector(loss_fun, x_real, n_iter, norm, verbose=False):

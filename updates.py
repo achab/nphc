@@ -1,5 +1,5 @@
 import numpy as np
-import prox
+from .prox import nonnegativity, stability, orthogonality
 from numba import autojit
 
 #@autojit
@@ -8,15 +8,15 @@ def update_X1(prox_fun, X2, Y1, U2, U4, diagA, rho=0.1):
 
 #@autojit
 def update_X2(X1, X3, U2, U3):
-    return 0.5 * prox.nonnegativity(X1 + U2 + X3 + U3)
+    return 0.5 * nonnegativity(X1 + U2 + X3 + U3)
 
 #@autojit
 def update_X3(X2, U3, alpha=0.99):
-    return prox.stability(X2 - U3, alpha=alpha)
+    return stability(X2 - U3, alpha=alpha)
 
 #@autojit
 def update_X4(Y2, U5, B):
-    return prox.orthogonality(np.dot(Y2,B) + U5)
+    return orthogonality(np.dot(Y2,B) + U5)
 
 #@autojit
 def update_Y1(X1, Y2, U1, U4, diagA, C):
