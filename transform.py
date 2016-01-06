@@ -31,6 +31,7 @@ def empirical_cross_corr(estim):
 #@autojit
 def corr_matrix(estim):
     G = integrated_claw(estim, method='lin')
+    np.fill_diagonal(G, G.diagonal()+1)
     C = np.einsum('i,ij->ij', np.array(estim.lam), G.T)
     # THE FOLLOWING LINE IS A TOTAL HACK
     C = .5 * (C + C.T)
@@ -99,19 +100,12 @@ def integrated_claw(estim, n_quad=50, xmax=40, method='gauss'):
         index = estim._ijl2index[i][j][l]
         return linc(estim.IG[index],t2)-linc(estim.IG[index],t1)
 
-    # Returns the integral of x times a claw between t1 and t2
-    def DIG2(i, j, l, t1, t2):
-        if t1 >= t2:
-            print("t2>t1 faux dans IG2")
-        index = estim._ijl2index[i][j][l]
-        return linc(estim.IG2[index],t2)-linc(estim.IG2[index],t1)
-
     # Fill the matrix to return with integrated claws
     def fill_matrix_integrated_claw(d):
         C = np.zeros((d,d))
         for i in range(d):
             for j in range(d):
-                C[i][j] = DIG(i, j, 0, 0, xmax)
+                C[i][j] = 2*DIG(i, j, 0, 0, xmax)
         return C
 
     fast_fill_matrix_integrated_claw = jit(double[:,:](int_))(fill_matrix_integrated_claw)

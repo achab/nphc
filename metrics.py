@@ -30,3 +30,14 @@ def frobenius(X):
 
 def sq_frobenius(X):
     return np.linalg.norm(X,ord='fro') ** 2
+
+def mse_K_partial(L, C, K_part, R):
+#    L = cumul.L
+#    C = cumul.C
+#    K_part = cumul.K_partial
+    from math import sqrt
+    dim = int(sqrt(R.shape[0]))
+    R = R.reshape(dim,dim)
+    K_part_from_R = np.dot(R**2,C.T)
+    K_part_from_R += 2*np.dot(R*(C-np.dot(R,np.diag(L))),R.T)
+    return np.linalg.norm(K_part - K_part_from_R)
