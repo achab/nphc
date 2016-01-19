@@ -22,15 +22,21 @@ class Cumulants(Estim):
         self.K_partial = get_K_partial(self)
 
 def get_C(estim):
-    G = integrated_claw(estim, method='lin')
+    G = integrated_claw(estim, method='gauss')
     np.fill_diagonal(G, G.diagonal()+1)
     C = np.einsum('i,ij->ij', estim.lam, G.T)
     # the following line cancels the edge effects
     C = .5 * (C + C.T)
     return C
 
-def get_K(cumul):
-    pass
+def get_K(estim,L,C,R):
+    d = len(estim.lam)
+    K = np.zeros((d,d,d))
+    K += np.einsum('im,jm,km->ijk',R,R,C)
+    K += np.einsum('im,jm,km->ijk',R,C,R)
+    K += np.einsum('im,jm,km->ijk',C,R,R)
+    K -= 2*np.einsum('m,im,jm,km->ijk',L,R,R,R)
+    return K
 
 def get_K_partial(L, C, Integrals):
 #    L = np.array(estim.lam)

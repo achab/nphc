@@ -7,7 +7,7 @@ def rel_err(A_true, A_pred):
     average = 0.
     average += np.sum(np.abs(A_pred) * (A_true == 0))
     average += np.sum(np.abs(A_true - A_pred)[A_not_zero] / np.abs(A_true)[A_not_zero])
-    average /= (A_true.shape[0] ** 2)
+    average /= A_true.size
     return average
 
 def rank_corr(A_true, A_pred):
