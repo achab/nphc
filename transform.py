@@ -4,7 +4,6 @@ from numpy.polynomial.legendre import leggauss
 from numba import double, int_, jit, autojit
 
 
-
 # Computation of \Sigma^{1/2}
 #@autojit
 def empirical_sqrt_mean(lam):
@@ -111,13 +110,6 @@ def integrated_claw(estim, n_quad=50, xmax=40, method='gauss'):
     fast_fill_matrix_integrated_claw = jit(double[:,:](int_))(fill_matrix_integrated_claw)
 
     return fast_fill_matrix_integrated_claw(estim._dim)
-
-
-def empirical_third_order(estim):
-    pass
-
-def empirical_partial_third_order(estim):
-    pass
 
 
 # # the following function is incomplete

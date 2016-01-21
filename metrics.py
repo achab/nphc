@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.stats import kendalltau
+from .cumulants import get_K_th
 
 def rel_err(A_true, A_pred):
     assert A_pred.shape == A_true.shape, "A_pred and A_true should have the same dimensions."
@@ -31,10 +32,11 @@ def frobenius(X):
 def sq_frobenius(X):
     return np.linalg.norm(X,ord='fro') ** 2
 
-def mse_K(L, C, K, R):
-    pass
+def mse_K(cumul, R):
+    K_th = get_K_th(cumul.L,cumul.C,R)
+    return .5/(cumul.dim**3) * sq_frobenius(cumul.K - K_th)
 
-def mse_K_partial(L, C, K_part, R):
+def mse_K_partial(cumul, R):
 #    L = cumul.L
 #    C = cumul.C
 #    K_part = cumul.K_partial
