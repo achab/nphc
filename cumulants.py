@@ -1,5 +1,5 @@
 import numpy as np
-from .transform import empirical_sqrt_mean, empirical_cross_corr, integrated_claw
+from transform import empirical_sqrt_mean, empirical_cross_corr, integrated_claw
 from mlpp.hawkesnoparam import Estim
 from numba import autojit
 
@@ -75,7 +75,6 @@ class Cumulants(SimpleHawkes):
         assert self.C is not None, "You should first set C using the function 'set_C'."
         self.K = get_K(self.A,self.F,self.L,self.C,H)
 
-
     def set_K_th(self, R_truth=None):
         assert R_truth is not None, "You should provide R_truth."
         assert self.C_th is not None, "You should provide C_th to compute K_th."
@@ -86,6 +85,20 @@ class Cumulants(SimpleHawkes):
 
     def set_K_part_th(self):
         pass
+
+    def compute_all(self,H=0.):
+        self.compute_A(H)
+        self.compute_F(H)
+        self.set_C(H)
+        self.set_K(H)
+
+    def compute_all_part(self,H=0.):
+        self.compute_A(H)
+        self.compute_F(H)
+        self.set_C(H)
+        self.set_K_part(H)
+
+
 
 @autojit
 def get_C(A,L,H):
