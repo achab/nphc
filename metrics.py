@@ -31,6 +31,9 @@ def frobenius(X):
 def sq_frobenius(X):
     return np.linalg.norm(X,ord='fro') ** 2
 
+def mse_K(L, C, K, R):
+    pass
+
 def mse_K_partial(L, C, K_part, R):
 #    L = cumul.L
 #    C = cumul.C
