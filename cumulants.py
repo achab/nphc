@@ -173,7 +173,8 @@ def get_K_th(L,C,R):
 @autojit
 def get_K_part(A,B,L,C,H):
     K_part = A.copy()
-    K_part += np.diag(L+2*np.diag(A))
+    K_part += np.diag(L)
+    K_part += 2*np.diag(np.diag(A))
     K_part += B[:,:,0]
     K_part += 2*B[:,:,1]
     K_part -= 4*H**2*np.einsum('i,j->ij',L**2,L)
@@ -188,7 +189,7 @@ def get_K_part_th(L,C,R):
         R_ = R.reshape(d,d)
     else:
         R_ = R.copy()
-    K_part = np.dot(R_*R_,C.T)
+    K_part = np.dot(R_**2,C.T)
     K_part += 2*np.dot(R_*(C-np.dot(R_,np.diag(L))),R_.T)
     return K_part
 
@@ -207,15 +208,18 @@ def A_ij(hk,i,j,H):
     n_i = len(Z_i)
     n_j = len(Z_j)
     if H >= 0:
-        for tau in Z_i:
-            while u < n_j and Z_j[u] < tau:
+        for tau in Z_j:
+            while u < n_i and Z_i[u] < tau:
                 u += 1
             v = u
-            while v < n_j and Z_j[v] < tau + H:
+            while v < n_i and Z_i[v] < tau + H:
                 v += 1
-            if v < n_j:
+            if v < n_i:
                 count += 1
                 res += v-u
+        res -= (i==j)*count
+        if count < n_j:
+            res *= n_j * 1. / count
     else:
         for tau in Z_i:
             while u < n_j and Z_j[u] <= tau:
@@ -226,9 +230,9 @@ def A_ij(hk,i,j,H):
             if v >= 0:
                 count += 1
                 res += u-1-v
-    res -= (i==j)*count
-    if count < n_i:
-        res *= n_i * 1. / count
+        res -= (i==j)*count
+        if count < n_i:
+            res *= n_i * 1. / count
     res /= T_
     return res
 

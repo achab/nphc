@@ -58,9 +58,9 @@ def gradient_g(cumul,R):
     diff_K = K_part_from_R - cumul.K_part
     res = np.einsum('ij,im,jm->im',diff_K,R,C)
     res += np.einsum('ij,im,jm->im',diff_K,C,R)
-    res -= np.einsum('ij,m,im,jm->im',diff_K,L,R,R)
+    res -= 2*np.einsum('ij,m,im,jm->im',diff_K,L,R,R)
     res += np.einsum('ij,im->jm',diff_K,R*C)
-    res -= 2*np.einsum('ij,m,im->jm',diff_K,L,R**2)
+    res -= np.einsum('ij,m,im->jm',diff_K,L,R**2)
     return 2./(d**2)*res
 
 #####################################
@@ -166,8 +166,7 @@ if __name__ == "__main__":
     cumul.compute_all()
 
     simple_obj = lambda R: mse_K(cumul,R)
-    #simple_grad = lambda R: gradient_f(cumul,R)
-    simple_grad = lambda R: gradient_f_2(cumul,R)
+    simple_grad = lambda R: gradient_f(cumul,R)
 
     d = cumul.dim
     R0 = np.random.rand(d**2).reshape(d,d)
