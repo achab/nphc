@@ -1,5 +1,5 @@
 import numpy as np
-from transform import empirical_sqrt_mean, empirical_cross_corr, integrated_claw
+from .transform import empirical_sqrt_mean, empirical_cross_corr, integrated_claw
 from mlpp.hawkesnoparam import Estim
 from numba import autojit
 
@@ -30,8 +30,10 @@ class Cumulants(SimpleHawkes):
         self.K = None
         self.K_th = None
         self.K_part = None
+        self.K_part_th = None
         self.hMax = hMax
 
+    @autojit
     def compute_A(self,H=0.):
         if H == 0.:
             hM = -self.hMax
@@ -44,6 +46,22 @@ class Cumulants(SimpleHawkes):
                 A[i,j] = A_ij(self,i,j,hM)
         self.A = A
 
+    @autojit
+    def compute_B(self,H=0.):
+        if H == 0.:
+            hM = self.hMax
+        else:
+            hM = H
+        assert self.hMax > 0, "self.hMax should be nonnegative."
+        d = self.dim
+        B = np.zeros((d,d,2))
+        for i in range(d):
+            for j in range(d):
+                B[i,j,0] = F_ijk(self,i,i,j,hM)
+                B[i,j,1] = F_ijk(self,j,i,i,hM)
+        self.B = B
+
+    @autojit
     def compute_F(self,H=0.):
         if H == 0.:
             hM = self.hMax
@@ -55,7 +73,7 @@ class Cumulants(SimpleHawkes):
         for i in range(d):
             for j in range(d):
                 for k in range(d):
-                    F[i,j,k] = B_ijk(self,i,j,k,hM)
+                    F[i,j,k] = F_ijk(self,i,j,k,hM)
         self.F = F
 
     def set_C(self,H=0.):
@@ -65,26 +83,33 @@ class Cumulants(SimpleHawkes):
             hM = H
         self.C = get_C(self.A,self.L,hM)
 
-    def set_C_th(self, R_truth=None):
-        assert R_truth is not None, "You should provide R_truth."
-        self.C_th = get_C_th(self.L, R_truth)
+    def set_C_th(self, R_true=None):
+        assert R_true is not None, "You should provide R_true."
+        self.C_th = get_C_th(self.L, R_true)
 
     def set_K(self,H=0.):
         if H == 0.:
-            H = self.hMax
+            hM = self.hMax
+        else:
+            hM = H
         assert self.C is not None, "You should first set C using the function 'set_C'."
-        self.K = get_K(self.A,self.F,self.L,self.C,H)
+        self.K = get_K(self.A,self.F,self.L,self.C,hM)
 
-    def set_K_th(self, R_truth=None):
-        assert R_truth is not None, "You should provide R_truth."
+    def set_K_th(self, R_true=None):
+        assert R_true is not None, "You should provide R_true."
         assert self.C_th is not None, "You should provide C_th to compute K_th."
-        self.K_th = get_K_th(self.L,self.C_th,R_truth)
+        self.K_th = get_K_th(self.L,self.C_th,R_true)
 
-    def set_K_part(self):
-        self.K_part = get_K_part(self)
+    def set_K_part(self,H=0.):
+        if H == 0.:
+            hM = self.hMax
+        else:
+            hM = H
+        self.K_part = get_K_part(self.A,self.B,self.L,self.C,hM)
 
-    def set_K_part_th(self):
-        pass
+    def set_K_part_th(self, R_true=None):
+        assert R_true is not None, "You should provide R_true."
+        self.K_part_th = get_K_part_th(self.L,self.C,R_true)
 
     def compute_all(self,H=0.):
         self.compute_A(H)
@@ -94,7 +119,7 @@ class Cumulants(SimpleHawkes):
 
     def compute_all_part(self,H=0.):
         self.compute_A(H)
-        self.compute_F(H)
+        self.compute_B(H)
         self.set_C(H)
         self.set_K_part(H)
 
@@ -104,6 +129,7 @@ class Cumulants(SimpleHawkes):
 def get_C(A,L,H):
     return A+A.T - 2*np.einsum('i,j->ij',L,L)*H + np.diag(L)
 
+@autojit
 def get_C_claw(estim):
     G = integrated_claw(estim, method='gauss')
     np.fill_diagonal(G, G.diagonal()+1)
@@ -112,9 +138,11 @@ def get_C_claw(estim):
     C = .5 * (C + C.T)
     return C
 
+@autojit
 def get_C_th(L, R):
     return np.dot(R,np.dot(np.diag(L),R.T))
 
+@autojit
 def get_K(A,F,L,C,H):
     I = np.eye(len(L))
     K1 = F.copy()
@@ -128,6 +156,7 @@ def get_K(A,F,L,C,H):
     K -= 4*np.einsum('i,j,k->ijk',L,L,L)*H**2
     return K
 
+@autojit
 def get_K_th(L,C,R):
     d = len(L)
     if R.shape[0] == d**2:
@@ -141,16 +170,27 @@ def get_K_th(L,C,R):
     K -= 2*np.einsum('m,im,jm,km->ijk',L,R_,R_,R_)
     return K
 
-def get_K_part(L, C, R):
-    #K_part = np.zeros((len(L),len(L)))
-    #K_part -= np.einsum('ii,j->ij',C,L)
-    #K_part -= 2*np.einsum('ij,i->ij',C,L)
-    #K_part += 2*np.einsum('i,j->ij',L**2,L)
-    #return K_part
-    pass
+@autojit
+def get_K_part(A,B,L,C,H):
+    K_part = A.copy()
+    K_part += np.diag(L+2*np.diag(A))
+    K_part += B[:,:,0]
+    K_part += 2*B[:,:,1]
+    K_part -= 4*H**2*np.einsum('i,j->ij',L**2,L)
+    K_part -= 2*H*np.einsum('ii,j->ij',C,L)
+    K_part -= 4*H*np.einsum('ij,i->ij',C,L)
+    return K_part
 
+@autojit
 def get_K_part_th(L,C,R):
-    pass
+    d = len(L)
+    if R.shape[0] == d**2:
+        R_ = R.reshape(d,d)
+    else:
+        R_ = R.copy()
+    K_part = np.dot(R_*R_,C.T)
+    K_part += 2*np.dot(R_*(C-np.dot(R_,np.diag(L))),R_.T)
+    return K_part
 
 @autojit
 def A_ij(hk,i,j,H):
@@ -193,7 +233,7 @@ def A_ij(hk,i,j,H):
     return res
 
 @autojit
-def B_ijk(hk,i,j,k,H):
+def F_ijk(hk,i,j,k,H):
     res = 0
     u = 0
     x = 0
