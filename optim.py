@@ -1,6 +1,6 @@
 import numpy as np
 from numba import autojit
-from .cumulants import Cumulants, get_K_th
+from .cumulants import Cumulants, get_K_th, get_K_part_th
 from .metrics import mse_K, rel_err
 from .prox import prox_zero
 
@@ -28,14 +28,40 @@ def gradient_f(cumul,R):
     L = cumul.L
     C = cumul.C
     K_from_R = get_K_th(L,C,R)
-    dKdR = np.einsum('im,jm->ijm',R,C)
-    dKdR += np.einsum('im,jm->ijm',C,R)
-    dKdR -= 2*np.einsum('m,im,jm->ijm',L,R,R)
     diff_K = K_from_R - cumul.K
-    res = np.einsum('ijk,ijm->km',diff_K,dKdR)
-    res += np.einsum('ijk,ikm->jm',diff_K,dKdR)
-    res += np.einsum('ijk,jkm->im',diff_K,dKdR)
+    res = np.zeros((d,d))
+    for idx in ['ijk','kij','jki']:
+        res += np.einsum(idx+',im,jm->km',diff_K,R,C)
+        res += np.einsum(idx+',im,jm->km',diff_K,C,R)
+        res -= 2*np.einsum(idx+',m,im,jm->km',diff_K,L,R,R)
     return 1./(d**3)*res
+
+@autojit
+def gradient_g_ij(cumul,R,i,j):
+    d = cumul.dim
+    C = cumul.C
+    L = cumul.L
+    K_part = cumul.K_part
+    grad = np.zeros((d,d))
+    grad[i] = R[i]*C[j] + R[j]*C[i] - 2*L*R[i]*R[j]
+    grad[j] = R[i]*C[i] - 2*L*R[i]**2
+    grad *= 2.
+    k_iij = np.sum(C[j]*R[i]**2 + 2*R[i]*C[i]*R[j] - 2*L*R[j]*R[i]**2)
+    return (k_iij- K_part[i,j])*grad
+
+@autojit
+def gradient_g(cumul,R):
+    d = cumul.dim
+    L = cumul.L
+    C = cumul.C
+    K_part_from_R = get_K_part_th(L,C,R)
+    diff_K = K_part_from_R - cumul.K_part
+    res = np.einsum('ij,im,jm->im',diff_K,R,C)
+    res += np.einsum('ij,im,jm->im',diff_K,C,R)
+    res -= np.einsum('ij,m,im,jm->im',diff_K,L,R,R)
+    res += np.einsum('ij,im->jm',diff_K,R*C)
+    res -= 2*np.einsum('ij,m,im->jm',diff_K,L,R**2)
+    return 2./(d**2)*res
 
 #####################################
 # a closure to update metrics saved #
@@ -140,7 +166,8 @@ if __name__ == "__main__":
     cumul.compute_all()
 
     simple_obj = lambda R: mse_K(cumul,R)
-    simple_grad = lambda R: gradient_f(cumul,R)
+    #simple_grad = lambda R: gradient_f(cumul,R)
+    simple_grad = lambda R: gradient_f_2(cumul,R)
 
     d = cumul.dim
     R0 = np.random.rand(d**2).reshape(d,d)
