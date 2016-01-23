@@ -108,7 +108,7 @@ def gd(R0, grad_fun, n_iter=100, step=1., prox=prox_zero, lbd= 1., callback=None
             R[:] = prox(R,lbd)
     return R
 
-def sgd(R0, grad_i_fun, n_dim=3, n_iter=100, step=1., prox=prox_zero, lbd= 1., callback=None):
+def sgd(R0, grad_i_fun, n_iter=100, step=1., prox=prox_zero, lbd= 1., callback=None):
     """Stochastic gradient descent algorithm."""
     R = R0.copy()
     d = R.shape[0]
@@ -117,13 +117,13 @@ def sgd(R0, grad_i_fun, n_dim=3, n_iter=100, step=1., prox=prox_zero, lbd= 1., c
         for n in range(n_iter):
             # Update metrics after each iteration.
             callback(R)
-            idx = np.random.randint(d,size=n_dim)
-            R -= step * grad_i_fun(R, idx) / (np.sqrt(n + 1))
+            i,j,k = np.random.randint(d,size=3)
+            R -= step * grad_i_fun(R,i,j,k) / (np.sqrt(n + 1))
             R[:] = prox(R,lbd)
     else:
         for n in range(n_iter):
-            idx = np.random.randint(d,size=n_dim)
-            R -= step * grad_i_fun(R, idx) / (np.sqrt(n + 1))
+            i,j,k = np.random.randint(d,size=3)
+            R -= step * grad_i_fun(R,i,j,k) / (np.sqrt(n + 1))
             R[:] = prox(R,lbd)
     return R
 
@@ -147,6 +147,30 @@ def nag(R0, grad_fun, n_iter=100, step=1., prox=prox_zero, lbd= 1., callback=Non
             R_old[:] = R
             Y -= step * grad_fun(Y)
             R[:] = prox(Y,lbd)
+    return R
+
+def adagrad(R0, grad_i_fun, n_iter=100, step=1., prox=prox_zero, lbd= 1., callback=None):
+    """AdaGrad algorithm."""
+    R = R0.copy()
+    d = R.shape[0]
+    diagG = .0001*np.ones((d,d))
+
+    if callback is not None:
+        for n in range(n_iter):
+            # Update metrics after each iteration.
+            callback(R)
+            i,j,k = np.random.randint(d,size=3)
+            grad = grad_i_fun(R,i,j,k)
+            diagG += grad**2
+            R -= step * grad / np.sqrt(diagG)
+            R[:] = prox(R,lbd)
+    else:
+        for n in range(n_iter):
+            i,j,k = np.random.randint(d,size=3)
+            grad = grad_i_fun(R,i,j,k)
+            diagG += grad**2
+            R -= step * grad / np.sqrt(diagG)
+            R[:] = prox(R,lbd)
     return R
 
 #####################
