@@ -33,9 +33,19 @@ def sq_frobenius(X):
     return np.linalg.norm(X) ** 2
 
 def mse_K(cumul, R):
-    K_from_R = get_K_th(cumul.L,cumul.C,R)
+    d = cumul.dim
+    if R.shape[0] == d**2:
+        R_ = R.reshape(d,d)
+    else:
+        R_ = R.copy()
+    K_from_R = get_K_th(cumul.L,cumul.C,R_)
     return .5/(cumul.dim**3) * sq_frobenius(cumul.K - K_from_R)
 
 def mse_K_part(cumul, R):
-    K_part_from_R = get_K_part_th(cumul.L,cumul.C,R)
+    d = cumul.dim
+    if R.shape[0] == d**2:
+        R_ = R.reshape(d,d)
+    else:
+        R_ = R.copy()
+    K_part_from_R = get_K_part_th(cumul.L,cumul.C,R_)
     return .5/(cumul.dim**2) * sq_frobenius(cumul.K_part - K_part_from_R)
