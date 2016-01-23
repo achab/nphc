@@ -5,9 +5,14 @@ from numba import autojit
 
 class SimpleHawkes:
 
-    def __init__(self, N=[]):
+    def __init__(self, N=[], sort_process=False):
         self.dim = len(N)
-        self.N = N
+        if sort_process:
+            self.N = []
+            for i, process in enumerate(N):
+                self.N.append(np.sort(N[i]))
+        else:
+            self.N = N
         self.L = np.empty(self.dim)
         self.set_L()
         if self.dim > 0:
@@ -109,7 +114,7 @@ class Cumulants(SimpleHawkes):
 
     def set_K_part_th(self, R_true=None):
         assert R_true is not None, "You should provide R_true."
-        self.K_part_th = get_K_part_th(self.L,self.C,R_true)
+        self.K_part_th = get_K_part_th(self.L,self.C_th,R_true)
 
     def compute_all(self,H=0.):
         self.compute_A(H)
@@ -189,7 +194,7 @@ def get_K_part_th(L,C,R):
         R_ = R.reshape(d,d)
     else:
         R_ = R.copy()
-    K_part = np.dot(R_**2,C.T)
+    K_part = np.dot(R*R,C.T)
     K_part += 2*np.dot(R_*(C-np.dot(R_,np.diag(L))),R_.T)
     return K_part
 
@@ -276,6 +281,9 @@ def F_ijk(hk,i,j,k,H):
         res *= n_k * 1. / count
     res /= T_
     return res
+
+
+#old
 
 @autojit
 def moment3_ijk(i,j,k,A_,F_,L,H):
