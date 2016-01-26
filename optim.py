@@ -36,7 +36,7 @@ def gradient_f(cumul,R):
         res -= 2*np.einsum(idx+',m,im,jm->km',diff_K,L,R,R)
     return 1./(d**3)*res
 
-@autojit
+#@autojit
 def gradient_g_ij(cumul,R,i,j):
     d = cumul.dim
     C = cumul.C
@@ -49,7 +49,7 @@ def gradient_g_ij(cumul,R,i,j):
     k_iij = np.sum(C[j]*R[i]**2 + 2*R[i]*C[i]*R[j] - 2*L*R[j]*R[i]**2)
     return (k_iij- K_part[i,j])*grad
 
-@autojit
+#@autojit
 def gradient_g(cumul,R):
     d = cumul.dim
     L = cumul.L
@@ -67,6 +67,7 @@ def gradient_g(cumul,R):
 # a closure to update metrics saved #
 #####################################
 
+#@autojit
 def inspector(loss_fun, R_true, verbose=False, n_iter=100):
     """A closure called to update metrics after each iteration."""
     objectives = []
@@ -92,6 +93,7 @@ def inspector(loss_fun, R_true, verbose=False, n_iter=100):
 # solvers #
 ###########
 
+@autojit
 def gd(R0, grad_fun, n_iter=100, step=1., prox=prox_zero, lbd= 1., callback=None):
     """Basic gradient descent algorithm."""
     R = R0.copy()
@@ -108,6 +110,7 @@ def gd(R0, grad_fun, n_iter=100, step=1., prox=prox_zero, lbd= 1., callback=None
             R[:] = prox(R,lbd)
     return R
 
+@autojit
 def sgd(R0, grad_i_fun, n_iter=100, step=1., prox=prox_zero, lbd= 1., callback=None):
     """Stochastic gradient descent algorithm."""
     R = R0.copy()
@@ -127,6 +130,7 @@ def sgd(R0, grad_i_fun, n_iter=100, step=1., prox=prox_zero, lbd= 1., callback=N
             R[:] = prox(R,lbd)
     return R
 
+@autojit
 def nag(R0, grad_fun, n_iter=100, step=1., prox=prox_zero, lbd= 1., callback=None):
     """Nesterov accelerated gradient algorithm."""
     R = R0.copy()
@@ -149,7 +153,8 @@ def nag(R0, grad_fun, n_iter=100, step=1., prox=prox_zero, lbd= 1., callback=Non
             R[:] = prox(Y,lbd)
     return R
 
-def adagrad(R0, grad_i_fun, n_iter=100, step=1., prox=prox_zero, lbd= 1., callback=None):
+@autojit
+def adagrad(R0, grad_i_fun, n_iter=100, step=1., prox=prox_zero, lbd= 1., callback=None,eps=1e-4):
     """AdaGrad algorithm."""
     R = R0.copy()
     d = R.shape[0]
@@ -172,6 +177,44 @@ def adagrad(R0, grad_i_fun, n_iter=100, step=1., prox=prox_zero, lbd= 1., callba
             R -= step * grad / np.sqrt(diagG)
             R[:] = prox(R,lbd)
     return R
+
+#@autojit
+def adadelta(R0, grad_i_fun, gamma=.95, eps=1e-6, n_iter=100, prox=prox_zero, lbd= 1., callback=None):
+    """AdaDelta algorithm."""
+    R = R0.copy()
+    d = R.shape[0]
+    g_sq = np.zeros((d,d))
+    X_sq = np.zeros((d,d))
+    dR = np.zeros((d,d))
+    def rms(X_):
+        return np.sqrt(X_+eps)
+
+    if callback is not None:
+        for n in range(n_iter):
+            # Update metrics after each iteration.
+            callback(R)
+            i,j,k = np.random.randint(d,size=3)
+            grad = grad_i_fun(R,i,j,k)
+            g_sq *= gamma
+            g_sq += (1.-gamma)*grad**2
+            dR = rms(X_sq)/rms(g_sq)*grad
+            X_sq *= gamma
+            X_sq += (1.-gamma)*dR**2
+            R -= dR
+            R[:] = prox(R,lbd)
+    else:
+        for n in range(n_iter):
+            i,j,k = np.random.randint(d,size=3)
+            grad = grad_i_fun(R,i,j,k)
+            g_sq *= gamma
+            g_sq += (1.-gamma)*grad**2
+            dR = rms(X_sq)/rms(g_sq)*grad
+            X_sq *= gamma
+            X_sq += (1.-gamma)*dR**2
+            R -= dR
+            R[:] = prox(R,lbd)
+    return R
+
 
 #####################
 # gradient checking #
