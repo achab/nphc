@@ -86,6 +86,7 @@ class Cumulants(SimpleHawkes):
             hM = self.hMax
         else:
             hM = H
+            self.compute_A(hM)
         self.C = get_C(self.A,self.L,hM)
 
     def set_C_th(self, R_true=None):
@@ -97,6 +98,9 @@ class Cumulants(SimpleHawkes):
             hM = self.hMax
         else:
             hM = H
+            self.compute_A(hM)
+            self.compute_F(hM)
+            self.set_C(hM)
         assert self.C is not None, "You should first set C using the function 'set_C'."
         self.K = get_K(self.A,self.F,self.L,self.C,hM)
 
@@ -110,6 +114,9 @@ class Cumulants(SimpleHawkes):
             hM = self.hMax
         else:
             hM = H
+            self.compute_A(hM)
+            self.compute_B(hM)
+            self.set_C(hM)
         self.K_part = get_K_part(self.A,self.B,self.L,self.C,hM)
 
     def set_K_part_th(self, R_true=None):
