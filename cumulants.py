@@ -1,7 +1,8 @@
 import numpy as np
-from .transform import empirical_sqrt_mean, empirical_cross_corr, integrated_claw
-from mlpp.hawkesnoparam import Estim
 from numba import autojit
+
+from .tests.int_claw import integrated_claw
+
 
 class SimpleHawkes:
 

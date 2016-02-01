@@ -1,16 +1,16 @@
+from numpy.linalg import eigh
 from .updates import *
-from .transform import empirical_sqrt_mean, empirical_cross_corr
 
 
 #@autojit
-def admm(estim, prox_fun, X1_0, X4_0, alpha_truth, rho=0.1, alpha=0.99, maxiter=100):
+def admm(cumul, prox_fun, X1_0, X4_0, alpha_truth, rho=0.1, alpha=0.99, maxiter=100):
     """
     ADMM framework to minimize a prox-capable objective over the matrix of kernel norms.
     """
 
     # compute diagA, diagD, O, B and C
-    diagA = empirical_sqrt_mean(estim.lam)
-    diagD, O = empirical_cross_corr(estim)
+    diagA = np.sqrt(cumul.L)
+    diagD, O = eigh(cumul.C)
     sqrt_diagD = np.sqrt(diagD)
     B = np.dot(O,np.dot(np.diag(sqrt_diagD),O.T))
     C = np.diag(1. / diagA)
@@ -43,13 +43,13 @@ def admm(estim, prox_fun, X1_0, X4_0, alpha_truth, rho=0.1, alpha=0.99, maxiter=
         U4[:] = update_U4(U4, X1, Y1, diagA)
         U5[:] = update_U5(U5, X4, Y2, B)
 
-    print("||X1 - X_2|| = ", np.linalg.norm(X1-X2))
-    print("||X2 - X_3|| = ", np.linalg.norm(X2-X3))
-    print("||U1|| = ", np.linalg.norm(U1))
-    print("||U2|| = ", np.linalg.norm(U2))
-    print("||U3|| = ", np.linalg.norm(U3))
-    print("||U4|| = ", np.linalg.norm(U4))
-    print("||U5|| = ", np.linalg.norm(U5))
+#    print("||X1 - X_2|| = ", np.linalg.norm(X1-X2))
+#    print("||X2 - X_3|| = ", np.linalg.norm(X2-X3))
+#    print("||U1|| = ", np.linalg.norm(U1))
+#    print("||U2|| = ", np.linalg.norm(U2))
+#    print("||U3|| = ", np.linalg.norm(U3))
+#    print("||U4|| = ", np.linalg.norm(U4))
+#    print("||U5|| = ", np.linalg.norm(U5))
 
     return X1
 

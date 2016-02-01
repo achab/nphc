@@ -1,3 +1,5 @@
+.gitignore
+old/
 *.pyc
 .DS_*
 __pycache_*

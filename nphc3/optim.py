@@ -1,8 +1,8 @@
 import numpy as np
 from numba import autojit
-from .cumulants import Cumulants, get_K_th, get_K_part_th
-from .metrics import mse_K, rel_err
-from .prox import prox_zero
+from cumulants import Cumulants, get_K_th, get_K_part_th
+from metrics import mse_K, rel_err
+from prox import prox_zero
 
 #######################################################
 ### This module contains the optimization functions ###

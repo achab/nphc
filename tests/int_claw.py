@@ -4,40 +4,6 @@ from numpy.polynomial.legendre import leggauss
 from numba import double, int_, jit, autojit
 
 
-# Computation of \Sigma^{1/2}
-#@autojit
-def empirical_sqrt_mean(lam):
-    return np.sqrt(lam)
-
-# Eigen-decomposition of ||C||
-#@autojit
-def empirical_cross_corr(estim):
-    G = integrated_claw(estim, method='lin')
-    np.fill_diagonal(G, G.diagonal()+1)
-    C = np.einsum('i,ij->ij', np.array(estim.lam), G.T)
-    # THE FOLLOWING LINE IS A TOTAL HACK
-    C = .5 * (C + C.T)
-    # C should be symmetric
-    assert np.allclose(C, C.T), "C should be symmetric !"
-    diagD, O = eig(C)
-    # we cast the imaginary part since it equals zero
-    diagD = np.array([x.real for x in diagD])
-    # O should be orthogonal
-    assert np.allclose(O.T, inv(O)), "O should be an orthogonal matrix !"
-    return diagD, O
-
-# Computation of \hat{\nu}(0)
-#@autojit
-def corr_matrix(estim):
-    G = integrated_claw(estim, method='lin')
-    np.fill_diagonal(G, G.diagonal()+1)
-    C = np.einsum('i,ij->ij', np.array(estim.lam), G.T)
-    # THE FOLLOWING LINE IS A TOTAL HACK
-    C = .5 * (C + C.T)
-    # C should be symmetric
-    return C
-
-
 # Computation of integral of claw
 def integrated_claw(estim, n_quad=50, xmax=40, method='gauss'):
     """ (Estim) -> float

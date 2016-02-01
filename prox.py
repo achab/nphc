@@ -35,7 +35,7 @@ def prox_l2(X, lbd=1.):
 
 #@autojit
 def prox_enet(X, lbd=1., alpha=.5):
-    return alpha * l1(X, lbd=lbd) / (1. + lbd * (1. - alpha))
+    return alpha * prox_l1(X, lbd=lbd) / (1. + lbd * (1. - alpha))
 
 #@autojit
 def prox_frob(X, lbd=1.):
