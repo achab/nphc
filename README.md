@@ -1,6 +1,6 @@
 # Example of Hawkes process
 
-![Example](http://i.imgur.com/3DgbwH1.png?1)
+![Example](http://i.imgur.com/3DgbwH1.png?2)
 
 # NPHC: NonParametric Hawkes with Cumulants
 
