@@ -1,3 +1,7 @@
+# Example of Hawkes process
+
+![Example](http://i.imgur.com/3DgbwH1.png?1)
+
 # NPHC: NonParametric Hawkes with Cumulants
 
 This repo contains two very different works:
