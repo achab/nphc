@@ -1,4 +1,6 @@
 datasets/
+*.txt
+*.gz
 .gitignore
 old/
 *.pyc

@@ -14,7 +14,7 @@ def load_data(url):
     substr = 'nphc-data'
     ind = url.find(substr)
     assert ind > -1, "The url should include the substring 'nphc-data' to import the right datasets."
-    dataset = 'datasets/downloads/' + url[ind+len(substr):]
+    dataset = 'datasets/' + url[ind+len(substr):]
     
     import gzip, pickle
     print('Downloading data from %s' % url)
