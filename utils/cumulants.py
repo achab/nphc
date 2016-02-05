@@ -1,7 +1,7 @@
 import numpy as np
 from numba import autojit
 
-from .tests.int_claw import integrated_claw
+from tests.int_claw import integrated_claw
 
 
 class SimpleHawkes:
@@ -37,6 +37,7 @@ class Cumulants(SimpleHawkes):
         self.K_th = None
         self.K_part = None
         self.K_part_th = None
+        self.R_true = None
         self.hMax = hMax
 
     @autojit
@@ -82,6 +83,9 @@ class Cumulants(SimpleHawkes):
                     F[i,j,k] = F_ijk(self,i,j,k,hM)
         self.F = F
 
+    def set_R_true(self,R_true):
+        self.R_true = R_true
+
     def set_C(self,H=0.):
         if H == 0.:
             hM = self.hMax
@@ -90,9 +94,9 @@ class Cumulants(SimpleHawkes):
             self.compute_A(hM)
         self.C = get_C(self.A,self.L,hM)
 
-    def set_C_th(self, R_true=None):
-        assert R_true is not None, "You should provide R_true."
-        self.C_th = get_C_th(self.L, R_true)
+    def set_C_th(self):
+        assert self.R_true is not None, "You should provide R_true."
+        self.C_th = get_C_th(self.L, self.R_true)
 
     def set_K(self,H=0.):
         if H == 0.:
@@ -105,10 +109,10 @@ class Cumulants(SimpleHawkes):
         assert self.C is not None, "You should first set C using the function 'set_C'."
         self.K = get_K(self.A,self.F,self.L,self.C,hM)
 
-    def set_K_th(self, R_true=None):
-        assert R_true is not None, "You should provide R_true."
+    def set_K_th(self):
+        assert self.R_true is not None, "You should provide R_true."
         assert self.C_th is not None, "You should provide C_th to compute K_th."
-        self.K_th = get_K_th(self.L,self.C_th,R_true)
+        self.K_th = get_K_th(self.L,self.C_th,self.R_true)
 
     def set_K_part(self,H=0.):
         if H == 0.:
@@ -120,9 +124,9 @@ class Cumulants(SimpleHawkes):
             self.set_C(hM)
         self.K_part = get_K_part(self.A,self.B,self.L,self.C,hM)
 
-    def set_K_part_th(self, R_true=None):
-        assert R_true is not None, "You should provide R_true."
-        self.K_part_th = get_K_part_th(self.L,self.C_th,R_true)
+    def set_K_part_th(self):
+        assert self.R_true is not None, "You should provide R_true."
+        self.K_part_th = get_K_part_th(self.L,self.C_th,self.R_true)
 
     def compute_all(self,H=0.):
         self.compute_A(H)

@@ -1,20 +1,21 @@
-# Example of Hawkes process
-
-![Example](http://i.imgur.com/3DgbwH1.png?2)
-
 # NPHC: NonParametric Hawkes with Cumulants
 
 This repo contains two very different works:
 
-**NPHC2**: framework to minimize a loss on ||\Phi||, with three constraints:
-- one between empirical intensities (1^{st} integrated cumulant), empirical integrated covariance (2^{nd} integrated cumulant) and ||\Phi||)
-- one to ensure the kernels to be causal (i.e. equals zero when t < 0)
-- one to ensure stability of the process (spectral radius of ||\Phi|| < 1)
+**NPHC2**: to uncover the influence
 
-**NPHC3**: regression on the third integrated cumulant
+**NPHC3**: to uncover the causality
 
-See notebooks to understand how to use the class *Cumulants* and the optimization and estimation processes
+See notebooks to understand how to use the class *Cumulants* and estimation procedures.
 
-# TODO
+## Dependencies
 
-Add new solves: AdaGrad, AdaDelta
+* urllib2  or urllib
+
+* cPickle or pickle
+
+* packages included in Anaconda: numpy, scipy, numba
+
+# Example of prediction:
+
+![Example](http://i.imgur.com/HrV5hDo.png?1)

@@ -1,4 +1,5 @@
 from numpy.linalg import eigh
+
 from .updates import *
 
 
@@ -51,7 +52,7 @@ def admm(cumul, prox_fun, X1_0, X4_0, alpha_truth, rho=0.1, alpha=0.99, maxiter=
 #    print("||U4|| = ", np.linalg.norm(U4))
 #    print("||U5|| = ", np.linalg.norm(U5))
 
-    return X1
+    return .5*(X1+X1.T)
 
 if __name__ == "__main__":
     import numpy as np
@@ -72,7 +73,8 @@ if __name__ == "__main__":
     h.simulate(10000)
     estim = Estim(h, n_threads=8)
 
-    import prox
+    from utils import prox
+
     X0 = np.eye(d)
     #X0 = np.ones(d**2).reshape(d,d)
     rho = 0.01

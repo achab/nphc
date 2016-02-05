@@ -1,5 +1,5 @@
 import numpy as np
-from nphc.prox import nonnegativity, stability, orthogonality
+from utils.prox import nonnegativity, stability, orthogonality
 from numba import autojit
 
 #@autojit
