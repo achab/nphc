@@ -8,7 +8,7 @@ try:
     from urllib.request import urlretrieve
 except ImportError:
     # Fall back to Python 2's urllib2
-    from urllib2 import urlretrieve
+    from urllib import urlretrieve
 
 def load_data(url):
     substr = 'nphc-data'

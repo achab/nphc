@@ -4,7 +4,7 @@ from numba import autojit
 from tests.int_claw import integrated_claw
 
 
-class SimpleHawkes:
+class SimpleHawkes(object):
 
     def __init__(self, N=[], sort_process=False):
         self.dim = len(N)
