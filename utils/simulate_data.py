@@ -16,7 +16,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("-k",help="Choose a kernel among: 'exp', 'rect' or 'plaw'.",type=str,choices=['exp','rect','plaw'])
 parser.add_argument("-d",help="Choose the dimension of the process: 10 or 100.",type=int,choices=[10,100])
-parser.add_argument("-s",help="Simulate either symmetric (1) or nonsymmetric (0).",type=int,choices=[0,1])
+parser.add_argument("-s",help="Simulate either from a symmetric (1), more complex symmetric (2) or nonsymmetric (0) kernel matrix.",type=int,choices=[0,1,2])
 parser.add_argument("-t",help="log_10 of the length of the simulation ie '3' gives T=1000",type=int,choices=[3,4,5,6,7,8,9])
 args = parser.parse_args()
 
@@ -36,7 +36,7 @@ else:
     d = args.d
 
 if args.s is None:
-    symmetric = True
+    symmetric = 2
 else:
     symmetric = args.s
 
@@ -48,10 +48,13 @@ else:
 
 # In[4]:
 
-if symmetric:
-    mode = 'd' + str(d) + '_sym'
-else:
+if symmetric == 0:
     mode = 'd' + str(d) + '_nonsym'
+elif symmetric == 1:
+    mode = 'd' + str(d) + '_sym'
+elif symmetric == 2:
+    mode = 'd' + str(d) + '_sym_hard'
+
 
 
 # ## Major key for exp kernel:
@@ -74,7 +77,7 @@ beta_min = log(1000) / hMax
 
 # In[7]:
 
-if mode == 'd10_sym':
+if 'd10_sym' in mode:
     d = 10
     mu = 0.0001 * np.ones(d)
     Alpha = np.zeros((d,d))
@@ -86,8 +89,9 @@ if mode == 'd10_sym':
     Beta[d/2:,d/2:] += 10*beta_min
     # add noise
     #Alpha += 0.01
-    Alpha[6:8,:3] += 3.
-    Beta[6:8,:3] += 100*beta_min
+    if symmetric == 2:
+        Alpha[6:8,:3] += 3.
+        Beta[6:8,:3] += 100*beta_min
     Alpha = .5*(Alpha+Alpha.T)
     Gamma = .5*Alpha
     Beta = .5*(Beta + Beta.T)
@@ -112,7 +116,7 @@ elif mode == 'd10_nonsym':
     Gamma = .5*Alpha
     Alpha /= 6
 
-elif mode == 'd100_sym':
+elif 'd100_sym' in mode:
     d = 100
     mu = 0.0001 * np.ones(d)
     Alpha = np.zeros((d,d))
@@ -124,9 +128,10 @@ elif mode == 'd100_sym':
     Beta[d/2:,d/2:] += 10*beta_min
     #add noise
     #Alpha += 0.01
-    Alpha[60:70,10:20] += 3.
+    if symmetric == 2:
+        Alpha[60:70,10:20] += 3.
+        Beta[60:70,10:20] += 100*beta_min
     Alpha = .5*(Alpha+Alpha.T)
-    Beta[60:70,10:20] += 100*beta_min
     Beta = .5*(Beta + Beta.T)
     Gamma = .5*Alpha
     Alpha /= 120
@@ -249,7 +254,7 @@ if with_Beta and without_N:
     cumul.N = None
     data = (cumul,Beta)
     import gzip, pickle
-    f = gzip.open('../datasets/' + name + '_with_Beta_without_N.pkl.gz','wb')
+    f = gzip.open('datasets/' + name + '_with_Beta_without_N.pkl.gz','wb')
     pickle.dump(data, f, protocol=2)
     f.close()
     cumul.N = h.get_full_process()
@@ -257,21 +262,21 @@ if with_Beta and without_N:
 elif with_Beta and not without_N:
     data = (cumul,Beta)
     import gzip, pickle
-    f = gzip.open('../datasets/' + name + '_with_Beta.pkl.gz','wb')
+    f = gzip.open('datasets/' + name + '_with_Beta.pkl.gz','wb')
     pickle.dump(data, f, protocol=2)
     f.close()
 
 elif not with_Beta and without_N:
     cumul.N = None
     import gzip, pickle
-    f = gzip.open('../datasets/' + name + '_without_N.pkl.gz','wb')
+    f = gzip.open('datasets/' + name + '_without_N.pkl.gz','wb')
     pickle.dump(cumul, f, protocol=2)
     f.close()
     cumul.N = h.get_full_process()
 
 elif not with_Beta and not without_N:
     import gzip, pickle
-    f = gzip.open('../datasets/' + name + '.pkl.gz','wb')
+    f = gzip.open('datasets/' + name + '.pkl.gz','wb')
     pickle.dump(cumul, f, protocol=2)
     f.close()
 
