@@ -36,7 +36,7 @@ else:
     d = args.d
 
 if args.s is None:
-    symmetric = 2
+    symmetric = 1
 else:
     symmetric = args.s
 
@@ -254,7 +254,7 @@ if with_Beta and without_N:
     cumul.N = None
     data = (cumul,Beta)
     import gzip, pickle
-    f = gzip.open('datasets/' + name + '_with_Beta_without_N.pkl.gz','wb')
+    f = gzip.open('../datasets/' + name + '_with_Beta_without_N.pkl.gz','wb')
     pickle.dump(data, f, protocol=2)
     f.close()
     cumul.N = h.get_full_process()
@@ -262,21 +262,21 @@ if with_Beta and without_N:
 elif with_Beta and not without_N:
     data = (cumul,Beta)
     import gzip, pickle
-    f = gzip.open('datasets/' + name + '_with_Beta.pkl.gz','wb')
+    f = gzip.open('../datasets/' + name + '_with_Beta.pkl.gz','wb')
     pickle.dump(data, f, protocol=2)
     f.close()
 
 elif not with_Beta and without_N:
     cumul.N = None
     import gzip, pickle
-    f = gzip.open('datasets/' + name + '_without_N.pkl.gz','wb')
+    f = gzip.open('../datasets/' + name + '_without_N.pkl.gz','wb')
     pickle.dump(cumul, f, protocol=2)
     f.close()
     cumul.N = h.get_full_process()
 
 elif not with_Beta and not without_N:
     import gzip, pickle
-    f = gzip.open('datasets/' + name + '.pkl.gz','wb')
+    f = gzip.open('../datasets/' + name + '.pkl.gz','wb')
     pickle.dump(cumul, f, protocol=2)
     f.close()
 
