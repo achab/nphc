@@ -4,7 +4,7 @@ from .updates import *
 
 
 #@autojit
-def admm(cumul, prox_fun, X1_0, X4_0, alpha_truth, rho=0.1, alpha=0.99, maxiter=100):
+def admm(cumul, prox_fun, X1_0, X4_0, alpha_truth, rho=0.1, alpha=0.99, maxiter=100, positivity=True):
     """
     ADMM framework to minimize a prox-capable objective over the matrix of kernel norms.
     """
@@ -33,7 +33,7 @@ def admm(cumul, prox_fun, X1_0, X4_0, alpha_truth, rho=0.1, alpha=0.99, maxiter=
 
     for _ in range(maxiter):
         X1[:] = update_X1(prox_fun, X2, Y1, U2, U4, diagA, rho=rho)
-        X2[:] = update_X2(X1, X3, U2, U3)
+        X2[:] = update_X2(X1, X3, U2, U3, positivity)
         X3[:] = update_X3(X2, U3, alpha=alpha)
         X4[:] = update_X4(Y2, U5, B)
         Y1[:] = update_Y1(X1, Y2, U1, U4, diagA, C)

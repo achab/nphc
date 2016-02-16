@@ -7,8 +7,11 @@ def update_X1(prox_fun, X2, Y1, U2, U4, diagA, rho=0.1):
     return prox_fun(0.5 * (X2 - U2 + np.dot(np.diag(diagA),Y1) + U4), lbd=rho)
 
 #@autojit
-def update_X2(X1, X3, U2, U3):
-    return 0.5 * nonnegativity(X1 + U2 + X3 + U3)
+def update_X2(X1, X3, U2, U3, positivity=True):
+    if positivity:
+        return 0.5 * nonnegativity(X1 + U2 + X3 + U3)
+    else:
+        return 0.5 * (X1 + U2 + X3 + U3)
 
 #@autojit
 def update_X3(X2, U3, alpha=0.99):
