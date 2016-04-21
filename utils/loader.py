@@ -11,15 +11,16 @@ except ImportError:
     from urllib import urlretrieve
 
 def load_data(url):
+    import os.path
     substr = 'nphc-data'
     ind = url.find(substr)
     assert ind > -1, "The url should include the substring 'nphc-data' to import the right datasets."
-    dataset = 'datasets/' + url[ind+len(substr):]
-    
-    import gzip, pickle
-    print('Downloading data from %s' % url)
-    urlretrieve(url, dataset)
-    print('... loading data')
+    dataset = 'downloads/' + url[ind+len(substr):]
+    if not os.path.isfile(dataset):
+        print('Downloading data from %s' % url)
+        urlretrieve(url, dataset)
+        print('... loading data')
+    import gzip
     f = gzip.open(dataset, 'rb')
     cumul = pickle.load(f)
     f.close()

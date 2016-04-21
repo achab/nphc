@@ -91,7 +91,7 @@ class Cumulants(SimpleHawkes):
             hM = self.hMax
         else:
             hM = H
-            self.compute_A(hM)
+            #self.compute_A(hM)
         self.C = get_C(self.A,self.L,hM)
 
     def set_C_th(self):
@@ -103,9 +103,9 @@ class Cumulants(SimpleHawkes):
             hM = self.hMax
         else:
             hM = H
-            self.compute_A(hM)
-            self.compute_F(hM)
-            self.set_C(hM)
+            #self.compute_A(hM)
+            #self.compute_F(hM)
+            #self.set_C(hM)
         assert self.C is not None, "You should first set C using the function 'set_C'."
         self.K = get_K(self.A,self.F,self.L,self.C,hM)
 
@@ -129,13 +129,13 @@ class Cumulants(SimpleHawkes):
         self.K_part_th = get_K_part_th(self.L,self.C_th,self.R_true)
 
     def compute_all(self,H=0.):
-        self.compute_A(H)
+        self.compute_A(-H)
         self.compute_F(H)
         self.set_C(H)
         self.set_K(H)
 
     def compute_all_part(self,H=0.):
-        self.compute_A(H)
+        self.compute_A(-H)
         self.compute_B(H)
         self.set_C(H)
         self.set_K_part(H)
@@ -144,7 +144,7 @@ class Cumulants(SimpleHawkes):
 
 @autojit
 def get_C(A,L,H):
-    return A+A.T - 2*np.einsum('i,j->ij',L,L)*H + np.diag(L)
+    return A+A.T - 2*np.einsum('i,j->ij',L,L)*abs(H) + np.diag(L)
 
 @autojit
 def get_C_claw(estim):
@@ -170,7 +170,7 @@ def get_K(A,F,L,C,H):
     K += np.einsum('jki',K1)
     K += np.einsum('kij',K1)
     K += np.einsum('ij,ik,i->ijk',I,I,L)
-    K -= 4*np.einsum('i,j,k->ijk',L,L,L)*H**2
+    K -= 3*np.einsum('i,j,k->ijk',L,L,L)*H**2
     return K
 
 @autojit
