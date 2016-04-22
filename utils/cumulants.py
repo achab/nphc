@@ -234,7 +234,7 @@ def get_K_part_th(L,C,R):
 ##########
 ## Useful fonctions to compute empirical cumulants
 ##########
-@autojit
+#@autojit
 def A_ij(cumul,i,j,a,b):
     """
 
