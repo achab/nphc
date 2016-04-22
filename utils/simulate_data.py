@@ -17,7 +17,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-k",help="Choose a kernel among: 'exp', 'rect' or 'plaw'.",type=str,choices=['exp','rect','plaw'])
 parser.add_argument("-d",help="Choose the dimension of the process: 10 or 100.",type=int,choices=[10,100])
 parser.add_argument("-s",help="Simulate either from a symmetric (1), more complex symmetric (2) or nonsymmetric (0) kernel matrix.",type=int,choices=[0,1,2])
-parser.add_argument("-t",help="log_10 of the length of the simulation ie '3' gives T=1000",type=int,choices=[3,4,5,6,7,8,9])
+parser.add_argument("-t",help="log_10 of the length of the simulation ie '3' gives T=1000",type=int,choices=[3,4,5,6,7,8,9,10])
 args = parser.parse_args()
 
 
@@ -189,7 +189,7 @@ elif kernel == 'rect':
         if beta > 0:
             T = np.array([0, gamma, gamma + 1./beta ], dtype=float)
             Y = np.array([0, alpha*beta,0], dtype=float)
-            tf = TimeFunction([T, Y], inter_mode=TimeFunction.InterConstRight)
+            tf = TimeFunction([T, Y], inter_mode=TimeFunction.InterConstRight,dt=0.1)
             return hk.HawkesKernelTimeFunc(tf)
         else:
             T = np.array([0, 1, 1.5 ], dtype=float)
@@ -254,7 +254,7 @@ if with_Beta and without_N:
     cumul.N = None
     data = (cumul,Beta)
     import gzip, pickle
-    f = gzip.open('../datasets/' + name + '_with_Beta_without_N.pkl.gz','wb')
+    f = gzip.open('datasets/' + name + '_with_Beta_without_N.pkl.gz','wb')
     pickle.dump(data, f, protocol=2)
     f.close()
     cumul.N = h.get_full_process()
@@ -262,21 +262,21 @@ if with_Beta and without_N:
 elif with_Beta and not without_N:
     data = (cumul,Beta)
     import gzip, pickle
-    f = gzip.open('../datasets/' + name + '_with_Beta.pkl.gz','wb')
+    f = gzip.open('datasets/' + name + '_with_Beta.pkl.gz','wb')
     pickle.dump(data, f, protocol=2)
     f.close()
 
 elif not with_Beta and without_N:
     cumul.N = None
     import gzip, pickle
-    f = gzip.open('../datasets/' + name + '_without_N.pkl.gz','wb')
+    f = gzip.open('datasets/' + name + '_without_N.pkl.gz','wb')
     pickle.dump(cumul, f, protocol=2)
     f.close()
     cumul.N = h.get_full_process()
 
 elif not with_Beta and not without_N:
     import gzip, pickle
-    f = gzip.open('../datasets/' + name + '.pkl.gz','wb')
+    f = gzip.open('datasets/' + name + '.pkl.gz','wb')
     pickle.dump(cumul, f, protocol=2)
     f.close()
 
