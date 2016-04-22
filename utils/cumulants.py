@@ -47,42 +47,54 @@ class Cumulants(SimpleHawkes):
         else:
             hM = H
         d = self.dim
-        B = np.zeros((d,d))
+        self.B = np.zeros((d,d))
         for i in range(d):
             for j in range(d):
-                B[i,j] = A_ij(self,i,j,-H,0)
-        self.B = B
+                self.B[i,j] = A_ij(self,i,j,hM,0)
 
     @autojit
-    def compute_F(self,H=0.):
+    def compute_E(self,H=0.):
         if H == 0.:
             hM = self.hMax
         else:
             hM = H
-        assert self.hMax > 0, "self.hMax should be nonnegative."
         d = self.dim
-        F = np.zeros((d,d,d))
+        self.E = np.zeros((d,d,d))
         for i in range(d):
             for j in range(d):
                 for k in range(d):
-                    F[i,j,k] = F_ijk(self,i,j,k,hM)
-        self.F = F
+                    self.E[i,j,k] = E_ijk(self,i,j,k,hM)
 
     @autojit
-    def compute_F_c(self,H=0.):
+    def compute_M(self, H=0.):
         if H == 0.:
             hM = self.hMax
         else:
             hM = H
-        assert self.hMax > 0, "self.hMax should be nonnegative."
+        assert self.C is not None, "You should first set C using the function 'set_C'."
         d = self.dim
-        F_c = np.zeros((d,d,2))
+        self.M = np.zeros((d,d,d))
         for i in range(d):
             for j in range(d):
-                F_c[i,j,0] = F_ijk(self,i,i,j,hM)
-                F_c[i,j,1] = F_ijk(self,j,i,i,hM)
-        self.F_c = F_c
+                for k in range(d):
+                    self.M[i,j,k] = self.L[k] * ( hM * self.C[i,j] - 2 * I_ij(self,i,j,hM) )
 
+    @autojit
+    def compute_E_c(self,H=0.):
+        if H == 0.:
+            hM = self.hMax
+        else:
+            hM = H
+        d = self.dim
+        E_c = np.zeros((d,d,2))
+        for i in range(d):
+            for j in range(d):
+                E_c[i,j,0] = E_ijk(self,i,i,j,hM)
+                E_c[i,j,1] = E_ijk(self,j,i,i,hM)
+        self.E_c = E_c
+
+    def compute_M_c(self,H=0.):
+        pass
 
     def set_R_true(self,R_true):
         self.R_true = R_true
@@ -93,7 +105,6 @@ class Cumulants(SimpleHawkes):
             hM = self.hMax
         else:
             hM = H
-        assert self.hMax > 0, "self.hMax should be nonnegative."
         d = self.dim
         self.C = np.zeros((d,d))
         for i in range(d):
@@ -102,22 +113,12 @@ class Cumulants(SimpleHawkes):
         # we keep the symmetric part to remove edge effects
         self.C[:] = 0.5*(self.C + self.C.T)
 
-    def set_C_th(self):
-        assert self.R_true is not None, "You should provide R_true."
-        self.C_th = get_C_th(self.L, self.R_true)
-
-    def set_K(self,H=0.):
-        if H == 0.:
-            hM = self.hMax
-        else:
-            hM = H
-        assert self.C is not None, "You should first set C using the function 'set_C'."
-        self.K = get_K(self.B,self.F,self.L,self.C,hM)
-
-    def set_K_th(self):
-        assert self.R_true is not None, "You should provide R_true."
-        assert self.C_th is not None, "You should provide C_th to compute K_th."
-        self.K_th = get_K_th(self.L,self.C_th,self.R_true)
+    @autojit
+    def set_K(self):
+        assert self.B is not None, "You should first set B using the function 'compute_B'."
+        assert self.E is not None, "You should first set E using the function 'compute_E'."
+        assert self.M is not None, "You should first set M using the function 'compute_M'."
+        self.K = get_K(self.B,self.E,self.M,self.L)
 
     def set_K_part(self,H=0.):
         if H == 0.:
@@ -125,9 +126,18 @@ class Cumulants(SimpleHawkes):
         else:
             hM = H
             self.compute_B(hM)
-            self.compute_F_c(hM)
+            self.compute_E_c(hM)
             self.set_C(hM)
-        self.K_part = get_K_part(self.B,self.F_c,self.L,self.C,hM)
+        self.K_part = get_K_part(self.B,self.E_c,self.L,self.C,hM)
+
+    def set_C_th(self):
+        assert self.R_true is not None, "You should provide R_true."
+        self.C_th = get_C_th(self.L, self.R_true)
+
+    def set_K_th(self):
+        assert self.R_true is not None, "You should provide R_true."
+        assert self.C_th is not None, "You should provide C_th to compute K_th."
+        self.K_th = get_K_th(self.L,self.C_th,self.R_true)
 
     def set_K_part_th(self):
         assert self.R_true is not None, "You should provide R_true."
@@ -135,22 +145,22 @@ class Cumulants(SimpleHawkes):
 
     def compute_all(self,H=0.):
         self.compute_B(-H)
-        self.compute_F(H)
+        self.compute_E(H)
+        self.compute_M(H)
         self.set_C(H)
         self.set_K(H)
 
     def compute_all_part(self,H=0.):
         self.compute_B(-H)
-        self.compute_F_c(H)
+        self.compute_E_c(H)
+        self.compute_M_c(H)
         self.set_C(H)
         self.set_K_part(H)
 
 
-
-@autojit
-def get_C(A,L,H):
-    return A+A.T - 2*np.einsum('i,j->ij',L,L)*abs(H) + np.diag(L)
-
+############
+## C from conditional law (code from Thibault Jaisson)
+############
 @autojit
 def get_C_claw(estim):
     G = integrated_claw(estim, method='gauss')
@@ -160,23 +170,40 @@ def get_C_claw(estim):
     C = .5 * (C + C.T)
     return C
 
-@autojit
-def get_C_th(L, R):
-    return np.dot(R,np.dot(np.diag(L),R.T))
 
+###########
+## Empirical cumulants with formula from the paper
+###########
 @autojit
-def get_K(A,F,L,C,H):
+def get_K(B,E,M,L):
     I = np.eye(len(L))
-    K1 = F.copy()
-    K1 -= np.einsum('jk,ij->ijk',I,A)
-    K1 += np.einsum('ij,ik->ijk',I,A+A.T)
-    K1 -= 2*np.einsum('i,jk->ijk',L,C)*H
+    K1 = E-M
+    K1 += np.einsum('ij,jk->ijk',I,B)
     K = K1.copy()
     K += np.einsum('jki',K1)
     K += np.einsum('kij',K1)
     K += np.einsum('ij,ik,i->ijk',I,I,L)
-    K -= 3*np.einsum('i,j,k->ijk',L,L,L)*H**2
     return K
+
+@autojit
+def get_K_part(A,B,L,C,H):
+    K_part = A.copy()
+    K_part += np.diag(L)
+    K_part += 2*np.diag(np.diag(A))
+    K_part += B[:,:,0]
+    K_part += 2*B[:,:,1]
+    K_part -= 4*H**2*np.einsum('i,j->ij',L**2,L)
+    K_part -= 2*H*np.einsum('ii,j->ij',C,L)
+    K_part -= 4*H*np.einsum('ij,i->ij',C,L)
+    return K_part
+
+
+##########
+## Theoretical cumulants C, K, K_part
+##########
+@autojit
+def get_C_th(L, R):
+    return np.dot(R,np.dot(np.diag(L),R.T))
 
 @autojit
 def get_K_th(L,C,R):
@@ -193,18 +220,6 @@ def get_K_th(L,C,R):
     return K
 
 @autojit
-def get_K_part(A,B,L,C,H):
-    K_part = A.copy()
-    K_part += np.diag(L)
-    K_part += 2*np.diag(np.diag(A))
-    K_part += B[:,:,0]
-    K_part += 2*B[:,:,1]
-    K_part -= 4*H**2*np.einsum('i,j->ij',L**2,L)
-    K_part -= 2*H*np.einsum('ii,j->ij',C,L)
-    K_part -= 4*H*np.einsum('ij,i->ij',C,L)
-    return K_part
-
-@autojit
 def get_K_part_th(L,C,R):
     d = len(L)
     if R.shape[0] == d**2:
@@ -216,11 +231,14 @@ def get_K_part_th(L,C,R):
     return K_part
 
 
+##########
+## Useful fonctions to compute empirical cumulants
+##########
 @autojit
 def A_ij(cumul,i,j,a,b):
     """
 
-    Computes the mean number of jumps of N^j between \tau + a and \tau + b, that is
+    Computes the mean centered number of jumps of N^j between \tau + a and \tau + b, that is
 
     \frac{1}{T} \sum_{\tau \in Z^i} ( N^j_{\tau + b} - N^j_{\tau + a} - \Lambda^j (b - a) )
 
@@ -233,65 +251,107 @@ def A_ij(cumul,i,j,a,b):
     Z_j = cumul.N[j]
     n_i = len(Z_i)
     n_j = len(Z_j)
+    L_i = cumul.L[i]
+    L_j = cumul.L[j]
     assert a < b, "You should provide a and b such that a < b."
     for tau in Z_i:
         while u < n_j and Z_j[u] <= tau + a:
             u += 1
-        #u -= 1
         v = u
         while v < n_j and Z_j[v] < tau + b:
             v += 1
-        #if v < n_j and v > 0:
-        if v < n_j:
+        if v < n_j and u > 0:
             count += 1
             res += v-u
+        u -= 1
     if count < n_i:
         res *= n_i * 1. / count
-    res -= count * cumul.L[j] * (b - a)
     res /= T_
+    res -= (b - a) * L_i * L_j
     return res
 
-
-
 @autojit
-def F_ijk(hk,i,j,k,H):
+def E_ijk(cumul,i,j,k,H):
+    """
+
+    Computes the mean of the centered product of i's and j's jumps between \tau + a and \tau + b, that is
+
+    \frac{1}{T} \sum_{\tau \in Z^k} ( N^i_{\tau} - N^i_{\tau - H} - \delta^{ik} - \Lambda^i H )
+                                  * ( N^j_{\tau} - N^j_{\tau - H} - \delta^{jk} - \Lambda^j H )
+
+    """
     res = 0
     u = 0
     x = 0
     count = 0
-    T_ = hk.time
+    T_ = cumul.time
     H_ = abs(H)
-    if isinstance(hk,Cumulants):
-        Z_i = hk.N[i]
-        Z_j = hk.N[j]
-        Z_k = hk.N[k]
-    else:
-        Z_i = hk.get_full_process()[i]
-        Z_j = hk.get_full_process()[j]
-        Z_k = hk.get_full_process()[k]
+    Z_i = cumul.N[i]
+    Z_j = cumul.N[j]
+    Z_k = cumul.N[k]
     n_i = len(Z_i)
     n_j = len(Z_j)
     n_k = len(Z_k)
+    L_i = cumul.L[i]
+    L_j = cumul.L[j]
     for tau in Z_k:
         # work on Z_i
-        while u < n_i and Z_i[u] <= tau:
+        while u < n_i and Z_i[u] <= tau - H_:
             u += 1
         v = u
-        while v >= 0 and Z_i[v] > tau - H_:
-            v -= 1
+        while v < n_i and Z_i[v] < tau:
+            v += 1
         # work on Z_j
-        while x < n_j and Z_j[x] <= tau:
+        while x < n_j and Z_j[x] <= tau - H_:
             x += 1
         y = x
-        while y >= 0 and Z_j[y] > tau - H_:
-            y -= 1
+        while y < n_j and Z_j[y] < tau:
+            y += 1
         # check if this step is admissible
-        if y >= 0 and v >= 0:
+        if y < n_j and x > 0 and v < n_i and u > 0:
             count += 1
-            res += (u-1-v-(i==k))*(x-1-y-(j==k))
+            res += (v-u-L_i*H_)*(y-x-L_j*H_)
+        u -= 1
+        x -= 1
     if count < n_k:
         res *= n_k * 1. / count
     res /= T_
+    return res
+
+
+@autojit
+def I_ij(cumul,i,j,H):
+    """
+
+    Computes the integral \int_{(0,H)} t c^{ij} (t) dt. This integral equals
+
+    \sum_{\tau \in Z^i} \sum_{\tau' \in Z^j} (\tau - \tau') 1_{ \tau - H < \tau' < \tau } - H^2 / 2 \Lambda^i \Lambda^
+
+    """
+    res = 0
+    u = 0
+    count = 0
+    T_ = cumul.time
+    H_ = abs(H)
+    Z_i = cumul.N[i]
+    Z_j = cumul.N[j]
+    n_i = len(Z_i)
+    n_j = len(Z_j)
+    L_i = cumul.L[i]
+    L_j = cumul.L[j]
+    for tau in Z_i:
+        while u < n_j and Z_j[u] <= tau - H_:
+            u += 1
+        v = u
+        while v < n_j and Z_j[v] < tau:
+            res += tau - Z_j[v]
+            count += 1
+            v += 1
+        u -= 1
+    if count < n_i:
+        res *= n_i * 1. / count
+    res /= T_
+    res -= .5 * (H_**2) * L_i * L_j
     return res
 
 
