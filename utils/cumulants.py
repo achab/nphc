@@ -1,7 +1,7 @@
 import numpy as np
 from numba import autojit
 
-from tests.int_claw import integrated_claw
+from int_claw import integrated_claw
 
 
 class SimpleHawkes(object):
@@ -263,7 +263,6 @@ def A_ij(cumul,i,j,a,b):
         if v < n_j and u > 0:
             count += 1
             res += v-u
-        u -= 1
     if count < n_i:
         res *= n_i * 1. / count
     res /= T_
@@ -311,8 +310,6 @@ def E_ijk(cumul,i,j,k,H):
         if y < n_j and x > 0 and v < n_i and u > 0:
             count += 1
             res += (v-u-L_i*H_)*(y-x-L_j*H_)
-        u -= 1
-        x -= 1
     if count < n_k:
         res *= n_k * 1. / count
     res /= T_
@@ -347,7 +344,6 @@ def I_ij(cumul,i,j,H):
             res += tau - Z_j[v]
             count += 1
             v += 1
-        u -= 1
     if count < n_i:
         res *= n_i * 1. / count
     res /= T_
@@ -355,3 +351,7 @@ def I_ij(cumul,i,j,H):
     return res
 
 
+if __name__ == "__main__":
+    N = [np.sort(np.random.randint(0,100,size=20)),np.sort(np.random.randint(0,100,size=20))]
+    cumul = Cumulants(N,hMax=10)
+    cumul.compute_B()
