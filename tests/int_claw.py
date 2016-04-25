@@ -78,23 +78,29 @@ def integrated_claw(estim, n_quad=50, xmax=40, method='gauss'):
     return fast_fill_matrix_integrated_claw(estim._dim)
 
 
-# # the following function is incomplete
-# def inspector(loss_fun, x_real, n_iter, norm, verbose=False):
-#     """A closure called to update metrics after each iteration."""
-#     objectives = []
-#     errors = []
-#     it = [0]  # This is a hack to be able to modify 'it' inside the closure.
-#     def inspector_cl(xk):
-#         obj = loss_fun(xk)
-#         err = norm(xk - x_real) / norm(x_real)
-#         objectives.append(obj)
-#         errors.append(err)
-#         if verbose == True:
-#             if it[0] == 0:
-#                 print ' | '.join([name.center(8) for name in ["it", "obj", "err"]])
-#             if it[0] % (n_iter / 5) == 0:
-#                 print ' | '.join([("%d" % it[0]).rjust(8), ("%.2e" % obj).rjust(8), ("%.2e" % err).rjust(8)])
-#             it[0] += 1
-#     inspector_cl.obj = objectives
-#     inspector_cl.err = errors
-#     return inspector_cl
+############
+## C from conditional law (code from Thibault Jaisson)
+############
+@autojit
+def get_C_claw(estim):
+    G = integrated_claw(estim, method='gauss')
+    np.fill_diagonal(G, G.diagonal()+1)
+    C = np.einsum('i,ij->ij', estim.lam, G.T)
+    # the following line cancels the edge effects
+    C = .5 * (C + C.T)
+    return C
+
+
+
+if __name__ == "__main__":
+    from mlpp.hawkesnoparam.estim import Estim
+    import mlpp.pp.hawkes as hk
+    h = hk.Hawkes(kernels=[[0,hk.HawkesKernelExp(0.1/0.2,0.2)],[hk.HawkesKernelExp(0.1/0.2,0.2),0]],mus=[0.05,0.05])
+    h.simulate(1000000)
+    estim = Estim(h)
+    C_claw = get_C_claw(estim)
+    from nphc.utils.cumulants import Cumulants
+    cumul = Cumulants(h.get_full_process(),hMax=16)
+    cumul.set_C()
+    print(np.linalg.norm(cumul.C-C_claw))
+    print("C_claw and C are close: ",np.allclose(C_claw,cumul.C))

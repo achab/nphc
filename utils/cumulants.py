@@ -1,8 +1,6 @@
 import numpy as np
 from numba import autojit
 
-from int_claw import integrated_claw
-
 
 class SimpleHawkes(object):
 
@@ -156,19 +154,6 @@ class Cumulants(SimpleHawkes):
         self.compute_M_c(H)
         self.set_C(H)
         self.set_K_part(H)
-
-
-############
-## C from conditional law (code from Thibault Jaisson)
-############
-@autojit
-def get_C_claw(estim):
-    G = integrated_claw(estim, method='gauss')
-    np.fill_diagonal(G, G.diagonal()+1)
-    C = np.einsum('i,ij->ij', estim.lam, G.T)
-    # the following line cancels the edge effects
-    C = .5 * (C + C.T)
-    return C
 
 
 ###########
