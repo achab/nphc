@@ -245,8 +245,7 @@ def A_ij(cumul,i,j,a,b):
         v = u
         while v < n_j and Z_j[v] < tau + b:
             v += 1
-        if v < n_j:
-        #if v < n_j and u > 0:
+        if v < n_j and u > 0:
             count += 1
             res += v-u
     if count < n_i:
