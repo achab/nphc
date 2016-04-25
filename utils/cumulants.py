@@ -43,12 +43,12 @@ class Cumulants(SimpleHawkes):
         if H == 0.:
             hM = -self.hMax
         else:
-            hM = H
+            hM = abs(H)
         d = self.dim
         self.B = np.zeros((d,d))
         for i in range(d):
             for j in range(d):
-                self.B[i,j] = A_ij(self,i,j,hM,0)
+                self.B[i,j] = A_ij(self,i,j,-hM,0)
 
     @autojit
     def compute_E(self,H=0.):
@@ -217,7 +217,7 @@ def get_K_part_th(L,C,R):
 
 
 ##########
-## Useful fonctions to compute empirical cumulants
+## Useful fonctions to compute empirical integrated cumulants
 ##########
 @autojit
 def A_ij(cumul,i,j,a,b):
@@ -245,7 +245,8 @@ def A_ij(cumul,i,j,a,b):
         v = u
         while v < n_j and Z_j[v] < tau + b:
             v += 1
-        if v < n_j and u > 0:
+        if v < n_j:
+        #if v < n_j and u > 0:
             count += 1
             res += v-u
     if count < n_i:
