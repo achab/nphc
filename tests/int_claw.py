@@ -96,11 +96,11 @@ if __name__ == "__main__":
     from mlpp.hawkesnoparam.estim import Estim
     import mlpp.pp.hawkes as hk
     h = hk.Hawkes(kernels=[[0,hk.HawkesKernelExp(0.1/0.2,0.2)],[hk.HawkesKernelExp(0.1/0.2,0.2),0]],mus=[0.05,0.05])
-    h.simulate(1000000)
+    h.simulate(10000000)
     estim = Estim(h)
     C_claw = get_C_claw(estim)
     from nphc.utils.cumulants import Cumulants
-    cumul = Cumulants(h.get_full_process(),hMax=16)
+    cumul = Cumulants(h.get_full_process(),hMax=40)
     cumul.set_C()
-    print(np.linalg.norm(cumul.C-C_claw))
-    print("C_claw and C are close: ",np.allclose(C_claw,cumul.C))
+    from utils.metrics import rel_err
+    print("relative error = ", rel_err(C_claw,cumul.C))
