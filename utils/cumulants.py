@@ -13,16 +13,14 @@ class SimpleHawkes(object):
         else:
             self.N = N
         self.L = np.empty(self.dim)
+        self.time = max([x[-1] for x in N]) * (self.dim > 0)
         self.set_L()
-        if self.dim > 0:
-            self.time = max([x[-1] for x in N])
-        else:
-            self.time = 0.
 
     def set_L(self):
-        if self.N is not None:
+        if self.dim > 0:
             for i, process in enumerate(self.N):
-                self.L[i] = len(process) / (process[-1] - process[0])
+                self.L[i] = len(process) / self.time
+                #self.L[i] = len(process) / (process[-1] - process[0])
 
 
 class Cumulants(SimpleHawkes):
