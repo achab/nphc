@@ -246,7 +246,7 @@ def A_ij(cumul,i,j,a,b):
         if v < n_j and u > 0:
             count += 1
             res += v-u
-    if count < n_i:
+    if count < n_i and count > 0:
         res *= n_i * 1. / count
     res /= T_
     res -= (b - a) * L_i * L_j
@@ -293,7 +293,7 @@ def E_ijk(cumul,i,j,k,H):
         if y < n_j and x > 0 and v < n_i and u > 0:
             count += 1
             res += (v-u-L_i*H_)*(y-x-L_j*H_)
-    if count < n_k:
+    if count < n_k and count > 0:
         res *= n_k * 1. / count
     res /= T_
     return res
@@ -305,7 +305,7 @@ def I_ij(cumul,i,j,H):
 
     Computes the integral \int_{(0,H)} t c^{ij} (t) dt. This integral equals
 
-    \sum_{\tau \in Z^i} \sum_{\tau' \in Z^j} (\tau - \tau') 1_{ \tau - H < \tau' < \tau } - H^2 / 2 \Lambda^i \Lambda^
+    \sum_{\tau \in Z^i} \sum_{\tau' \in Z^j} (\tau - \tau') 1_{ \tau - H < \tau' < \tau } - H^2 / 2 \Lambda^i \Lambda^j
 
     """
     res = 0
@@ -327,7 +327,7 @@ def I_ij(cumul,i,j,H):
             res += tau - Z_j[v]
             count += 1
             v += 1
-    if count < n_i:
+    if count < n_i and count > 0:
         res *= n_i * 1. / count
     res /= T_
     res -= .5 * (H_**2) * L_i * L_j
