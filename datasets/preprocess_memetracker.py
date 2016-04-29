@@ -3,9 +3,7 @@ import gzip
 
 filename = 'memetracker/test.txt.gz'
 
-f = gzip.open(filename, 'rb')
-
-try:
+with gzip.open(filename, 'r') as f:
     content = [x.strip('\n') for x in f.readlines()]
     lines = content.__iter__()
     df_rows = []
@@ -21,13 +19,11 @@ try:
             df_rows.append(row)
     df = pd.DataFrame(df_rows, columns=['Post_URL', 'Date', 'HyperLink'])
     df['Date'] = pd.to_datetime(df['Date'])
-finally:
-    f.close()
 
 if __name__ == '__main__':
     print("len(df = ",len(df))
     i = 0
-    with open(filename) as f:
+    with gzip.open(filename) as f:
         content = [x.strip('\n') for x in f.readlines()]
         for line in content:
             if line.split('\t')[0] == 'L': i += 1
