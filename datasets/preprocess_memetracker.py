@@ -1,11 +1,11 @@
 import pandas as pd
+import gzip
 
-#filename = 'memetracker/test.txt'
-filename = 'memetracker/quotes_2008-08.txt'
+filename = 'memetracker/test.txt.gz'
 
-links = []
+f = gzip.open(filename, 'rb')
 
-with open(filename) as f:
+try:
     content = [x.strip('\n') for x in f.readlines()]
     lines = content.__iter__()
     df_rows = []
@@ -19,9 +19,10 @@ with open(filename) as f:
             hyperlink = x[1]
             row = [post_url, date, hyperlink]
             df_rows.append(row)
-    df = pd.DataFrame(df_rows, columns=['Post URL', 'Date', 'Hyper Link'])
+    df = pd.DataFrame(df_rows, columns=['Post_URL', 'Date', 'HyperLink'])
     df['Date'] = pd.to_datetime(df['Date'])
-
+finally:
+    f.close()
 
 if __name__ == '__main__':
     print("len(df = ",len(df))
