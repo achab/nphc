@@ -112,7 +112,7 @@ class Cumulants(SimpleHawkes):
                         val = I_ij(self,i,j,h) / h
                         res.append(val)
                     res = np.array(res)
-                    self.H[i,j] =  = range_h[np.argmin(res)]
+                    self.H[i,j] = range_h[np.argmin(res)]
 
 
     def set_R_true(self,R_true):
