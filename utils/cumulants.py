@@ -35,9 +35,10 @@ class Cumulants(SimpleHawkes):
         self.K_part_th = None
         self.R_true = None
         self.hMax = hMax
+        self.H = None
 
     @autojit
-    def compute_B(self,H=0.):
+    def set_B(self,H=0.):
         if H == 0.:
             hM = -self.hMax
         else:
@@ -49,7 +50,7 @@ class Cumulants(SimpleHawkes):
                 self.B[i,j] = A_ij(self,i,j,-hM,0)
 
     @autojit
-    def compute_E(self,H=0.):
+    def set_E(self,H=0.):
         if H == 0.:
             hM = self.hMax
         else:
@@ -62,7 +63,7 @@ class Cumulants(SimpleHawkes):
                     self.E[i,j,k] = E_ijk(self,i,j,k,hM)
 
     @autojit
-    def compute_M(self, H=0.):
+    def set_M(self, H=0.):
         if H == 0.:
             hM = self.hMax
         else:
@@ -76,7 +77,7 @@ class Cumulants(SimpleHawkes):
                     self.M[i,j,k] = self.L[k] * ( hM * self.C[i,j] - 2 * I_ij(self,i,j,hM) )
 
     @autojit
-    def compute_E_c(self,H=0.):
+    def set_E_c(self,H=0.):
         if H == 0.:
             hM = self.hMax
         else:
@@ -89,8 +90,30 @@ class Cumulants(SimpleHawkes):
                 E_c[i,j,1] = E_ijk(self,j,i,i,hM)
         self.E_c = E_c
 
-    def compute_M_c(self,H=0.):
+    def set_M_c(self,H=0.):
         pass
+
+    def set_H(self,method=0,N=1000):
+        """
+        Set the matrix parameter self.H using different heuristics.
+        Method 0 simply set the same H for each couple (i,j).
+        Method 1 set the H that minimizes 1/H \int_0^H u c_{ij} (u) du.
+        """
+        d = self.dim
+        if method == 0:
+            self.H = self.hMax * np.ones((d,d))
+        if method == 1:
+            self.H = np.empty((d,d))
+            for i in range(d):
+                for j in range(d):
+                    range_h = np.logspace(-3,3,N)
+                    res = []
+                    for h in range_h:
+                        val = I_ij(self,i,j,h) / h
+                        res.append(val)
+                    res = np.array(res)
+                    self.H[i,j] =  = range_h[np.argmin(res)]
+
 
     def set_R_true(self,R_true):
         self.R_true = R_true
@@ -111,9 +134,9 @@ class Cumulants(SimpleHawkes):
 
     @autojit
     def set_K(self):
-        assert self.B is not None, "You should first set B using the function 'compute_B'."
-        assert self.E is not None, "You should first set E using the function 'compute_E'."
-        assert self.M is not None, "You should first set M using the function 'compute_M'."
+        assert self.B is not None, "You should first set B using the function 'set_B'."
+        assert self.E is not None, "You should first set E using the function 'set_E'."
+        assert self.M is not None, "You should first set M using the function 'set_M'."
         self.K = get_K(self.B,self.E,self.M,self.L)
 
     def set_K_part(self,H=0.):
@@ -121,8 +144,8 @@ class Cumulants(SimpleHawkes):
             hM = self.hMax
         else:
             hM = H
-            self.compute_B(hM)
-            self.compute_E_c(hM)
+            self.set_B(hM)
+            self.set_E_c(hM)
             self.set_C(hM)
         self.K_part = get_K_part(self.B,self.E_c,self.L,self.C,hM)
 
@@ -132,24 +155,24 @@ class Cumulants(SimpleHawkes):
 
     def set_K_th(self):
         assert self.R_true is not None, "You should provide R_true."
-        assert self.C_th is not None, "You should provide C_th to compute K_th."
+        assert self.C_th is not None, "You should provide C_th to set_ K_th."
         self.K_th = get_K_th(self.L,self.C_th,self.R_true)
 
     def set_K_part_th(self):
         assert self.R_true is not None, "You should provide R_true."
         self.K_part_th = get_K_part_th(self.L,self.C_th,self.R_true)
 
-    def compute_all(self,H=0.):
-        self.compute_B(-H)
-        self.compute_E(H)
-        self.compute_M(H)
+    def set_all(self,H=0.):
+        self.set_B(-H)
+        self.set_E(H)
+        self.set_M(H)
         self.set_C(H)
         self.set_K(H)
 
-    def compute_all_part(self,H=0.):
-        self.compute_B(-H)
-        self.compute_E_c(H)
-        self.compute_M_c(H)
+    def set_all_part(self,H=0.):
+        self.set_B(-H)
+        self.set_E_c(H)
+        self.set_M_c(H)
         self.set_C(H)
         self.set_K_part(H)
 
@@ -215,7 +238,7 @@ def get_K_part_th(L,C,R):
 
 
 ##########
-## Useful fonctions to compute empirical integrated cumulants
+## Useful fonctions to set_ empirical integrated cumulants
 ##########
 @autojit
 def A_ij(cumul,i,j,a,b):
@@ -337,4 +360,4 @@ def I_ij(cumul,i,j,H):
 if __name__ == "__main__":
     N = [np.sort(np.random.randint(0,100,size=20)),np.sort(np.random.randint(0,100,size=20))]
     cumul = Cumulants(N,hMax=10)
-    cumul.compute_B()
+    cumul.set_B()
