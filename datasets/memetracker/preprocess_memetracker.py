@@ -1,10 +1,8 @@
+from multiprocessing import Pool
 import pandas as pd
-import gzip
-import glob
 
-L = glob.glob("quotes*")
 
-for filename in L:
+def file2df(filename):
     with gzip.open(filename, 'r') as f:
         content = [x.decode().strip('\n') for x in f.readlines()]
         df_rows = []
@@ -23,10 +21,9 @@ for filename in L:
         df.to_csv("df_"+filename[7:14]+".csv")
 
 if __name__ == '__main__':
-    print("len(df = ",len(df))
-    i = 0
-    with gzip.open(filename) as f:
-        content = [x.strip('\n') for x in f.readlines()]
-        for line in content:
-            if line.split('\t')[0] == 'L': i += 1
-    print("Number of lines starting with 'L' = ",i)
+    import gzip
+    import glob
+    names = glob.glob("quotes*")
+
+    pool = Pool(processes=9)
+    pool.map(file2df, names)
