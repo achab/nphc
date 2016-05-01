@@ -93,6 +93,7 @@ class Cumulants(SimpleHawkes):
     def set_M_c(self,H=0.):
         pass
 
+    @autojit
     def set_H(self,method=0,N=1000):
         """
         Set the matrix parameter self.H using different heuristics.
