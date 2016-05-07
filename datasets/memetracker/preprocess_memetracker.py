@@ -34,11 +34,16 @@ def apply_inplace(df, field, fun):
     return pd.concat([df.drop(field, axis=1), df[field].apply(fun)], axis=1)
 
 def parse_url(url):
-    o = urlparse(url)
-    return o.scheme + "://" + o.netloc
+    try:
+        o = urlparse(url)
+        return o.scheme + "://" + o.netloc
+    except ValueError:
+        print("pb with url : ",url)
+        return url
 
-def split_df_into_links_and_posts(filename):
-    pass
+def count_links_and_posts():
+    hdf = pd.read_hdf('store.h5')
+
 
 def save_in_one_file():
     import glob
