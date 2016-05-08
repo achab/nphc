@@ -43,10 +43,10 @@ def worker(filename):
                 hyperlink = x[1]
                 row = [post_url, date, hyperlink]
                 df_rows.append(row)
-        df = pd.DataFrame(df_rows, columns=['Post_URL', 'Date', 'HyperLink'])
+        df = pd.DataFrame(df_rows, columns=['From', 'Date', 'To'])
         df['Date'] = pd.to_datetime(df['Date'])
-        df = apply_inplace(df, 'Post_URL', parse_url)
-        df = apply_inplace(df, 'HyperLink', parse_url)
+        df = apply_inplace(df, 'From', parse_url)
+        df = apply_inplace(df, 'To', parse_url)
         df.to_csv("df_"+filename[7:14]+".csv",index=False)
 
 
