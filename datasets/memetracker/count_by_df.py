@@ -5,7 +5,7 @@ def worker(filename):
     """
     Return counts by url for the DataFrame in filename
     """
-    data = pd.DataFrame(filename)
+    data = pd.read_csv(filename)
     posts = data['Post_URL']
     links = data['HyperLink']
     counts = posts.add(links).value_counts()
