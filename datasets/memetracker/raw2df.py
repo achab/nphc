@@ -48,7 +48,7 @@ def worker(filename):
         df = df[['Post_URL', 'Date', 'HyperLink']]
         df = apply_inplace(df, 'Post_URL', parse_url)
         df = apply_inplace(df, 'HyperLink', parse_url)
-        df.to_csv("df_"+filename[7:14]+".csv")
+        df[['Post_URL', 'Date', 'HyperLink']].to_csv("df_"+filename[7:14]+".csv")
 
 
 if __name__ == "__main__":
