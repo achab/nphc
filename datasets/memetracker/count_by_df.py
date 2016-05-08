@@ -9,7 +9,7 @@ def worker(filename):
     posts = data['Post_URL']
     links = data['HyperLink']
     counts = posts.add(links).value_counts()
-    counts.to_csv("counts_"+filename[3:])
+    counts.to_csv("counts_"+filename[3:],header=False)
 
 if __name__ == "__main__":
     import glob
