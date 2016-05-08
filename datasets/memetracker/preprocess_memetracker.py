@@ -10,10 +10,11 @@ except:
 
 def raw2df(filename):
     with gzip.open(filename, 'r') as f:
-        content = [x.decode().strip('\n') for x in f.readlines()]
+        #content = [x.decode().strip('\n') for x in f.readlines()]
         df_rows = []
-        for line in content:
-            x = line.split('\t')
+        for line in f:
+        #for line in content:
+            x = line.rstrip('\n').split('\t')
             if x[0] == 'P':
                 post_url = x[1]
             elif x[0] == 'T':
@@ -43,6 +44,9 @@ def parse_url(url):
 
 def count_links_and_posts():
     hdf = pd.read_hdf('store.h5')
+    posts = hdf['Post_URL'].value_counts()
+    links = hdf['HyperLink'].value_counts()
+    return posts, links
 
 
 def save_in_one_file():
@@ -71,3 +75,5 @@ if __name__ == '__main__':
 if __name__ == '__main__':
 
     save_in_one_file()
+
+    posts, links = count_links_and_posts()
