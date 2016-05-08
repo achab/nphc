@@ -45,10 +45,9 @@ def worker(filename):
                 df_rows.append(row)
         df = pd.DataFrame(df_rows, columns=['Post_URL', 'Date', 'HyperLink'])
         df['Date'] = pd.to_datetime(df['Date'])
-        df = df[['Post_URL', 'Date', 'HyperLink']]
         df = apply_inplace(df, 'Post_URL', parse_url)
         df = apply_inplace(df, 'HyperLink', parse_url)
-        df[['Post_URL', 'Date', 'HyperLink']].to_csv("df_"+filename[7:14]+".csv")
+        df.to_csv("df_"+filename[7:14]+".csv",index=False)
 
 
 if __name__ == "__main__":
