@@ -37,6 +37,7 @@ def worker(ind):
     for filename in names:
         df = pd.read_csv(filename)
         df_url = df[df.To == url]
+        if len(df_url) == 0: continue
         df_url = apply_inplace(df_url, 'Date', time_from_start)
         process.append(df_url['Date'].values)
     process_arr = np.concatenate(process)
