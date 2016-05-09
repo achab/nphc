@@ -46,7 +46,7 @@ def worker(ind):
         ind_str = '0' + str(ind)
     else:
         ind_str = str(ind)
-    f = gzip.open('process_'+ind_str+'.pkl.gz')
+    f = gzip.open('process_'+ind_str+'.pkl.gz','wb')
     pickle.dump(process_arr,f,protocol=2)
     f.close()
 
