@@ -9,8 +9,9 @@ def worker(filename):
     posts = data['From']
     links = data['To']
     counts = pd.concat([posts,links]).value_counts()
+    counts = pd.concat([pd.DataFrame(counts.index),pd.DataFrame(counts.values)],axis=1)
     counts.columns = ['url','count']
-    counts.to_csv("counts_"+filename[3:])
+    counts.to_csv("counts_"+filename[3:],index=False)
 
 if __name__ == "__main__":
     import glob
@@ -29,4 +30,4 @@ if __name__ == "__main__":
     df = pd.concat([pd.DataFrame(df.index),pd.DataFrame(df.values)],axis=1)
     df.columns = ['url','count']
     df = df.sort('count',ascending=False)
-    df[:500].to_csv("top500.csv",header=False)
+    df[:500].to_csv("top500.csv",index=False)
