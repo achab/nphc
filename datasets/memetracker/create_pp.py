@@ -4,6 +4,7 @@ import numpy as np
 from glob import glob
 import gzip, pickle
 
+
 top500 = pd.read_csv('top500.csv')
 
 url2ix = { x:i for i, x in enumerate(top500['url']) }
