@@ -223,13 +223,13 @@ from utils.cumulants import Cumulants
 N = h.get_full_process()
 cumul = Cumulants(N,hMax=16)
 # compute everything
-cumul.compute_all()
+cumul.set_all()
 from scipy.linalg import inv
 R_true = inv(np.eye(d)-Phi_norm)
 cumul.set_R_true(R_true)
 cumul.set_C_th()
 cumul.set_K_th()
-cumul.compute_B()
+cumul.set_B()
 cumul.set_K_part()
 cumul.set_K_part_th()
 
