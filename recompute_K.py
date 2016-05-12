@@ -1,7 +1,7 @@
 from multiprocessing import Pool
 import numpy as np
 import pickle, gzip
-from cumulants import Cumulants
+from utils.cumulants import Cumulants
 
 def worker(infos):
     """
@@ -28,7 +28,7 @@ def worker(infos):
 
 if __name__ == '__main__':
     from glob import glob
-    filenames = glob('../datasets/*log10T9_with_Beta.pkl.gz')
+    filenames = glob('datasets/*log10T9_with_Beta.pkl.gz')
     modes = ['full', 'part']
     list_infos = []
     for x in filenames:
