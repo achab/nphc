@@ -115,8 +115,8 @@ class Cumulants(SimpleHawkes):
         self.M = np.zeros((d,d,d))
         for i in range(d):
             for j in range(d):
-                for k in range(d):
-                    self.M[i,j,k] = self.L[k] * ( hM * self.C[i,j] - 2 * I_ij(self,i,j,hM) )
+                self.M[i,j,:] = self.L * ( hM * self.C[i,j] - 2 * I_ij(self,i,j,hM) )
+
 
     @autojit
     def set_E_c(self,H=0.):
@@ -219,14 +219,14 @@ class Cumulants(SimpleHawkes):
 
     def set_all(self,H=0.):
         self.set_C(H)
-        self.set_B(-H)
+        self.set_B(H)
         self.set_E(H)
         self.set_M(H)
         self.set_K(H)
 
     def set_all_part(self,H=0.):
         self.set_C(H)
-        self.set_B(-H)
+        self.set_B(H)
         self.set_E_c(H)
         self.set_M_c(H)
         self.set_K_part(H)
