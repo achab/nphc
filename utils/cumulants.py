@@ -37,10 +37,52 @@ class Cumulants(SimpleHawkes):
         self.hMax = hMax
         self.H = None
 
+    #########
+    ## Functions to compute third order cumulant
+    ##  with new formula
+    ##
+    ## Implementation with classic formula is below
+    #########
+
+    @autojit
+    def set_F(self,H=0.):
+        if H == 0.:
+            hM = self.hMax
+        else:
+            hM = H
+        d = self.dim
+        K = np.zeros((d,d,d))
+        for i in range(d):
+            for j in range(d):
+                for k in range(d):
+                    K[i,j,k] = E_ijk(self,i,j,k,-hM,hM) - self.L[k]*(2*hM*A_ij(self,i,j,-2*hM,2*hM) - 2*I_ij(self,i,j,2*hM))
+        self.F = K.copy()
+        self.F += np.einsum('jki',K)
+        self.F += np.einsum('kij',K)
+        self.F /= 3
+
+    @autojit
+    def set_F_c(self,H=0.):
+        if H == 0.:
+            hM = self.hMax
+        else:
+            hM = H
+        d = self.dim
+        self.F_c = np.zeros((d,d))
+        for i in range(d):
+            for j in range(d):
+                    self.F_c[i,j] = 2 * ( E_ijk(self,j,i,j,-hM,hM) - self.L[j]*(2*hM*A_ij(self,i,j,-2*hM,2*hM) - I_ij(self,i,j,2*hM) - I_ij(self,j,i,2*hM) ) )
+                    self.F_c[i,j] += E_ijk(self,j,j,i,-hM,hM) - self.L[i]*(2*hM*A_ij(self,j,j,-2*hM,2*hM) - 2*I_ij(self,j,j,2*hM))
+        self.F_c /= 3
+
+    #########
+    ## Functions to compute third order cumulant with
+    ##  classic formula
+    #########
     @autojit
     def set_B(self,H=0.):
         if H == 0.:
-            hM = -self.hMax
+            hM = self.hMax
         else:
             hM = abs(H)
         d = self.dim
@@ -60,7 +102,7 @@ class Cumulants(SimpleHawkes):
         for i in range(d):
             for j in range(d):
                 for k in range(d):
-                    self.E[i,j,k] = E_ijk(self,i,j,k,hM)
+                    self.E[i,j,k] = E_ijk(self,i,j,k,-hM,0)
 
     @autojit
     def set_M(self, H=0.):
@@ -83,15 +125,22 @@ class Cumulants(SimpleHawkes):
         else:
             hM = H
         d = self.dim
-        E_c = np.zeros((d,d,2))
+        self.E_c = np.zeros((d,d))
         for i in range(d):
             for j in range(d):
-                E_c[i,j,0] = E_ijk(self,i,i,j,hM)
-                E_c[i,j,1] = E_ijk(self,j,i,i,hM)
-        self.E_c = E_c
+                self.E_c[i,j] = E_ijk(self,i,j,j,-hM,0)
 
+    @autojit
     def set_M_c(self,H=0.):
-        pass
+        if H == 0.:
+            hM = self.hMax
+        else:
+            hM = H
+        d = self.dim
+        self.M_c = np.zeros((d,d))
+        for i in range(d):
+            for j in range(d):
+                self.M_c[i,j] = self.L[j] * ( hM * self.C[i,j] - I_ij(self,i,j,hM) - I_ij(self,j,i,hM) )
 
     @autojit
     def set_H(self,method=0,N=1000):
@@ -134,21 +183,26 @@ class Cumulants(SimpleHawkes):
         self.C[:] = 0.5*(self.C + self.C.T)
 
     @autojit
-    def set_K(self):
-        assert self.B is not None, "You should first set B using the function 'set_B'."
-        assert self.E is not None, "You should first set E using the function 'set_E'."
-        assert self.M is not None, "You should first set M using the function 'set_M'."
-        self.K = get_K(self.B,self.E,self.M,self.L)
+    def set_K(self,H=0.,method='classic'):
+        if method == 'classic':
+            assert self.B is not None, "You should first set B using the function 'set_B'."
+            assert self.E is not None, "You should first set E using the function 'set_E'."
+            assert self.M is not None, "You should first set M using the function 'set_M'."
+            self.K = get_K(self.B,self.E,self.M,self.L)
+        elif method == 'new':
+            assert self.F is not None, "You should first set F using the function 'set_F'."
+            self.K = self.F
 
-    def set_K_part(self,H=0.):
-        if H == 0.:
-            hM = self.hMax
-        else:
-            hM = H
-            self.set_B(hM)
-            self.set_E_c(hM)
-            self.set_C(hM)
-        self.K_part = get_K_part(self.B,self.E_c,self.L,self.C,hM)
+    @autojit
+    def set_K_part(self,H=0.,method='classic'):
+        if method == 'classic':
+            assert self.B is not None, "You should first set B using the function 'set_B'."
+            assert self.E_c is not None, "You should first set E using the function 'set_E_c'."
+            assert self.M_c is not None, "You should first set M using the function 'set_M_c'."
+            self.K_part = get_K_part(self.B,self.E_c,self.M_c,self.L)
+        elif method == 'new':
+            assert self.F_c is not None, "You should first set F_c using the function 'set_F_c'."
+            self.K_part = self.F_c
 
     def set_C_th(self):
         assert self.R_true is not None, "You should provide R_true."
@@ -164,17 +218,17 @@ class Cumulants(SimpleHawkes):
         self.K_part_th = get_K_part_th(self.L,self.C_th,self.R_true)
 
     def set_all(self,H=0.):
+        self.set_C(H)
         self.set_B(-H)
         self.set_E(H)
         self.set_M(H)
-        self.set_C(H)
         self.set_K(H)
 
     def set_all_part(self,H=0.):
+        self.set_C(H)
         self.set_B(-H)
         self.set_E_c(H)
         self.set_M_c(H)
-        self.set_C(H)
         self.set_K_part(H)
 
 
@@ -193,15 +247,12 @@ def get_K(B,E,M,L):
     return K
 
 @autojit
-def get_K_part(A,B,L,C,H):
-    K_part = A.copy()
+def get_K_part(B,E_c,M_c,L,):
+    K_part = B.T
     K_part += np.diag(L)
-    K_part += 2*np.diag(np.diag(A))
-    K_part += B[:,:,0]
-    K_part += 2*B[:,:,1]
-    K_part -= 4*H**2*np.einsum('i,j->ij',L**2,L)
-    K_part -= 2*H*np.einsum('ii,j->ij',C,L)
-    K_part -= 4*H*np.einsum('ij,i->ij',C,L)
+    K_part += 2*np.diag(np.diag(B))
+    K_part += 2*(E_c-M_c)
+    K_part += (E_c-M_c).T
     return K_part
 
 
@@ -277,13 +328,13 @@ def A_ij(cumul,i,j,a,b):
     return res
 
 @autojit
-def E_ijk(cumul,i,j,k,H):
+def E_ijk(cumul,i,j,k,a,b):
     """
 
     Computes the mean of the centered product of i's and j's jumps between \tau + a and \tau + b, that is
 
-    \frac{1}{T} \sum_{\tau \in Z^k} ( N^i_{\tau} - N^i_{\tau - H} - \delta^{ik} - \Lambda^i H )
-                                  * ( N^j_{\tau} - N^j_{\tau - H} - \delta^{jk} - \Lambda^j H )
+    \frac{1}{T} \sum_{\tau \in Z^k} ( N^i_{\tau + b} - N^i_{\tau + a} - \Lambda^i * ( b - a ) )
+                                  * ( N^j_{\tau + b} - N^j_{\tau + a} - \Lambda^j * ( b - a ) )
 
     """
     res = 0
@@ -291,7 +342,6 @@ def E_ijk(cumul,i,j,k,H):
     x = 0
     count = 0
     T_ = cumul.time
-    H_ = abs(H)
     Z_i = cumul.N[i]
     Z_j = cumul.N[j]
     Z_k = cumul.N[k]
@@ -302,21 +352,21 @@ def E_ijk(cumul,i,j,k,H):
     L_j = cumul.L[j]
     for tau in Z_k:
         # work on Z_i
-        while u < n_i and Z_i[u] <= tau - H_:
+        while u < n_i and Z_i[u] <= tau + a:
             u += 1
         v = u
-        while v < n_i and Z_i[v] < tau:
+        while v < n_i and Z_i[v] < tau + b:
             v += 1
         # work on Z_j
-        while x < n_j and Z_j[x] <= tau - H_:
+        while x < n_j and Z_j[x] <= tau + a:
             x += 1
         y = x
-        while y < n_j and Z_j[y] < tau:
+        while y < n_j and Z_j[y] < tau + b:
             y += 1
         # check if this step is admissible
         if y < n_j and x > 0 and v < n_i and u > 0:
             count += 1
-            res += (v-u-L_i*H_)*(y-x-L_j*H_)
+            res += (v-u-L_i*(b-a))*(y-x-L_j*(b-a))
     if count < n_k and count > 0:
         res *= n_k * 1. / count
     res /= T_
