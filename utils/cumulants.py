@@ -190,7 +190,7 @@ class Cumulants(SimpleHawkes):
             assert self.M is not None, "You should first set M using the function 'set_M'."
             self.K = get_K(self.B,self.E,self.M,self.L)
         elif method == 'new':
-            assert self.F is not None, "You should first set F using the function 'set_F'."
+            self.set_F(H)
             self.K = self.F
 
     @autojit
@@ -201,7 +201,7 @@ class Cumulants(SimpleHawkes):
             assert self.M_c is not None, "You should first set M using the function 'set_M_c'."
             self.K_part = get_K_part(self.B,self.E_c,self.M_c,self.L)
         elif method == 'new':
-            assert self.F_c is not None, "You should first set F_c using the function 'set_F_c'."
+            self.set_F_c(H)
             self.K_part = self.F_c
 
     def set_C_th(self):
