@@ -1,7 +1,7 @@
 from multiprocessing import Pool
 import numpy as np
 import pickle, gzip
-from utils.cumulants import Cumulants
+from cumulants import Cumulants
 
 def worker(infos):
     """
