@@ -1,7 +1,7 @@
 from multiprocessing import Pool
 import pandas as pd
 import numpy as np
-import os
+import os, gzip, pickle
 
 # Define the parameters
 #
@@ -56,6 +56,11 @@ if __name__ == '__main__':
         for j in range(d):
             tuple_indices.append((i,j))
     pool3 = Pool(processes=20)
-    pool3.map(worker3,tuple_indices)
+
+    # save the results
+    res = pool3.map(worker3,tuple_indices)
+    f = gzip.open(dir_name+'/true_G.pkl.gz','wb')
+    pickle.dump(res,f,protocol=2)
+    f.close()
 
 
