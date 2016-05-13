@@ -1,4 +1,3 @@
-from multiprocessing import Pool
 import pandas as pd
 
 def worker(filename,dir_name):
@@ -13,13 +12,7 @@ def worker(filename,dir_name):
     counts.columns = ['url','count']
     counts.to_csv(dir_name+"/counts_"+filename[3:],index=False)
 
-def main(list_df,d,dir_name):
-
-    worker_ = lambda x: worker(x,dir_name)
-
-    pool = Pool(processes=len(list_df))
-    pool.map(worker_, list_df)
-
+def save_top_d(d,dir_name):
     import glob
     counts = glob.glob(dir_name + "/counts_*")
     frames = []

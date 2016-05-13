@@ -1,7 +1,5 @@
-from multiprocessing import Pool
 import pandas as pd
 import numpy as np
-from glob import glob
 import gzip, pickle
 
 
@@ -41,16 +39,3 @@ def worker(ind,list_df,start,ix2url,dir_name):
     f = gzip.open(dir_name+'/process_'+ind_str+'.pkl.gz','wb')
     pickle.dump(process_arr,f,protocol=2)
     f.close()
-
-def main(list_df,d,dir_name,start):
-
-    top_d = pd.read_csv(dir_name + '/top_' + str(d) + '.csv',index=False)
-
-    ix2url = { i:x for i, x in enumerate(top_d['url']) }
-
-    worker_ = lambda x: worker(x,list_df,start,ix2url,dir_name)
-
-    indices = np.arange(d,dtype=int)
-
-    pool = Pool(processes=20)
-    pool.map(worker_, indices)
