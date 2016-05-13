@@ -5,7 +5,7 @@ import gzip, pickle
 def ix2str(ix):
     if ix < 10:
         ix_str = '00' + str(ix)
-    if ix < 100:
+    elif ix < 100:
         ix_str = '0' + str(ix)
     else:
         ix_str = str(ix)

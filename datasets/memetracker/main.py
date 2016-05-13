@@ -59,8 +59,9 @@ if __name__ == '__main__':
 
     # save the results
     res = pool3.map(worker3,tuple_indices)
+    res_mat = np.array(res).reshape(d,d)
     f = gzip.open(dir_name+'/true_G.pkl.gz','wb')
-    pickle.dump(res,f,protocol=2)
+    pickle.dump(res_mat,f,protocol=2)
     f.close()
 
 
