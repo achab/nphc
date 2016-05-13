@@ -26,7 +26,9 @@ if __name__ == '__main__':
     import count_top, create_pp
 
     # counts the occurences of the sites
-    worker1 = lambda x: count_top.worker(x,dir_name)
+    def worker1(x):
+        return count_top.worker(x,dir_name)
+#    worker1 = lambda x: count_top.worker(x,dir_name)
     pool1 = Pool(processes=len(list_df))
     pool1.map(worker1,list_df)
 
@@ -41,7 +43,9 @@ if __name__ == '__main__':
 
 
     # create multivariate point process for the top d sites
-    worker2 = lambda x: create_pp.worker(x,list_df,start,ix2url,dir_name)
+    def worker2(x):
+        return create_pp.worker(x,list_df,start,ix2url,dir_name)
+#    worker2 = lambda x: create_pp.worker(x,list_df,start,ix2url,dir_name)
     indices = np.arange(d,dtype=int)
     pool2 = Pool(processes=20)
     pool2.map(worker2,indices)
