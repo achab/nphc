@@ -23,12 +23,11 @@ if not os.path.isdir(dir_name):
 
 if __name__ == '__main__':
 
-    import count_top, create_pp
+    import count_top, create_pp, true_G
 
     # counts the occurences of the sites
     def worker1(x):
         return count_top.worker(x,dir_name)
-#    worker1 = lambda x: count_top.worker(x,dir_name)
     pool1 = Pool(processes=len(list_df))
     pool1.map(worker1,list_df)
 
@@ -45,9 +44,18 @@ if __name__ == '__main__':
     # create multivariate point process for the top d sites
     def worker2(x):
         return create_pp.worker(x,list_df,start,ix2url,dir_name)
-#    worker2 = lambda x: create_pp.worker(x,list_df,start,ix2url,dir_name)
     indices = np.arange(d,dtype=int)
     pool2 = Pool(processes=20)
     pool2.map(worker2,indices)
+
+    # estimate G from the labelled links
+    def worker3(x):
+        return true_G.worker(x,list_df,d,dir_name,ix2url)
+    tuple_indices = []
+    for i in range(d):
+        for j in range(d):
+            tuple_indices.append((i,j))
+    pool3 = Pool(processes=20)
+    pool3.map(worker3,tuple_indices)
 
 
