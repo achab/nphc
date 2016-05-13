@@ -5,16 +5,6 @@ from glob import glob
 import gzip, pickle
 
 
-top500 = pd.read_csv('top500.csv')
-
-url2ix = { x:i for i, x in enumerate(top500['url']) }
-ix2url = { i:x for i, x in enumerate(top500['url']) }
-
-names = glob('df_200*')
-names.sort()
-
-start = pd.to_datetime('2008-08-01 00:00:00')
-
 ####################
 # Useful functions #
 ####################
@@ -24,18 +14,18 @@ def apply_inplace(df, field, fun):
 def time2delta(start_time, current_time):
     return int((current_time-start_time).total_seconds())
 
-time_from_start = lambda time: time2delta(start,pd.to_datetime(time))
 
 ###################
 # Function to map #
 ###################
-def worker(ind):
+def worker(ind,list_df,start,ix2url,dir_name):
     """
     Record all jumps of process i in a numpy array.
     """
+    time_from_start = lambda time: time2delta(start,pd.to_datetime(time))
     url = ix2url[ind]
     process = []
-    for filename in names:
+    for filename in list_df :
         df = pd.read_csv(filename)
         df_url = df[df.To == url]
         if len(df_url) == 0: continue
@@ -48,14 +38,19 @@ def worker(ind):
         ind_str = '0' + str(ind)
     else:
         ind_str = str(ind)
-    f = gzip.open('process_'+ind_str+'.pkl.gz','wb')
+    f = gzip.open(dir_name+'/process_'+ind_str+'.pkl.gz','wb')
     pickle.dump(process_arr,f,protocol=2)
     f.close()
 
+def main(list_df,d,dir_name,start):
 
-if __name__ == '__main__':
+    top_d = pd.read_csv(dir_name + '/top_' + str(d) + '.csv',index=False)
 
-    indices = np.arange(500,dtype=int)
+    ix2url = { i:x for i, x in enumerate(top_d['url']) }
+
+    worker_ = lambda x: worker(x,list_df,start,ix2url,dir_name)
+
+    indices = np.arange(d,dtype=int)
 
     pool = Pool(processes=20)
-    pool.map(worker, indices)
+    pool.map(worker_, indices)
