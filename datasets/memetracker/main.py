@@ -21,12 +21,6 @@ dir_name = "top" + str(d) + "_" + str(len(list_df)) + "months_start" + list_df[0
 if not os.path.isdir(dir_name):
     os.mkdir(dir_name)
 
-# useful variables for the workers below
-start_month = list_df[0][3:-4]
-start = pd.to_datetime(start_month + '-01 00:00:00')
-top_d = pd.read_csv(dir_name + '/top_' + str(d) + '.csv')
-ix2url = { i:x for i, x in enumerate(top_d['url']) }
-
 if __name__ == '__main__':
 
     import count_top, create_pp
@@ -38,6 +32,13 @@ if __name__ == '__main__':
 
     # save the top d sites
     count_top.save_top_d(d,dir_name)
+
+    # useful variables for the worker below
+    start_month = list_df[0][3:-4]
+    start = pd.to_datetime(start_month + '-01 00:00:00')
+    top_d = pd.read_csv(dir_name + '/top_' + str(d) + '.csv')
+    ix2url = { i:x for i, x in enumerate(top_d['url']) }
+
 
     # create multivariate point process for the top d sites
     worker2 = lambda x: create_pp.worker(x,list_df,start,ix2url,dir_name)
