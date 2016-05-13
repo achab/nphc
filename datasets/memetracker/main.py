@@ -24,7 +24,7 @@ if not os.path.isdir(dir_name):
 # useful variables for the workers below
 start_month = list_df[0][3:-4]
 start = pd.to_datetime(start_month + '-01 00:00:00')
-top_d = pd.read_csv(dir_name + '/top_' + str(d) + '.csv',index=False)
+top_d = pd.read_csv(dir_name + '/top_' + str(d) + '.csv')
 ix2url = { i:x for i, x in enumerate(top_d['url']) }
 
 if __name__ == '__main__':
