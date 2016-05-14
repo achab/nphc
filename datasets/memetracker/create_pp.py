@@ -37,7 +37,7 @@ def worker(ind,list_df,start,ix2url,dir_name):
         if len(df_url) == 0: continue
         df_url = apply_inplace(df_url, 'Date', time_from_start)
         process.append(df_url['Date'].values)
-    if len(process):
+    if process is not None and len(process):
         process_arr = np.concatenate(process)
         ind_str = ix2str(ind)
         f = gzip.open(dir_name+'/process_'+ind_str+'.pkl.gz','wb')
