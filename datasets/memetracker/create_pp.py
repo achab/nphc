@@ -12,6 +12,14 @@ def apply_inplace(df, field, fun):
 def time2delta(start_time, current_time):
     return int((current_time-start_time).total_seconds())
 
+def ix2str(ix):
+    if ix < 10:
+        ix_str = '00' + str(ix)
+    elif ix < 100:
+        ix_str = '0' + str(ix)
+    else:
+        ix_str = str(ix)
+    return ix_str
 
 ###################
 # Function to map #
@@ -29,17 +37,9 @@ def worker(ind,list_df,start,ix2url,dir_name):
         if len(df_url) == 0: continue
         df_url = apply_inplace(df_url, 'Date', time_from_start)
         process.append(df_url['Date'].values)
-    if len(process) == 0:
-        print("Quelque chose de chelou se passe")
-        process_arr = None
-    else:
+    if len(process):
         process_arr = np.concatenate(process)
-    if ind < 10:
-        ind_str = '00' + str(ind)
-    elif ind < 100:
-        ind_str = '0' + str(ind)
-    else:
-        ind_str = str(ind)
-    f = gzip.open(dir_name+'/process_'+ind_str+'.pkl.gz','wb')
-    pickle.dump(process_arr,f,protocol=2)
-    f.close()
+        ind_str = ix2str(ind)
+        f = gzip.open(dir_name+'/process_'+ind_str+'.pkl.gz','wb')
+        pickle.dump(process_arr,f,protocol=2)
+        f.close()
