@@ -80,7 +80,7 @@ class Cumulants(SimpleHawkes):
     ## Functions to compute third order cumulant with
     ##  classic formula
     #########
-    @autojit
+    #@autojit
     def set_B(self,H=0.,method='classic'):
         if H == 0.:
             hM = self.hMax
@@ -93,7 +93,7 @@ class Cumulants(SimpleHawkes):
                 for j in range(d):
                     self.B[i,j] = A_ij(self,i,j,-hM,0)
         elif method == 'new':
-            l = Parallel()(delayed(A_ij)(self,i,j,-hM,0) for i in range(d) for j in range(d))
+            l = Parallel(-1)(delayed(A_ij)(self,i,j,-hM,0) for i in range(d) for j in range(d))
             self.B = np.array(l).reshape(d,d)
 
     @autojit
