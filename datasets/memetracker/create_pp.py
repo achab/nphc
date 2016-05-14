@@ -29,7 +29,11 @@ def worker(ind,list_df,start,ix2url,dir_name):
         if len(df_url) == 0: continue
         df_url = apply_inplace(df_url, 'Date', time_from_start)
         process.append(df_url['Date'].values)
-    process_arr = np.concatenate(process)
+    if len(process) == 0:
+        print("Quelque chose de chelou se passe")
+        process_arr = None
+    else:
+        process_arr = np.concatenate(process)
     if ind < 10:
         ind_str = '00' + str(ind)
     elif ind < 100:
