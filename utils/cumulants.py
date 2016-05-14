@@ -1,5 +1,6 @@
 import numpy as np
 from numba import autojit
+from joblib import Parallel, delayed
 
 
 class SimpleHawkes(object):
@@ -80,16 +81,20 @@ class Cumulants(SimpleHawkes):
     ##  classic formula
     #########
     @autojit
-    def set_B(self,H=0.):
+    def set_B(self,H=0.,method='classic'):
         if H == 0.:
             hM = self.hMax
         else:
             hM = abs(H)
         d = self.dim
-        self.B = np.zeros((d,d))
-        for i in range(d):
-            for j in range(d):
-                self.B[i,j] = A_ij(self,i,j,-hM,0)
+        if method == 'classic':
+            self.B = np.zeros((d,d))
+            for i in range(d):
+                for j in range(d):
+                    self.B[i,j] = A_ij(self,i,j,-hM,0)
+        elif method == 'new':
+            l = Parallel()(delayed(A_ij)(self,i,j,-hM,0) for i in range(d) for j in range(d))
+            self.B = np.array(l).reshape(d,d)
 
     @autojit
     def set_E(self,H=0.):
