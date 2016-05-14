@@ -81,7 +81,7 @@ class Cumulants(SimpleHawkes):
     ##  classic formula
     #########
     #@autojit
-    def set_B(self,H=0.,method='classic'):
+    def set_B(self,H=0.,method='new'):
         if H == 0.:
             hM = self.hMax
         else:
@@ -96,56 +96,72 @@ class Cumulants(SimpleHawkes):
             l = Parallel(-1)(delayed(A_ij)(self,i,j,-hM,0) for i in range(d) for j in range(d))
             self.B = np.array(l).reshape(d,d)
 
-    @autojit
-    def set_E(self,H=0.):
+    #@autojit
+    def set_E(self,H=0.,method='new'):
         if H == 0.:
             hM = self.hMax
         else:
             hM = H
         d = self.dim
-        self.E = np.zeros((d,d,d))
-        for i in range(d):
-            for j in range(d):
-                for k in range(d):
-                    self.E[i,j,k] = E_ijk(self,i,j,k,-hM,0)
+        if method == 'classic':
+            self.E = np.zeros((d,d,d))
+            for i in range(d):
+                for j in range(d):
+                    for k in range(d):
+                        self.E[i,j,k] = E_ijk(self,i,j,k,-hM,0)
+        elif method == 'new':
+            l = Parallel(-1)(delayed(E_ijk)(self,i,j,k,-hM,0) for i in range(d) for j in range(d) for k in range(d))
+            self.E = np.array(l).reshape(d,d,d)
 
-    @autojit
-    def set_M(self, H=0.):
+    #@autojit
+    def set_M(self, H=0.,method='new'):
         if H == 0.:
             hM = self.hMax
         else:
             hM = H
         assert self.C is not None, "You should first set C using the function 'set_C'."
         d = self.dim
-        self.M = np.zeros((d,d,d))
-        for i in range(d):
-            for j in range(d):
-                self.M[i,j,:] = self.L * ( hM * self.C[i,j] - 2 * I_ij(self,i,j,hM) )
+        if method == 'classic':
+            self.M = np.zeros((d,d,d))
+            for i in range(d):
+                for j in range(d):
+                    self.M[i,j,:] = self.L * ( hM * self.C[i,j] - 2 * I_ij(self,i,j,hM) )
+        elif method == 'new':
+            l = Parallel(-1)(delayed(M_ijk)(self,i,j,k,H) for i in range(d) for j in range(d) for k in range(d))
+            self.M = np.array(l).reshape(d,d,d)
 
 
-    @autojit
-    def set_E_c(self,H=0.):
+    #@autojit
+    def set_E_c(self,H=0.,method='new'):
         if H == 0.:
             hM = self.hMax
         else:
             hM = H
         d = self.dim
-        self.E_c = np.zeros((d,d))
-        for i in range(d):
-            for j in range(d):
-                self.E_c[i,j] = E_ijk(self,i,j,j,-hM,0)
+        if method == 'classic':
+            self.E_c = np.zeros((d,d))
+            for i in range(d):
+                for j in range(d):
+                    self.E_c[i,j] = E_ijk(self,i,j,j,-hM,0)
+        elif method == 'new':
+            l = Parallel(-1)(delayed(E_ijk)(self,i,j,j,-hM,0) for i in range(d) for j in range(d))
+            self.E_c = np.array(l).reshape(d,d)
 
-    @autojit
-    def set_M_c(self,H=0.):
+    #@autojit
+    def set_M_c(self,H=0.,method='new'):
         if H == 0.:
             hM = self.hMax
         else:
             hM = H
         d = self.dim
-        self.M_c = np.zeros((d,d))
-        for i in range(d):
-            for j in range(d):
-                self.M_c[i,j] = self.L[j] * ( hM * self.C[i,j] - I_ij(self,i,j,hM) - I_ij(self,j,i,hM) )
+        if method == 'classic':
+            self.M_c = np.zeros((d,d))
+            for i in range(d):
+                for j in range(d):
+                    self.M_c[i,j] = M_c_ij(self,i,j,hM)
+        elif method == 'new':
+            l = Parallel(-1)(delayed(M_c_ij)(self,i,j,hM) for i in range(d) for j in range(d))
+            self.M_c = np.array(l).reshape(d,d)
 
     @autojit
     def set_H(self,method=0,N=1000):
@@ -173,17 +189,20 @@ class Cumulants(SimpleHawkes):
     def set_R_true(self,R_true):
         self.R_true = R_true
 
-    @autojit
-    def set_C(self,H=0.):
+    def set_C(self,H=0.,method='new'):
         if H == 0.:
             hM = self.hMax
         else:
             hM = H
         d = self.dim
-        self.C = np.zeros((d,d))
-        for i in range(d):
-            for j in range(d):
-                self.C[i,j] = A_ij(self,i,j,-hM,hM)
+        if method == 'classic':
+            self.C = np.zeros((d,d))
+            for i in range(d):
+                for j in range(d):
+                    self.C[i,j] = A_ij(self,i,j,-hM,hM)
+        elif method == 'new':
+            l = Parallel(-1)(delayed(A_ij)(self,i,j,-hM,hM) for i in range(d) for j in range(d))
+            self.C = np.array(l).reshape(d,d)
         # we keep the symmetric part to remove edge effects
         self.C[:] = 0.5*(self.C + self.C.T)
 
@@ -411,6 +430,16 @@ def I_ij(cumul,i,j,H):
     res /= T_
     res -= .5 * (H_**2) * L_i * L_j
     return res
+
+@autojit
+def M_c_ij(cumul,i,j,H):
+    return cumul.L[j] * ( H * cumul.C[i,j] - I_ij(cumul,i,j,H) - I_ij(cumul,j,i,H) )
+
+@autojit
+def M_ijk(cumul,i,j,k,H):
+    return cumul.L[k] * ( H * cumul.C[i,j] - I_ij(cumul,i,j,H) - I_ij(cumul,j,i,H) )
+
+
 
 
 if __name__ == "__main__":
