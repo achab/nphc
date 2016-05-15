@@ -65,6 +65,24 @@ def gradient_g(cumul,R):
     res -= np.einsum('ij,m,im->jm',diff_K,L,R**2)
     return 2./(d**2)*res
 
+def grad_second_order_norm():
+    pass
+
+def grad_ij_second_order_norm():
+    pass
+
+def grad_third_order_norm():
+    pass
+
+def grad_ijk_third_order_norm():
+    pass
+
+def grad_part_third_order_norm():
+    pass
+
+def grad_ij_part_third_order_norm():
+    pass
+
 #####################################
 # a closure to update metrics saved #
 #####################################

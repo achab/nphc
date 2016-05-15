@@ -1,5 +1,5 @@
 import numpy as np
-from numba import autojit
+from numba import autojit, jit, double, int32
 from joblib import Parallel, delayed
 
 
@@ -56,7 +56,7 @@ class Cumulants(SimpleHawkes):
         for i in range(d):
             for j in range(d):
                 for k in range(d):
-                    K[i,j,k] = E_ijk(self,i,j,k,-hM,hM) - self.L[k]*(2*hM*A_ij(self,i,j,-2*hM,2*hM) - 2*I_ij(self,i,j,2*hM))
+                    K[i,j,k] = E_ijk(self,i,j,k,-hM,hM) - self.L[k]*(2*hM*A_ij(self.N[i],self.N[j],-2*hM,2*hM,self.time,self.L[i],self.L[j]) - 2*I_ij(self,i,j,2*hM))
         self.F = K.copy()
         self.F += np.einsum('jki',K)
         self.F += np.einsum('kij',K)
@@ -72,8 +72,8 @@ class Cumulants(SimpleHawkes):
         self.F_c = np.zeros((d,d))
         for i in range(d):
             for j in range(d):
-                    self.F_c[i,j] = 2 * ( E_ijk(self,j,i,j,-hM,hM) - self.L[j]*(2*hM*A_ij(self,i,j,-2*hM,2*hM) - I_ij(self,i,j,2*hM) - I_ij(self,j,i,2*hM) ) )
-                    self.F_c[i,j] += E_ijk(self,j,j,i,-hM,hM) - self.L[i]*(2*hM*A_ij(self,j,j,-2*hM,2*hM) - 2*I_ij(self,j,j,2*hM))
+                    self.F_c[i,j] = 2 * ( E_ijk(self,j,i,j,-hM,hM) - self.L[j]*(2*hM*A_ij(self.N[i],self.N[j],-2*hM,2*hM,self.time,self.L[i],self.L[j]) - I_ij(self,j,i,2*hM) ) )
+                    self.F_c[i,j] += E_ijk(self,j,j,i,-hM,hM) - self.L[i]*(2*hM*A_ij(self.N[j],self.N[j],-2*hM,2*hM,self.time,self.L[j],self.L[j])  - 2*I_ij(self,j,j,2*hM))
         self.F_c /= 3
 
     #########
@@ -91,9 +91,9 @@ class Cumulants(SimpleHawkes):
             self.B = np.zeros((d,d))
             for i in range(d):
                 for j in range(d):
-                    self.B[i,j] = A_ij(self,i,j,-hM,0)
+                    self.B[i,j] = A_ij(self.N[i],self.N[j],-hM,0,self.time,self.L[i],self.L[j])
         elif method == 'new':
-            l = Parallel(-1)(delayed(A_ij)(self,i,j,-hM,0) for i in range(d) for j in range(d))
+            l = Parallel(-1)(delayed(A_ij)(self.N[i],self.N[j],-hM,0,self.time,self.L[i],self.L[j]) for i in range(d) for j in range(d))
             self.B = np.array(l).reshape(d,d)
 
     #@autojit
@@ -199,9 +199,9 @@ class Cumulants(SimpleHawkes):
             self.C = np.zeros((d,d))
             for i in range(d):
                 for j in range(d):
-                    self.C[i,j] = A_ij(self,i,j,-hM,hM)
+                    self.C[i,j] = A_ij(self.N[i],self.N[j],-hM,hM,self.time,self.L[i],self.L[j])
         elif method == 'new':
-            l = Parallel(-1)(delayed(A_ij)(self,i,j,-hM,hM) for i in range(d) for j in range(d))
+            l = Parallel(-1)(delayed(A_ij)(self.N[i],self.N[j],-hM,hM,self.time,self.L[i],self.L[j]) for i in range(d) for j in range(d))
             self.C = np.array(l).reshape(d,d)
         # we keep the symmetric part to remove edge effects
         self.C[:] = 0.5*(self.C + self.C.T)
@@ -316,8 +316,8 @@ def get_K_part_th(L,C,R):
 ##########
 ## Useful fonctions to set_ empirical integrated cumulants
 ##########
-@autojit
-def A_ij(cumul,i,j,a,b):
+@jit(double(double[:],double[:],int32,int32,double,double,double), nogil=True, nopython=True)
+def A_ij(Z_i,Z_j,a,b,T,L_i,L_j):
     """
 
     Computes the mean centered number of jumps of N^j between \tau + a and \tau + b, that is
@@ -328,26 +328,31 @@ def A_ij(cumul,i,j,a,b):
     res = 0
     u = 0
     count = 0
-    T_ = cumul.time
-    Z_i = cumul.N[i]
-    Z_j = cumul.N[j]
-    n_i = len(Z_i)
-    n_j = len(Z_j)
-    L_i = cumul.L[i]
-    L_j = cumul.L[j]
-    assert a < b, "You should provide a and b such that a < b."
-    for tau in Z_i:
-        while u < n_j and Z_j[u] <= tau + a:
-            u += 1
+    n_i = Z_i.shape[0]
+    n_j = Z_j.shape[0]
+    for t in range(n_i):
+        tau = Z_i[t]
+        if tau + a < 0: continue
+        while u < n_j:
+            if Z_j[u] <= tau + a:
+                u += 1
+            else:
+                break
+        if u == n_j: continue
         v = u
-        while v < n_j and Z_j[v] < tau + b:
-            v += 1
-        if v < n_j and u > 0:
-            count += 1
-            res += v-u
-    if count < n_i and count > 0:
-        res *= n_i * 1. / count
-    res /= T_
+        while v < n_j:
+            if Z_j[v] < tau + b:
+                v += 1
+            else:
+                break
+        if v < n_j:
+            if u > 0:
+                count += 1
+                res += v-u
+    if count < n_i:
+        if count > 0:
+            res *= n_i * 1. / count
+    res /= T
     res -= (b - a) * L_i * L_j
     return res
 
