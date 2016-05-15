@@ -1,5 +1,5 @@
 import numpy as np
-from numba import autojit, jit, double, int32, int64
+from numba import autojit, jit, double, int32, int64, float64
 from joblib import Parallel, delayed
 
 
@@ -316,7 +316,7 @@ def get_K_part_th(L,C,R):
 ##########
 ## Useful fonctions to set_ empirical integrated cumulants
 ##########
-@jit(double(int64[:],int64[:],int64,int64,int64,double,double), nogil=True, nopython=True)
+@jit(float64(int64[:],int64[:],int64,int64,int64,float64,float64), nogil=True, nopython=True)
 #@autojit
 def A_ij(Z_i,Z_j,a,b,T,L_i,L_j):
     """
