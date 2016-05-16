@@ -272,19 +272,28 @@ class Cumulants(SimpleHawkes):
 
     def set_all(self,H=0.):
         self.set_C(H)
+        print("cumul.C is computed !")
         self.set_B(H)
+        print("cumul.B is computed !")
         self.set_E(H)
-        #self.set_M(H)
+        print("cumul.E is computed !")
         self.set_J(H)
+        print("cumul.J is computed !")
         self.set_K(H)
+        print("cumul.K is computed !")
+
 
     def set_all_part(self,H=0.):
         self.set_C(H)
+        print("cumul.C is computed !")
         self.set_B(H)
+        print("cumul.B is computed !")
         self.set_E_c(H)
-        #self.set_M_c(H)
+        print("cumul.E_c is computed !")
         self.set_J(H)
+        print("cumul.J is computed !")
         self.set_K_part(H)
+        print("cumul.K_part is computed !")
 
 
 ###########
