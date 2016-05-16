@@ -20,8 +20,10 @@ class SimpleHawkes(object):
     def set_L(self):
         if self.dim > 0:
             for i, process in enumerate(self.N):
-                self.L[i] = len(process) / self.time
-                #self.L[i] = len(process) / (process[-1] - process[0])
+                if process is None:
+                    self.L[i] = 0
+                else:
+                    self.L[i] = len(process) / self.time
 
 
 class Cumulants(SimpleHawkes):
