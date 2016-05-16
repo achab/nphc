@@ -92,12 +92,12 @@ class Cumulants(SimpleHawkes):
             for i in range(d):
                 for j in range(d):
                     self.B[i,j] = A_ij(self.N[i],self.N[j],-hM,0,self.time,self.L[i],self.L[j])
-        elif method == 'new':
+        elif method == 'parallel':
             l = Parallel(-1)(delayed(A_ij)(self.N[i],self.N[j],-hM,0,self.time,self.L[i],self.L[j]) for i in range(d) for j in range(d))
             self.B = np.array(l).reshape(d,d)
 
     #@autojit
-    def set_E(self,H=0.,method='new'):
+    def set_E(self,H=0.,method='parallel'):
         if H == 0.:
             hM = self.hMax
         else:
@@ -109,12 +109,12 @@ class Cumulants(SimpleHawkes):
                 for j in range(d):
                     for k in range(d):
                         self.E[i,j,k] = E_ijk(self.N[i],self.N[j],self.N[k],-hM,0,self.time,self.L[i],self.L[j],self.L[k])
-        elif method == 'new':
+        elif method == 'parallel':
             l = Parallel(-1)(delayed(E_ijk)(self.N[i],self.N[j],self.N[k],-hM,0,self.time,self.L[i],self.L[j],self.L[k]) for i in range(d) for j in range(d) for k in range(d))
             self.E = np.array(l).reshape(d,d,d)
 
     #@autojit
-    def set_M(self, H=0.,method='new'):
+    def set_M(self, H=0.,method='parallel'):
         if H == 0.:
             hM = self.hMax
         else:
@@ -126,13 +126,13 @@ class Cumulants(SimpleHawkes):
             for i in range(d):
                 for j in range(d):
                     self.M[i,j,:] = self.L * ( hM * self.C[i,j] - 2 * I_ij(self.N[i],self.N[j],hM,self.time,self.L[i],self.L[j]) )
-        elif method == 'new':
-            l = Parallel(-1)(delayed(M_ijk)(self,i,j,k,H) for i in range(d) for j in range(d) for k in range(d))
+        elif method == 'parallel':
+            l = Parallel(-1)(delayed(M_ijk)(self.N[i],self.N[j],H,self.time,self.L[i],self.L[j],self.L[k],self.C[i,j]) for i in range(d) for j in range(d) for k in range(d))
             self.M = np.array(l).reshape(d,d,d)
 
 
     #@autojit
-    def set_E_c(self,H=0.,method='new'):
+    def set_E_c(self,H=0.,method='parallel'):
         if H == 0.:
             hM = self.hMax
         else:
@@ -143,12 +143,12 @@ class Cumulants(SimpleHawkes):
             for i in range(d):
                 for j in range(d):
                     self.E_c[i,j] = E_ijk(self.N[i],self.N[j],self.N[j],-hM,0,self.time,self.L[i],self.L[j],self.L[j])
-        elif method == 'new':
+        elif method == 'parallel':
             l = Parallel(-1)(delayed(E_ijk)(self.N[i],self.N[j],self.N[j],-hM,0,self.time,self.L[i],self.L[j],self.L[j]) for i in range(d) for j in range(d))
             self.E_c = np.array(l).reshape(d,d)
 
     #@autojit
-    def set_M_c(self,H=0.,method='new'):
+    def set_M_c(self,H=0.,method='parallel'):
         if H == 0.:
             hM = self.hMax
         else:
@@ -158,9 +158,9 @@ class Cumulants(SimpleHawkes):
             self.M_c = np.zeros((d,d))
             for i in range(d):
                 for j in range(d):
-                    self.M_c[i,j] = M_c_ij(self,i,j,hM)
-        elif method == 'new':
-            l = Parallel(-1)(delayed(M_c_ij)(self,i,j,hM) for i in range(d) for j in range(d))
+                    self.M_c[i,j] = M_c_ij(self.N[i],self.N[j],hM,self.time,self.L[i],self.L[j],self.C[i,j])
+        elif method == 'parallel':
+            l = Parallel(-1)(delayed(M_c_ij)(self.N[i],self.N[j],hM,self.time,self.L[i],self.L[j],self.C[i,j]) for i in range(d) for j in range(d))
             self.M_c = np.array(l).reshape(d,d)
 
     @autojit
@@ -189,7 +189,7 @@ class Cumulants(SimpleHawkes):
     def set_R_true(self,R_true):
         self.R_true = R_true
 
-    def set_C(self,H=0.,method='new'):
+    def set_C(self,H=0.,method='parallel'):
         if H == 0.:
             hM = self.hMax
         else:
@@ -200,7 +200,7 @@ class Cumulants(SimpleHawkes):
             for i in range(d):
                 for j in range(d):
                     self.C[i,j] = A_ij(self.N[i],self.N[j],-hM,hM,self.time,self.L[i],self.L[j])
-        elif method == 'new':
+        elif method == 'parallel':
             l = Parallel(-1)(delayed(A_ij)(self.N[i],self.N[j],-hM,hM,self.time,self.L[i],self.L[j]) for i in range(d) for j in range(d))
             self.C = np.array(l).reshape(d,d)
         # we keep the symmetric part to remove edge effects
@@ -448,15 +448,18 @@ def I_ij(Z_i,Z_j,H,T,L_i,L_j):
     return res
 
 @autojit
-def M_c_ij(cumul,i,j,H):
-    return M_ijk(cumul,i,j,j,H)
+def M_c_ij(Z_i,Z_j,H,T,L_i,L_j,C_ij):
+    return L_j * (H *C_ij - I_ij(Z_i,Z_j,H,T,L_i,L_j) - I_ij(Z_j,Z_i,H,T,L_j,L_i))
+#def M_c_ij(cumul,i,j,H):
+#    return M_ijk(cumul,i,j,j,H)
 
 @autojit
-def M_ijk(cumul,i,j,k,H):
-    return cumul.L[k] * ( H * cumul.C[i,j] - I_ij(cumul.N[i],cumul.N[j],H,cumul.time,cumul.L[i],cumul.L[j]) - I_ij(cumul.N[j],cumul.N[i],H,cumul.time,cumul.L[j],cumul.L[i]) )
+def M_ijk(Z_i,Z_j,H,T,L_i,L_j,L_k,C_ij):
+    return L_k * (H *C_ij - I_ij(Z_i,Z_j,H,T,L_i,L_j) - I_ij(Z_j,Z_i,H,T,L_j,L_i))
+#def M_ijk(cumul,i,j,k,H):
+#    return cumul.L[k] * ( H * cumul.C[i,j] - I_ij(cumul.N[i],cumul.N[j],H,cumul.time,cumul.L[i],cumul.L[j]) - I_ij(cumul.N[j],cumul.N[i],H,cumul.time,cumul.L[j],cumul.L[i]) )
 
-
-
+#M_ijk(self.N[i],self.N[j],hM,self.time,self.L[i],self.L[j],self.C[i,j])
 
 if __name__ == "__main__":
     N = [np.sort(np.random.randint(0,100,size=20)),np.sort(np.random.randint(0,100,size=20))]
