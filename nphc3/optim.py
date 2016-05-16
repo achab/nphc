@@ -2,7 +2,7 @@ import numpy as np
 from nphc.utils.cumulants import Cumulants, get_K_th, get_K_part_th
 from numba import autojit
 from nphc.utils.prox import prox_zero
-from nhc.utils.metrics import mse_K, rel_err
+from nphc.utils.metrics import mse_K, rel_err
 
 
 
