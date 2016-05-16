@@ -317,7 +317,8 @@ def get_K_part_th(L,C,R):
 ## Useful fonctions to set_ empirical integrated cumulants
 ##########
 #@autojit
-@jit(float64(int64[:],int64[:],int64,int64,int64,float64,float64), nogil=True, nopython=True)
+@jit(double(double[:],double[:],int32,int32,double,double,double), nogil=True, nopython=True)
+#@jit(float64(float64[:],float64[:],int64,int64,int64,float64,float64), nogil=True, nopython=True)
 def A_ij(Z_i,Z_j,a,b,T,L_i,L_j):
     """
 
