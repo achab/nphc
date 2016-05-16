@@ -5,9 +5,10 @@ def worker(filename,dir_name):
     Return counts by url for the DataFrame in filename
     """
     data = pd.read_csv(filename)
-    posts = data['From']
+    #posts = data['From']
     links = data['To']
-    counts = pd.concat([posts,links]).value_counts()
+    #counts = pd.concat([posts,links]).value_counts()
+    counts = links.value_counts()
     counts = pd.concat([pd.DataFrame(counts.index),pd.DataFrame(counts.values)],axis=1)
     counts.columns = ['url','count']
     counts.to_csv(dir_name+"/counts_"+filename[3:],index=False)
