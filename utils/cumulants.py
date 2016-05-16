@@ -160,6 +160,7 @@ class Cumulants(SimpleHawkes):
                 for j in range(d):
                     self.M_c[i,j] = M_c_ij(self.N[i],self.N[j],hM,self.time,self.L[i],self.L[j],self.C[i,j])
         elif method == 'parallel':
+            assert self.C is not None, "You should first set C using the function 'set_C'."
             l = Parallel(-1)(delayed(M_c_ij)(self.N[i],self.N[j],hM,self.time,self.L[i],self.L[j],self.C[i,j]) for i in range(d) for j in range(d))
             self.M_c = np.array(l).reshape(d,d)
 
