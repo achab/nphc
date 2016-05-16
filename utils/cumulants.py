@@ -113,6 +113,22 @@ class Cumulants(SimpleHawkes):
             l = Parallel(-1)(delayed(E_ijk)(self.N[i],self.N[j],self.N[k],-hM,0,self.time,self.L[i],self.L[j],self.L[k]) for i in range(d) for j in range(d) for k in range(d))
             self.E = np.array(l).reshape(d,d,d)
 
+
+    def set_J(self, H=0.,method='parallel'):
+        if H == 0.:
+            hM = self.hMax
+        else:
+            hM = H
+        d = self.dim
+        if method == 'classic':
+            self.J = np.zeros((d,d))
+            for i in range(d):
+                for j in range(d):
+                    self.J[i,j] = I_ij(self.N[i],self.N[j],hM,self.time,self.L[i],self.L[j])
+        elif method == 'parallel':
+            l = Parallel(-1)(delayed(I_ij)(self.N[i],self.N[j],hM,self.time,self.L[i],self.L[j]) for i in range(d) for j in range(d) )
+            self.J = np.array(l).reshape(d,d)
+
     #@autojit
     def set_M(self, H=0.,method='parallel'):
         if H == 0.:
@@ -209,22 +225,32 @@ class Cumulants(SimpleHawkes):
 
     @autojit
     def set_K(self,H=0.,method='classic'):
+        if H == 0.:
+            hM = self.hMax
+        else:
+            hM = H
         if method == 'classic':
             assert self.B is not None, "You should first set B using the function 'set_B'."
             assert self.E is not None, "You should first set E using the function 'set_E'."
-            assert self.M is not None, "You should first set M using the function 'set_M'."
-            self.K = get_K(self.B,self.E,self.M,self.L)
+            assert self.J is not None, "You should first set J using the function 'set_J'."
+            assert self.C is not None, "You should first set C using the function 'set_C'."
+            self.K = get_K(self.B,self.E,self.J,self.C,self.L,hM)
         elif method == 'new':
             self.set_F(H)
             self.K = self.F
 
     @autojit
     def set_K_part(self,H=0.,method='classic'):
+        if H == 0.:
+            hM = self.hMax
+        else:
+            hM = H
         if method == 'classic':
             assert self.B is not None, "You should first set B using the function 'set_B'."
             assert self.E_c is not None, "You should first set E using the function 'set_E_c'."
-            assert self.M_c is not None, "You should first set M using the function 'set_M_c'."
-            self.K_part = get_K_part(self.B,self.E_c,self.M_c,self.L)
+            assert self.J is not None, "You should first set J using the function 'set_J'."
+            assert self.C is not None, "You should first set C using the function 'set_C'."
+            self.K_part = get_K_part(self.B,self.E_c,self.J,self.C,self.L,hM)
         elif method == 'new':
             self.set_F_c(H)
             self.K_part = self.F_c
@@ -246,14 +272,16 @@ class Cumulants(SimpleHawkes):
         self.set_C(H)
         self.set_B(H)
         self.set_E(H)
-        self.set_M(H)
+        #self.set_M(H)
+        self.set_J(H)
         self.set_K(H)
 
     def set_all_part(self,H=0.):
         self.set_C(H)
         self.set_B(H)
         self.set_E_c(H)
-        self.set_M_c(H)
+        #self.set_M_c(H)
+        self.set_J(H)
         self.set_K_part(H)
 
 
@@ -261,8 +289,9 @@ class Cumulants(SimpleHawkes):
 ## Empirical cumulants with formula from the paper
 ###########
 @autojit
-def get_K(B,E,M,L):
+def get_K(B,E,J,C,L,H):
     I = np.eye(len(L))
+    M = np.einsum('k,ij->ijk',L,H*C-J-J.T)
     K1 = E-M
     K1 += np.einsum('ij,jk->ijk',I,B)
     K = K1.copy()
@@ -272,10 +301,11 @@ def get_K(B,E,M,L):
     return K
 
 @autojit
-def get_K_part(B,E_c,M_c,L,):
+def get_K_part(B,E_c,J,C,L,H):
     K_part = B.T
     K_part += np.diag(L)
     K_part += 2*np.diag(np.diag(B))
+    M_c = np.einsum('j,ij->ij',L,H*C-J-J.T)
     K_part += 2*(E_c-M_c)
     K_part += (E_c-M_c).T
     return K_part
@@ -317,9 +347,9 @@ def get_K_part_th(L,C,R):
 ##########
 ## Useful fonctions to set_ empirical integrated cumulants
 ##########
-@autojit
 #@jit(double(double[:],double[:],int32,int32,double,double,double), nogil=True, nopython=True)
 #@jit(float64(float64[:],float64[:],int64,int64,int64,float64,float64), nogil=True, nopython=True)
+@autojit
 def A_ij(Z_i,Z_j,a,b,T,L_i,L_j):
     """
 
@@ -428,16 +458,18 @@ def I_ij(Z_i,Z_j,H,T,L_i,L_j):
     count = 0
     for t in Z_i:
         tau = Z_i[t]
-        if tau - H < 0: continue
+        tau_minus_H = tau - H
+        if tau_minus_H  < 0: continue
         while u < n_j:
-            if Z_j[u] <= tau - H:
+            if Z_j[u] <= tau_minus_H :
                 u += 1
             else:
                 break
         v = u
         while v < n_j:
-            if Z_j[v] < tau:
-                res += tau - Z_j[v]
+            tau_minus_tau_p = tau - Z_j[v]
+            if tau_minus_tau_p > 0:
+                res += tau_minus_tau_p
                 count += 1
                 v += 1
             else:
@@ -448,19 +480,14 @@ def I_ij(Z_i,Z_j,H,T,L_i,L_j):
     res -= .5 * (H**2) * L_i * L_j
     return res
 
-@autojit
-def M_c_ij(Z_i,Z_j,H,T,L_i,L_j,C_ij):
-    return L_j * (H *C_ij - I_ij(Z_i,Z_j,H,T,L_i,L_j) - I_ij(Z_j,Z_i,H,T,L_j,L_i))
-#def M_c_ij(cumul,i,j,H):
-#    return M_ijk(cumul,i,j,j,H)
+#@autojit
+#def M_c_ij(Z_i,Z_j,H,T,L_i,L_j,C_ij):
+#    return L_j * (H *C_ij - I_ij(Z_i,Z_j,H,T,L_i,L_j) - I_ij(Z_j,Z_i,H,T,L_j,L_i))
 
-@autojit
-def M_ijk(Z_i,Z_j,H,T,L_i,L_j,L_k,C_ij):
-    return L_k * (H *C_ij - I_ij(Z_i,Z_j,H,T,L_i,L_j) - I_ij(Z_j,Z_i,H,T,L_j,L_i))
-#def M_ijk(cumul,i,j,k,H):
-#    return cumul.L[k] * ( H * cumul.C[i,j] - I_ij(cumul.N[i],cumul.N[j],H,cumul.time,cumul.L[i],cumul.L[j]) - I_ij(cumul.N[j],cumul.N[i],H,cumul.time,cumul.L[j],cumul.L[i]) )
+#@autojit
+#def M_ijk(Z_i,Z_j,H,T,L_i,L_j,L_k,C_ij):
+#    return L_k * (H *C_ij - I_ij(Z_i,Z_j,H,T,L_i,L_j) - I_ij(Z_j,Z_i,H,T,L_j,L_i))
 
-#M_ijk(self.N[i],self.N[j],hM,self.time,self.L[i],self.L[j],self.C[i,j])
 
 if __name__ == "__main__":
     N = [np.sort(np.random.randint(0,100,size=20)),np.sort(np.random.randint(0,100,size=20))]
