@@ -10,6 +10,10 @@ for dir_name in list_dir_name:
     print("Starting for dataset in ",dir_name)
 
     L = glob.glob(dir_name+'/process_*')
+    for x in L:
+        if 'with_cumul' in x:
+            L.remove(x)
+
 
     import gzip, pickle
     N = []
