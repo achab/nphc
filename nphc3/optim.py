@@ -1,9 +1,9 @@
 import numpy as np
-from utils.cumulants import Cumulants, get_K_th, get_K_part_th
+from nphc.utils.cumulants import Cumulants, get_K_th, get_K_part_th
 from numba import autojit
-from utils.prox import prox_zero
+from nphc.utils.prox import prox_zero
+from nhc.utils.metrics import mse_K, rel_err
 
-from utils.metrics import mse_K, rel_err
 
 
 #######################################################
