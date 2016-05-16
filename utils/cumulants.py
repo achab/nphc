@@ -56,7 +56,7 @@ class Cumulants(SimpleHawkes):
         for i in range(d):
             for j in range(d):
                 for k in range(d):
-                    K[i,j,k] = E_ijk(self,i,j,k,-hM,hM) - self.L[k]*(2*hM*A_ij(self.N[i],self.N[j],-2*hM,2*hM,self.time,self.L[i],self.L[j]) - 2*I_ij(self,i,j,2*hM))
+                    K[i,j,k] = E_ijk(self.N[i],self.N[j],self.N[k],-hM,hM,self.time,self.L[i],self.L[j],self.L[k]) - self.L[k]*(2*hM*A_ij(self.N[i],self.N[j],-2*hM,2*hM,self.time,self.L[i],self.L[j]) - 2*I_ij(self.N[i],self.N[j],2*hM,self.time,self.L[i],self.L[j]))
         self.F = K.copy()
         self.F += np.einsum('jki',K)
         self.F += np.einsum('kij',K)
@@ -72,8 +72,8 @@ class Cumulants(SimpleHawkes):
         self.F_c = np.zeros((d,d))
         for i in range(d):
             for j in range(d):
-                    self.F_c[i,j] = 2 * ( E_ijk(self,j,i,j,-hM,hM) - self.L[j]*(2*hM*A_ij(self.N[i],self.N[j],-2*hM,2*hM,self.time,self.L[i],self.L[j]) - I_ij(self,j,i,2*hM) ) )
-                    self.F_c[i,j] += E_ijk(self,j,j,i,-hM,hM) - self.L[i]*(2*hM*A_ij(self.N[j],self.N[j],-2*hM,2*hM,self.time,self.L[j],self.L[j])  - 2*I_ij(self,j,j,2*hM))
+                    self.F_c[i,j] = 2 * ( E_ijk(self.N[j],self.N[i],self.N[j],-hM,hM,self.time,self.L[j],self.L[i],self.L[j]) - self.L[j]*(2*hM*A_ij(self.N[i],self.N[j],-2*hM,2*hM,self.time,self.L[i],self.L[j]) - I_ij(self.N[j],self.N[i],2*hM,self.time,self.L[j],self.L[i]) ) )
+                    self.F_c[i,j] += E_ijk(self.N[j],self.N[j],self.N[i],-hM,hM,self.time,self.L[j],self.L[j],self.L[i]) - self.L[i]*(2*hM*A_ij(self.N[j],self.N[j],-2*hM,2*hM,self.time,self.L[j],self.L[j])  - 2*I_ij(self.N[j],self.N[j],2*hM,self.time,self.L[j],self.L[j]))
         self.F_c /= 3
 
     #########
@@ -108,9 +108,9 @@ class Cumulants(SimpleHawkes):
             for i in range(d):
                 for j in range(d):
                     for k in range(d):
-                        self.E[i,j,k] = E_ijk(self,i,j,k,-hM,0)
+                        self.E[i,j,k] = E_ijk(self.N[i],self.N[j],self.N[k],-hM,0,self.time,self.L[i],self.L[j],self.L[k])
         elif method == 'new':
-            l = Parallel(-1)(delayed(E_ijk)(self,i,j,k,-hM,0) for i in range(d) for j in range(d) for k in range(d))
+            l = Parallel(-1)(delayed(E_ijk)(self.N[i],self.N[j],self.N[k],-hM,0,self.time,self.L[i],self.L[j],self.L[k]) for i in range(d) for j in range(d) for k in range(d))
             self.E = np.array(l).reshape(d,d,d)
 
     #@autojit
@@ -125,7 +125,7 @@ class Cumulants(SimpleHawkes):
             self.M = np.zeros((d,d,d))
             for i in range(d):
                 for j in range(d):
-                    self.M[i,j,:] = self.L * ( hM * self.C[i,j] - 2 * I_ij(self,i,j,hM) )
+                    self.M[i,j,:] = self.L * ( hM * self.C[i,j] - 2 * I_ij(self.N[i],self.N[j],hM,self.time,self.L[i],self.L[j]) )
         elif method == 'new':
             l = Parallel(-1)(delayed(M_ijk)(self,i,j,k,H) for i in range(d) for j in range(d) for k in range(d))
             self.M = np.array(l).reshape(d,d,d)
@@ -142,9 +142,9 @@ class Cumulants(SimpleHawkes):
             self.E_c = np.zeros((d,d))
             for i in range(d):
                 for j in range(d):
-                    self.E_c[i,j] = E_ijk(self,i,j,j,-hM,0)
+                    self.E_c[i,j] = E_ijk(self.N[i],self.N[j],self.N[j],-hM,0,self.time,self.L[i],self.L[j],self.L[j])
         elif method == 'new':
-            l = Parallel(-1)(delayed(E_ijk)(self,i,j,j,-hM,0) for i in range(d) for j in range(d))
+            l = Parallel(-1)(delayed(E_ijk)(self.N[i],self.N[j],self.N[j],-hM,0,self.time,self.L[i],self.L[j],self.L[j]) for i in range(d) for j in range(d))
             self.E_c = np.array(l).reshape(d,d)
 
     #@autojit
@@ -180,7 +180,7 @@ class Cumulants(SimpleHawkes):
                     range_h = np.logspace(-3,3,N)
                     res = []
                     for h in range_h:
-                        val = I_ij(self,i,j,h) / h
+                        val = I_ij(self.N[i],self.N[j],h,self.time,self.L[i],self.L[j]) / h
                         res.append(val)
                     res = np.array(res)
                     self.H[i,j] = range_h[np.argmin(res)]
@@ -316,8 +316,8 @@ def get_K_part_th(L,C,R):
 ##########
 ## Useful fonctions to set_ empirical integrated cumulants
 ##########
-#@autojit
-@jit(double(double[:],double[:],int32,int32,double,double,double), nogil=True, nopython=True)
+@autojit
+#@jit(double(double[:],double[:],int32,int32,double,double,double), nogil=True, nopython=True)
 #@jit(float64(float64[:],float64[:],int64,int64,int64,float64,float64), nogil=True, nopython=True)
 def A_ij(Z_i,Z_j,a,b,T,L_i,L_j):
     """
@@ -359,7 +359,7 @@ def A_ij(Z_i,Z_j,a,b,T,L_i,L_j):
     return res
 
 @autojit
-def E_ijk(cumul,i,j,k,a,b):
+def E_ijk(Z_i,Z_j,Z_k,a,b,T,L_i,L_j,L_k):
     """
 
     Computes the mean of the centered product of i's and j's jumps between \tau + a and \tau + b, that is
@@ -372,40 +372,47 @@ def E_ijk(cumul,i,j,k,a,b):
     u = 0
     x = 0
     count = 0
-    T_ = cumul.time
-    Z_i = cumul.N[i]
-    Z_j = cumul.N[j]
-    Z_k = cumul.N[k]
-    n_i = len(Z_i)
-    n_j = len(Z_j)
-    n_k = len(Z_k)
-    L_i = cumul.L[i]
-    L_j = cumul.L[j]
-    for tau in Z_k:
+    n_i = Z_i.shape[0]
+    n_j = Z_j.shape[0]
+    n_k = Z_k.shape[0]
+    for t in range(n_k):
+        tau = Z_k[t]
+        if tau + a < 0: continue
         # work on Z_i
-        while u < n_i and Z_i[u] <= tau + a:
-            u += 1
+        while u < n_i:
+            if Z_i[u] <= tau + a:
+                u += 1
+            else:
+                break
         v = u
-        while v < n_i and Z_i[v] < tau + b:
-            v += 1
+        while v < n_i:
+            if Z_i[v] < tau + b:
+                v += 1
+            else:
+                break
         # work on Z_j
-        while x < n_j and Z_j[x] <= tau + a:
-            x += 1
+        while x < n_j:
+            if Z_j[x] <= tau + a:
+                x += 1
+            else:
+                break
         y = x
-        while y < n_j and Z_j[y] < tau + b:
-            y += 1
+        while y < n_j:
+            if Z_j[y] < tau + b:
+                y += 1
+            else:
+                break
         # check if this step is admissible
         if y < n_j and x > 0 and v < n_i and u > 0:
             count += 1
             res += (v-u-L_i*(b-a))*(y-x-L_j*(b-a))
     if count < n_k and count > 0:
         res *= n_k * 1. / count
-    res /= T_
+    res /= T
     return res
 
-
 @autojit
-def I_ij(cumul,i,j,H):
+def I_ij(Z_i,Z_j,H,T,L_i,L_j):
     """
 
     Computes the integral \int_{(0,H)} t c^{ij} (t) dt. This integral equals
@@ -413,38 +420,40 @@ def I_ij(cumul,i,j,H):
     \sum_{\tau \in Z^i} \sum_{\tau' \in Z^j} (\tau - \tau') 1_{ \tau - H < \tau' < \tau } - H^2 / 2 \Lambda^i \Lambda^j
 
     """
+    n_i = Z_i.shape[0]
+    n_j = Z_j.shape[0]
     res = 0
     u = 0
     count = 0
-    T_ = cumul.time
-    H_ = abs(H)
-    Z_i = cumul.N[i]
-    Z_j = cumul.N[j]
-    n_i = len(Z_i)
-    n_j = len(Z_j)
-    L_i = cumul.L[i]
-    L_j = cumul.L[j]
-    for tau in Z_i:
-        while u < n_j and Z_j[u] <= tau - H_:
-            u += 1
+    for t in Z_i:
+        tau = Z_i[t]
+        if tau - H < 0: continue
+        while u < n_j:
+            if Z_j[u] <= tau - H:
+                u += 1
+            else:
+                break
         v = u
-        while v < n_j and Z_j[v] < tau:
-            res += tau - Z_j[v]
-            count += 1
-            v += 1
+        while v < n_j:
+            if Z_j[v] < tau:
+                res += tau - Z_j[v]
+                count += 1
+                v += 1
+            else:
+                break
     if count < n_i and count > 0:
         res *= n_i * 1. / count
-    res /= T_
-    res -= .5 * (H_**2) * L_i * L_j
+    res /= T
+    res -= .5 * (H**2) * L_i * L_j
     return res
 
 @autojit
 def M_c_ij(cumul,i,j,H):
-    return cumul.L[j] * ( H * cumul.C[i,j] - I_ij(cumul,i,j,H) - I_ij(cumul,j,i,H) )
+    return M_ijk(cumul,i,j,j,H)
 
 @autojit
 def M_ijk(cumul,i,j,k,H):
-    return cumul.L[k] * ( H * cumul.C[i,j] - I_ij(cumul,i,j,H) - I_ij(cumul,j,i,H) )
+    return cumul.L[k] * ( H * cumul.C[i,j] - I_ij(cumul.N[i],cumul.N[j],H,cumul.time,cumul.L[i],cumul.L[j]) - I_ij(cumul.N[j],cumul.N[i],H,cumul.time,cumul.L[j],cumul.L[i]) )
 
 
 
