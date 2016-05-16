@@ -97,6 +97,9 @@ class Cumulants(SimpleHawkes):
         elif method == 'parallel':
             l = Parallel(-1)(delayed(A_ij)(self.N[i],self.N[j],-hM,0,self.time,self.L[i],self.L[j]) for i in range(d) for j in range(d))
             self.B = np.array(l).reshape(d,d)
+        # we keep the symmetric part to remove edge effects
+        self.B[:] = 0.5 * (self.B + self.B.T)
+
 
     #@autojit
     def set_E(self,H=0.,method='parallel'):
