@@ -271,6 +271,7 @@ class Cumulants(SimpleHawkes):
         self.K_part_th = get_K_part_th(self.L,self.C_th,self.R_true)
 
     def set_all(self,H=0.):
+        print("Starting computation of full cumulants...")
         self.set_C(H)
         print("cumul.C is computed !")
         self.set_B(H)
@@ -281,9 +282,11 @@ class Cumulants(SimpleHawkes):
         print("cumul.J is computed !")
         self.set_K(H)
         print("cumul.K is computed !")
+        print("All cumulants are computed !")
 
 
     def set_all_part(self,H=0.):
+        print("Starting computation of partial cumulants...")
         self.set_C(H)
         print("cumul.C is computed !")
         self.set_B(H)
@@ -294,6 +297,7 @@ class Cumulants(SimpleHawkes):
         print("cumul.J is computed !")
         self.set_K_part(H)
         print("cumul.K_part is computed !")
+        print("All cumulants are computed !")
 
 
 ###########
