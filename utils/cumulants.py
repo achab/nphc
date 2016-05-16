@@ -128,6 +128,8 @@ class Cumulants(SimpleHawkes):
         elif method == 'parallel':
             l = Parallel(-1)(delayed(I_ij)(self.N[i],self.N[j],hM,self.time,self.L[i],self.L[j]) for i in range(d) for j in range(d) )
             self.J = np.array(l).reshape(d,d)
+        # we keep the symmetric part to remove edge effects
+        self.J[:] = 0.5 * (self.J + self.J.T)
 
     #@autojit
     def set_M(self, H=0.,method='parallel'):
@@ -291,7 +293,7 @@ class Cumulants(SimpleHawkes):
 @autojit
 def get_K(B,E,J,C,L,H):
     I = np.eye(len(L))
-    M = np.einsum('k,ij->ijk',L,H*C-J-J.T)
+    M = np.einsum('k,ij->ijk',L,H*C-2*J)
     K1 = E-M
     K1 += np.einsum('ij,jk->ijk',I,B)
     K = K1.copy()
@@ -305,7 +307,7 @@ def get_K_part(B,E_c,J,C,L,H):
     K_part = B.T
     K_part += np.diag(L)
     K_part += 2*np.diag(np.diag(B))
-    M_c = np.einsum('j,ij->ij',L,H*C-J-J.T)
+    M_c = np.einsum('j,ij->ij',L,H*C-2*J)
     K_part += 2*(E_c-M_c)
     K_part += (E_c-M_c).T
     return K_part
@@ -456,7 +458,7 @@ def I_ij(Z_i,Z_j,H,T,L_i,L_j):
     res = 0
     u = 0
     count = 0
-    for t in Z_i:
+    for t in range(n_i):
         tau = Z_i[t]
         tau_minus_H = tau - H
         if tau_minus_H  < 0: continue
