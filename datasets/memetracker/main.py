@@ -1,7 +1,8 @@
 from multiprocessing import Pool
 import pandas as pd
 import numpy as np
-import os, gzip, pickle
+import os, gzip, pickle, glob
+
 
 # Define the parameters
 #
@@ -11,12 +12,12 @@ import os, gzip, pickle
 #
 
 
-d = 10
+d = 20
 
-list_df = ['df_2008-08.csv']
+list_df = glob.glob('new_df*')
 list_df.sort()
 
-dir_name = "top" + str(d) + "_" + str(len(list_df)) + "months_start" + list_df[0][3:-4]
+dir_name = "top" + str(d) + "_" + str(len(list_df)) + "months_start_2008_08"
 
 if not os.path.isdir(dir_name):
     os.mkdir(dir_name)
@@ -35,7 +36,8 @@ if __name__ == '__main__':
     count_top.save_top_d(d,dir_name)
 
     # useful variables for the worker below
-    start_month = list_df[0][3:-4]
+    #start_month = list_df[0][3:-4]
+    start_month = '2008-08'
     start = pd.to_datetime(start_month + '-01 00:00:00')
     top_d = pd.read_csv(dir_name + '/top_' + str(d) + '.csv')
     ix2url = { i:x for i, x in enumerate(top_d['url']) }
@@ -45,7 +47,7 @@ if __name__ == '__main__':
     def worker2(x):
         return create_pp.worker(x,list_df,start,ix2url,dir_name)
     indices = np.arange(d,dtype=int)
-    pool2 = Pool(processes=20)
+    pool2 = Pool()
     pool2.map(worker2,indices)
 
     # estimate G from the labelled links
@@ -55,7 +57,7 @@ if __name__ == '__main__':
     for i in range(d):
         for j in range(d):
             tuple_indices.append((i,j))
-    pool3 = Pool(processes=20)
+    pool3 = Pool()
 
     # save the results
     res = pool3.map(worker3,tuple_indices)

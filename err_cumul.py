@@ -11,14 +11,12 @@ def worker(infos):
     data = pickle.load(f)
     f.close()
     cumul = data[0]
-    cumul.set_all(H)
     cumul.set_all_part(H)
     # append errors
     err_C = rel_err(cumul.C_th,cumul.C)
-    err_K = rel_err(cumul.K_th,cumul.K)
     err_K_part = rel_err(cumul.K_part_th,cumul.K_part)
     print("Done for ",filename," and for = ",H,)
-    return filename, H, err_C, err_K, err_K_part
+    return filename, H, err_C, err_K_part
 
 
 if __name__ == '__main__':
@@ -34,4 +32,4 @@ if __name__ == '__main__':
     results = pool.map(worker,list_infos)
 
     import pandas as pd
-    pd.DataFrame(results,columns=['name','H','err_C','err_K','err_K_part']).to_csv('err_results.csv')
+    pd.DataFrame(results,columns=['name','H','err_C','err_K_part']).to_csv('err_results.csv')

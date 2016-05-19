@@ -32,6 +32,7 @@ def worker(filename):
     with gzip.open(filename, 'r') as f:
         #content = [x.decode().strip('\n') for x in f.readlines()]
         df_rows = []
+        date_old = ''
         for line in f:
         #for line in content:
             x = line.rstrip('\n').split('\t')
@@ -42,7 +43,9 @@ def worker(filename):
             elif x[0] == 'L':
                 hyperlink = x[1]
                 row = [post_url, date, hyperlink]
-                df_rows.append(row)
+                if date != date_old:
+                    df_rows.append(row)
+                    date_old = date
         df = pd.DataFrame(df_rows, columns=['From', 'Date', 'To'])
         df['Date'] = pd.to_datetime(df['Date'])
         df = apply_inplace(df, 'From', parse_url)
