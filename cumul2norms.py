@@ -11,9 +11,9 @@ url = 'https://s3-eu-west-1.amazonaws.com/nphc-data/{}_{}_log10T{}_with_Beta_wit
 cumul, Beta = load_data(url)
 
 # Params
-alpha = 10.
-learning_rate = 1e4
-training_epochs = 10
+alpha = 1.
+learning_rate = 1e5
+training_epochs = 10000
 display_step = 10
 d = cumul.dim
 
@@ -31,7 +31,8 @@ activation_2 = tf.matmul(R,tf.matmul(tf.diag(L),R,transpose_b=True))
 
 # Minimize error
 cost = tf.reduce_mean(tf.square(activation_3 - K_c)) + alpha*tf.reduce_mean(tf.square(activation_2 - C))
-optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost)
+#optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost)
+optimizer = tf.train.AdagradOptimizer(learning_rate).minimize(cost)
 
 # Initialize the variables
 init = tf.initialize_all_variables()
@@ -54,12 +55,18 @@ with tf.Session() as sess:
         # Fit training using batch data
         sess.run(optimizer, feed_dict={L: cumul.L, C: cumul.C, K_c: cumul.K_part})
         avg_cost = sess.run(cost, feed_dict={L: cumul.L, C: cumul.C, K_c: cumul.K_part})
-        print("Epoch:", '%04d' % (epoch+1), "cost=", "{:.9f}".format(avg_cost))
+        print("Epoch:", '%04d' % (epoch+1), "log10(cost)=", "{:.9f}".format(np.log10(avg_cost)))
         # Write logs at every iteration
         summary_str = sess.run(merged_summary_op, feed_dict={L: cumul.L, C: cumul.C, K_c: cumul.K_part})
         summary_writer.add_summary(summary_str, epoch)
 
     print("Optimization Finished!")
+
+    import gzip, pickle
+    f = gzip.open('out.pkl.gz', 'wb')
+    pickle.dump(sess.run(R),f,protocol=2)
+    f.close()
+
 
 '''
 Run the command line: tensorboard --logdir=/tmp/tf_cumul

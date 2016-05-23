@@ -100,6 +100,27 @@ class Cumulants(SimpleHawkes):
         # we keep the symmetric part to remove edge effects
         self.B[:] = 0.5 * (self.B + self.B.T)
 
+    #@autojit
+    def set_C(self,H=0.,compute_C=False,method='parallel'):
+        if H == 0.:
+            hM = self.hMax
+        else:
+            hM = H
+        d = self.dim
+        if compute_C:
+            if method == 'classic':
+                self.C = np.zeros((d,d))
+                for i in range(d):
+                    for j in range(d):
+                        self.C[i,j] = A_ij(self.N[i],self.N[j],-hM,hM,self.time,self.L[i],self.L[j])
+            elif method == 'parallel':
+                l = Parallel(-1)(delayed(A_ij)(self.N[i],self.N[j],-hM,hM,self.time,self.L[i],self.L[j]) for i in range(d) for j in range(d))
+                self.C = np.array(l).reshape(d,d)
+            # we keep the symmetric part to remove edge effects
+            self.C[:] = 0.5*(self.C + self.C.T)
+        else:
+            assert self.B is not None, "You should first set B using the function 'set_B'."
+            self.C = 2*self.B + np.diag(self.L)
 
     #@autojit
     def set_E(self,H=0.,method='parallel'):
@@ -118,7 +139,7 @@ class Cumulants(SimpleHawkes):
             l = Parallel(-1)(delayed(E_ijk)(self.N[i],self.N[j],self.N[k],-hM,0,self.time,self.L[i],self.L[j],self.L[k]) for i in range(d) for j in range(d) for k in range(d))
             self.E = np.array(l).reshape(d,d,d)
 
-
+    #@autojit
     def set_J(self, H=0.,method='parallel'):
         if H == 0.:
             hM = self.hMax
@@ -152,7 +173,7 @@ class Cumulants(SimpleHawkes):
             l = Parallel(-1)(delayed(E_ijk)(self.N[i],self.N[j],self.N[j],-hM,0,self.time,self.L[i],self.L[j],self.L[j]) for i in range(d) for j in range(d))
             self.E_c = np.array(l).reshape(d,d)
 
-    @autojit
+    #@autojit
     def set_H(self,method=0,N=1000):
         """
         Set the matrix parameter self.H using different heuristics.
@@ -174,28 +195,9 @@ class Cumulants(SimpleHawkes):
                     res = np.array(res)
                     self.H[i,j] = range_h[np.argmin(res)]
 
-
     def set_R_true(self,R_true):
         self.R_true = R_true
 
-    def set_C(self,H=0.,method='parallel'):
-        if H == 0.:
-            hM = self.hMax
-        else:
-            hM = H
-        d = self.dim
-        if method == 'classic':
-            self.C = np.zeros((d,d))
-            for i in range(d):
-                for j in range(d):
-                    self.C[i,j] = A_ij(self.N[i],self.N[j],-hM,hM,self.time,self.L[i],self.L[j])
-        elif method == 'parallel':
-            l = Parallel(-1)(delayed(A_ij)(self.N[i],self.N[j],-hM,hM,self.time,self.L[i],self.L[j]) for i in range(d) for j in range(d))
-            self.C = np.array(l).reshape(d,d)
-        # we keep the symmetric part to remove edge effects
-        self.C[:] = 0.5*(self.C + self.C.T)
-
-    @autojit
     def set_K(self,H=0.,method='classic'):
         if H == 0.:
             hM = self.hMax
@@ -211,7 +213,6 @@ class Cumulants(SimpleHawkes):
             self.set_F(H)
             self.K = self.F
 
-    @autojit
     def set_K_part(self,H=0.,method='classic'):
         if H == 0.:
             hM = self.hMax
@@ -242,10 +243,10 @@ class Cumulants(SimpleHawkes):
 
     def set_all(self,H=0.):
         print("Starting computation of full cumulants...")
-        self.set_C(H)
-        print("cumul.C is computed !")
         self.set_B(H)
         print("cumul.B is computed !")
+        self.set_C(H)
+        print("cumul.C is computed !")
         self.set_E(H)
         print("cumul.E is computed !")
         self.set_J(H)
@@ -254,13 +255,12 @@ class Cumulants(SimpleHawkes):
         print("cumul.K is computed !")
         print("All cumulants are computed !")
 
-
     def set_all_part(self,H=0.):
         print("Starting computation of partial cumulants...")
-        self.set_C(H)
-        print("cumul.C is computed !")
         self.set_B(H)
         print("cumul.B is computed !")
+        self.set_C(H)
+        print("cumul.C is computed !")
         self.set_E_c(H)
         print("cumul.E_c is computed !")
         self.set_J(H)
@@ -391,6 +391,8 @@ def E_ijk(Z_i,Z_j,Z_k,a,b,T,L_i,L_j,L_k):
     n_i = Z_i.shape[0]
     n_j = Z_j.shape[0]
     n_k = Z_k.shape[0]
+    trend_i = L_j*(b-a)
+    trend_j = L_j*(b-a)
     for t in range(n_k):
         tau = Z_k[t]
         if tau + a < 0: continue
@@ -421,7 +423,7 @@ def E_ijk(Z_i,Z_j,Z_k,a,b,T,L_i,L_j,L_k):
         # check if this step is admissible
         if y < n_j and x > 0 and v < n_i and u > 0:
             count += 1
-            res += (v-u-L_i*(b-a))*(y-x-L_j*(b-a))
+            res += (v-u-trend_i) * (y-x-trend_j)
     if count < n_k and count > 0:
         res *= n_k * 1. / count
     res /= T
@@ -469,4 +471,9 @@ def I_ij(Z_i,Z_j,H,T,L_i,L_j):
 if __name__ == "__main__":
     N = [np.sort(np.random.randint(0,100,size=20)),np.sort(np.random.randint(0,100,size=20))]
     cumul = Cumulants(N,hMax=10)
-    cumul.set_B()
+    cumul.set_all()
+    cumul.set_all_part()
+    print("cumul.C = ")
+    print(cumul.C)
+    print("cumul.J = ")
+    print(cumul.J)
