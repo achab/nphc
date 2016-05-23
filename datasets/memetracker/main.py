@@ -24,7 +24,7 @@ if not os.path.isdir(dir_name):
 
 if __name__ == '__main__':
 
-    import count_top, create_pp, true_G
+    from .processing import count_top, create_pp, true_G
 
     # counts the occurences of the sites
     def worker1(x):
