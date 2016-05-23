@@ -227,11 +227,8 @@ cumul.set_all()
 from scipy.linalg import inv
 R_true = inv(np.eye(d)-Phi_norm)
 cumul.set_R_true(R_true)
-cumul.set_C_th()
-cumul.set_K_th()
-cumul.set_B()
-cumul.set_K_part()
-cumul.set_K_part_th()
+cumul.set_all_part()
+cumul.set_all()
 
 
 # In[44]:
