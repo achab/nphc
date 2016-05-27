@@ -6,10 +6,10 @@ This repo contains two very different works:
 
 **NPHC3**: to uncover the causality
 
-# The optimization in NPHC3 is now done via *tensorflow*
+# Optimization in NPHC3 is done via TensorFlow
 
 See the file ```cumul2norms.py``` to understand how to use the library in our framework. 
 
 # Example of prediction:
 
-![Example](http://i.imgur.com/HrV5hDo.png?1)
+![Example](http://i.imgur.com/44M8qct.png?1)
