@@ -27,7 +27,7 @@ elif symmetric == 3:
 
 
 def worker(ix):
-    ix_str = ' ' + ix2str(ix)
+    ix_str = '_' + ix2str(ix)
     mu, Alpha, Beta, Gamma = args2params(mode, symmetric)
     kernels = params2kernels(kernel, Alpha, Beta, Gamma)
     cumul = simulate_and_compute_cumul(mu, kernels, Alpha, T, 20)
