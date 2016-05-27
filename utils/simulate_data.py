@@ -173,7 +173,7 @@ def simulate_and_compute_cumul(mu, kernels, Alpha, T, hM=20):
     h = hk.Hawkes(kernels=kernels, mus=list(mu))
     h.simulate(T)
     # use the class Cumulants
-    from utils.cumulants import Cumulants
+    from nphc.utils.cumulants import Cumulants
     N = h.get_full_process()
     cumul = Cumulants(N,hMax=hM)
     # compute everything
