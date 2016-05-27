@@ -6,15 +6,9 @@ This repo contains two very different works:
 
 **NPHC3**: to uncover the causality
 
-See notebooks to understand how to use the class *Cumulants* and estimation procedures.
+# The optimization in NPHC3 is now done via *tensorflow*
 
-## Dependencies
-
-* urllib2  or urllib
-
-* cPickle or pickle
-
-* packages included in Anaconda: numpy, scipy, numba
+See the file ```cumul2norms.py``` to understand how to use the library in our framework. 
 
 # Example of prediction:
 
