@@ -12,7 +12,7 @@ def args2params(mode, symmetric):
 
     if 'd10_sym' in mode:
         d = 10
-        mu = 0.01 * np.ones(d)
+        mu = 0.001 * np.ones(d)
         Alpha = np.zeros((d,d))
         Beta = np.zeros((d,d))
         Alpha[:d/2,:d/2] += 1.
@@ -29,7 +29,7 @@ def args2params(mode, symmetric):
 
     elif mode == 'd10_nonsym_1':
         d = 10
-        mu = 0.01 * np.ones(d)
+        mu = 0.001 * np.ones(d)
         Alpha = np.zeros((d,d))
         Beta = np.zeros((d,d))
         for i in range(5):
@@ -47,7 +47,7 @@ def args2params(mode, symmetric):
 
     elif mode == 'd10_nonsym_2':
         d = 10
-        mu = 0.01 * np.ones(d)
+        mu = 0.001 * np.ones(d)
         Alpha = np.zeros((d,d))
         Gamma = np.zeros((d,d))
         for i in range(5):
@@ -66,7 +66,7 @@ def args2params(mode, symmetric):
 
     elif 'd100_sym' in mode:
         d = 100
-        mu = 0.01 * np.ones(d)
+        mu = 0.001 * np.ones(d)
         Alpha = np.zeros((d,d))
         Beta = np.zeros((d,d))
         Alpha[:d/2,:d/2] += 1.
@@ -83,7 +83,7 @@ def args2params(mode, symmetric):
 
     elif mode == 'd100_nonsym_1':
         d = 100
-        mu = 0.01 * np.ones(d)
+        mu = 0.001 * np.ones(d)
         Alpha = np.zeros((d,d))
         Beta = np.zeros((d,d))
         for i in range(50):
@@ -106,7 +106,7 @@ def args2params(mode, symmetric):
 
     elif mode == 'd100_nonsym_2':
         d = 100
-        mu = 0.01 * np.ones(d)
+        mu = 0.001 * np.ones(d)
         Alpha = np.zeros((d,d))
         Gamma = np.zeros((d,d))
         for i in range(50):
