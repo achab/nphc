@@ -1,5 +1,5 @@
 from multiprocessing import Pool
-from utils.simulate_data import args2params, params2kernels, simulate_and_compute_cumul, save
+from nphc.utils.simulate_data import args2params, params2kernels, simulate_and_compute_cumul, save
 import numpy as np
 
 def ix2str(ix):
