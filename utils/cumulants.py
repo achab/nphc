@@ -213,24 +213,17 @@ class Cumulants(SimpleHawkes):
             self.set_F(H)
             self.K = self.F
 
-    def set_K_part(self,H=0.,method='classic',submethod='parallel'):
+    def set_K_part(self,H=0.,method='classic'):
         if H == 0.:
             hM = self.hMax
         else:
             hM = H
         if method == 'classic':
-            if self.K_part is None:
-                assert self.B is not None, "You should first set B using the function 'set_B'."
-                assert self.E_c is not None, "You should first set E using the function 'set_E_c'."
-                assert self.J is not None, "You should first set J using the function 'set_J'."
-                assert self.C is not None, "You should first set C using the function 'set_C'."
-                self.K_part = get_K_part(self.B,self.E_c,self.J,self.C,self.L,hM)
-            else:
-                self.set_B(hM,method=submethod)
-                self.set_C(hM,method=submethod)
-                self.set_E_c(hM,method=submethod)
-                self.set_J(hM,method=submethod)
-                self.K_part = get_K_part(self.B,self.E_c,self.J,self.C,self.L,hM)
+            assert self.B is not None, "You should first set B using the function 'set_B'."
+            assert self.E_c is not None, "You should first set E using the function 'set_E_c'."
+            assert self.J is not None, "You should first set J using the function 'set_J'."
+            assert self.C is not None, "You should first set C using the function 'set_C'."
+            self.K_part = get_K_part(self.B,self.E_c,self.J,self.C,self.L,hM)
         elif method == 'new':
             self.set_F_c(H)
             self.K_part = self.F_c

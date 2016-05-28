@@ -22,6 +22,6 @@ def load_data(url):
         print('... loading data')
     import gzip
     f = gzip.open(dataset, 'rb')
-    cumul = pickle.load(f)
+    data = pickle.load(f)
     f.close()
-    return cumul
+    return data
