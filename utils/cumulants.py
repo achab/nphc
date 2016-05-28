@@ -213,7 +213,7 @@ class Cumulants(SimpleHawkes):
             self.set_F(H)
             self.K = self.F
 
-    def set_K_part(self,H=0.,method='classic'):
+    def set_K_part(self,H=0.,method='classic',submethod='parallel'):
         if H == 0.:
             hM = self.hMax
         else:
@@ -226,10 +226,10 @@ class Cumulants(SimpleHawkes):
                 assert self.C is not None, "You should first set C using the function 'set_C'."
                 self.K_part = get_K_part(self.B,self.E_c,self.J,self.C,self.L,hM)
             else:
-                self.set_B(hM)
-                self.set_C(hM)
-                self.set_E_c(hM)
-                self.set_J(hM)
+                self.set_B(hM,method=submethod)
+                self.set_C(hM,method=submethod)
+                self.set_E_c(hM,method=submethod)
+                self.set_J(hM,method=submethod)
                 self.K_part = get_K_part(self.B,self.E_c,self.J,self.C,self.L,hM)
         elif method == 'new':
             self.set_F_c(H)
