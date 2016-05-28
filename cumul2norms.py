@@ -12,8 +12,8 @@ cumul, Alpha, Beta, Gamma = load_data(url)
 
 # Params
 alpha = 1.
-learning_rate = 5e5
-training_epochs = 5000
+learning_rate = 1e0
+training_epochs = 20000
 display_step = 100
 d = cumul.dim
 
@@ -33,7 +33,7 @@ activation_2 = tf.matmul(R,tf.matmul(tf.diag(L),R,transpose_b=True))
 cost = tf.reduce_mean(tf.square(activation_3 - K_c)) + alpha*tf.reduce_mean(tf.square(activation_2 - C))
 #optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost)
 #optimizer = tf.train.AdagradOptimizer(learning_rate).minimize(cost)
-optimizer = tf.train.AdadeltaOptimizer(learning_rate).minimize(cost)
+optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
 
 # Initialize the variables
 init = tf.initialize_all_variables()

@@ -165,13 +165,17 @@ class Cumulants(SimpleHawkes):
             hM = H
         d = self.dim
         if method == 'classic':
-            self.E_c = np.zeros((d,d))
+            self.E_c = np.zeros((d,d,2))
             for i in range(d):
                 for j in range(d):
-                    self.E_c[i,j] = E_ijk(self.N[i],self.N[j],self.N[j],-hM,0,self.time,self.L[i],self.L[j],self.L[j])
+                    self.E_c[i,j,0] = E_ijk(self.N[i],self.N[j],self.N[j],-hM,0,self.time,self.L[i],self.L[j],self.L[j])
+                    self.E_c[i,j,1] = E_ijk(self.N[i],self.N[i],self.N[j],-hM,0,self.time,self.L[i],self.L[i],self.L[j])
         elif method == 'parallel':
-            l = Parallel(-1)(delayed(E_ijk)(self.N[i],self.N[j],self.N[j],-hM,0,self.time,self.L[i],self.L[j],self.L[j]) for i in range(d) for j in range(d))
-            self.E_c = np.array(l).reshape(d,d)
+            l1 = Parallel(-1)(delayed(E_ijk)(self.N[i],self.N[j],self.N[j],-hM,0,self.time,self.L[i],self.L[j],self.L[j]) for i in range(d) for j in range(d))
+            l2 = Parallel(-1)(delayed(E_ijk)(self.N[i],self.N[i],self.N[j],-hM,0,self.time,self.L[i],self.L[i],self.L[j]) for i in range(d) for j in range(d))
+            self.E_c = np.zeros((d,d,2))
+            self.E_c[:,:,0] = np.array(l1).reshape(d,d)
+            self.E_c[:,:,1] = np.array(l2).reshape(d,d)
 
     #@autojit
     def set_H(self,method=0,N=1000):
@@ -290,9 +294,10 @@ def get_K_part(B,E_c,J,C,L,H):
     K_part = B.T
     K_part += np.diag(L)
     K_part += 2*np.diag(np.diag(B))
-    M_c = np.einsum('j,ij->ij',L,H*C-2*J)
-    K_part += 2*(E_c-M_c)
-    K_part += (E_c-M_c).T
+    M_c_1 = np.einsum('j,ij->ij',L,H*C-2*J)
+    M_c_2 = np.einsum('i,jj->ij',L,H*C-2*J)
+    K_part += 2*(E_c[:,:,0]-M_c_1)
+    K_part += E_c[:,:,1].T-M_c_2
     return K_part
 
 
