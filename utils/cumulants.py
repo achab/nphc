@@ -230,6 +230,7 @@ class Cumulants(SimpleHawkes):
                 self.set_C(hM)
                 self.set_E_c(hM)
                 self.set_J(hM)
+                self.K_part = get_K_part(self.B,self.E_c,self.J,self.C,self.L,hM)
         elif method == 'new':
             self.set_F_c(H)
             self.K_part = self.F_c
