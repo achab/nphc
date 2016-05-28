@@ -74,8 +74,8 @@ class Cumulants(SimpleHawkes):
         self.F_c = np.zeros((d,d))
         for i in range(d):
             for j in range(d):
-                    self.F_c[i,j] = 2 * ( E_ijk(self.N[j],self.N[i],self.N[j],-hM,hM,self.time,self.L[j],self.L[i],self.L[j]) - self.L[j]*(2*hM*A_ij(self.N[i],self.N[j],-2*hM,2*hM,self.time,self.L[i],self.L[j]) - I_ij(self.N[j],self.N[i],2*hM,self.time,self.L[j],self.L[i]) ) )
-                    self.F_c[i,j] += E_ijk(self.N[j],self.N[j],self.N[i],-hM,hM,self.time,self.L[j],self.L[j],self.L[i]) - self.L[i]*(2*hM*A_ij(self.N[j],self.N[j],-2*hM,2*hM,self.time,self.L[j],self.L[j])  - 2*I_ij(self.N[j],self.N[j],2*hM,self.time,self.L[j],self.L[j]))
+                self.F_c[i,j] = 2 * ( E_ijk(self.N[j],self.N[i],self.N[j],-hM,hM,self.time,self.L[j],self.L[i],self.L[j]) - self.L[j]*(2*hM*A_ij(self.N[i],self.N[j],-2*hM,2*hM,self.time,self.L[i],self.L[j]) - I_ij(self.N[j],self.N[i],2*hM,self.time,self.L[j],self.L[i]) ) )
+                self.F_c[i,j] += E_ijk(self.N[j],self.N[j],self.N[i],-hM,hM,self.time,self.L[j],self.L[j],self.L[i]) - self.L[i]*(2*hM*A_ij(self.N[j],self.N[j],-2*hM,2*hM,self.time,self.L[j],self.L[j])  - 2*I_ij(self.N[j],self.N[j],2*hM,self.time,self.L[j],self.L[j]))
         self.F_c /= 3
 
     #########
@@ -219,11 +219,17 @@ class Cumulants(SimpleHawkes):
         else:
             hM = H
         if method == 'classic':
-            assert self.B is not None, "You should first set B using the function 'set_B'."
-            assert self.E_c is not None, "You should first set E using the function 'set_E_c'."
-            assert self.J is not None, "You should first set J using the function 'set_J'."
-            assert self.C is not None, "You should first set C using the function 'set_C'."
-            self.K_part = get_K_part(self.B,self.E_c,self.J,self.C,self.L,hM)
+            if self.K_part is None:
+                assert self.B is not None, "You should first set B using the function 'set_B'."
+                assert self.E_c is not None, "You should first set E using the function 'set_E_c'."
+                assert self.J is not None, "You should first set J using the function 'set_J'."
+                assert self.C is not None, "You should first set C using the function 'set_C'."
+                self.K_part = get_K_part(self.B,self.E_c,self.J,self.C,self.L,hM)
+            else:
+                self.set_B(hM)
+                self.set_C(hM)
+                self.set_E_c(hM)
+                self.set_J(hM)
         elif method == 'new':
             self.set_F_c(H)
             self.K_part = self.F_c
