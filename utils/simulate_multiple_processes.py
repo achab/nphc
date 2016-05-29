@@ -1,4 +1,3 @@
-from multiprocessing import Pool
 from nphc.utils.simulate_data import args2params, params2kernels, simulate_and_compute_cumul, save
 import numpy as np
 
@@ -33,9 +32,9 @@ def worker(ix):
     cumul = simulate_and_compute_cumul(mu, kernels, Alpha, T, 20)
     save(cumul, Alpha, Beta, Gamma, kernel, mode, T, suffix=ix_str)
 
-if __name__ == '__main__':
 
-    indices = np.arange(100)
-    pool = Pool()
-    pool.map(worker,indices)
+indices = np.arange(100)
 
+for ind in indices:
+    worker(ind)
+    print("Done for i =", ind)
