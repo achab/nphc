@@ -1,5 +1,5 @@
 import numpy as np
-from nphc.utils.cumulants import Cumulants, get_K_th, get_K_part_th, get_C_th
+from nphc.utils.cumulants import Cumulants, get_K_c_th, get_C_th
 from numba import autojit
 from nphc.utils.prox import prox_zero
 from nphc.utils.metrics import mse_K, rel_err
@@ -47,6 +47,7 @@ def grad_ij_second_order_norm(cumul,R,i,j):
     k_ij = np.sum(L * R[i] * R[j])
     return (k_ij - C[i,j]) * grad
 
+'''
 def grad_third_order_norm(cumul,R):
     d = cumul.dim
     L = cumul.L
@@ -97,7 +98,7 @@ def grad_ij_part_third_order_norm(cumul,R,i,j):
     grad *= 2.
     k_iij = np.sum(C[j]*R[i]**2 + 2*R[i]*C[i]*R[j] - 2*L*R[j]*R[i]**2)
     return (k_iij- K_part[i,j])*grad
-
+'''
 #####################################
 # a closure to update metrics saved #
 #####################################

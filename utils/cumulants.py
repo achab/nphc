@@ -196,20 +196,6 @@ def get_C_th(L, R):
     return np.dot(R,np.dot(np.diag(L),R.T))
 
 @autojit
-def get_K_th(L,C,R):
-    d = len(L)
-    if R.shape[0] == d**2:
-        R_ = R.reshape(d,d)
-    else:
-        R_ = R.copy()
-    K1 = np.einsum('im,jm,km->ijk',C,R_,R_)
-    K = K1.copy()
-    K += np.einsum('jki',K1)
-    K += np.einsum('kij',K1)
-    K -= 2*np.einsum('m,im,jm,km->ijk',L,R_,R_,R_)
-    return K
-
-@autojit
 def get_K_c_th(L,C,R):
     d = len(L)
     if R.shape[0] == d**2:
@@ -364,7 +350,6 @@ if __name__ == "__main__":
     N = [np.sort(np.random.randint(0,100,size=20)),np.sort(np.random.randint(0,100,size=20))]
     cumul = Cumulants(N,hMax=10)
     cumul.set_all()
-    cumul.set_all_part()
     print("cumul.C = ")
     print(cumul.C)
     print("cumul.J = ")
