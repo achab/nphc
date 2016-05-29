@@ -181,9 +181,7 @@ def simulate_and_compute_cumul(mu, kernels, Alpha, T, hM=20):
     d = Alpha.shape[0]
     R_true = inv(np.eye(d)-Alpha)
     cumul.set_R_true(R_true)
-    cumul.set_all_part()
-    cumul.set_C_th()
-    cumul.set_K_part_th()
+    cumul.set_all()
 
     from nphc.utils.metrics import rel_err
     print("rel_err on C = ", rel_err(cumul.C_th,cumul.C))
