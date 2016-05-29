@@ -294,7 +294,7 @@ def get_K_part(B,E_c,J,C,L,H):
     K_part = B.T
     K_part += np.diag(L)
     K_part += 2*np.diag(np.diag(B))
-    M_c_1 = np.einsum('j,ij->ij',L,H*C-2*J)
+    M_c_1 = np.einsum('j,ij->ij',L,H*C-2*J.T)
     M_c_2 = np.einsum('i,jj->ij',L,H*C-2*J)
     K_part += 2*(E_c[:,:,0]-M_c_1)
     K_part += E_c[:,:,1].T-M_c_2

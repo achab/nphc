@@ -11,7 +11,7 @@ url = 'https://s3-eu-west-1.amazonaws.com/nphc-data/{}_{}_log10T{}_with_params_w
 cumul, Alpha, Beta, Gamma = load_data(url)
 
 # Params
-alpha = 1.
+alpha = 0.01
 learning_rate = 1e0
 training_epochs = 20000
 display_step = 100
