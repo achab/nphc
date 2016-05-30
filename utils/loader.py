@@ -22,6 +22,6 @@ def load_data(url):
         print('... loading data')
     import gzip
     f = gzip.open(dataset, 'rb')
-    data = pickle.load(f)
+    data = pickle.load(f,encoding='latin1')
     f.close()
     return data
