@@ -185,8 +185,7 @@ def simulate_and_compute_cumul(mu, kernels, Alpha, T, hM=20):
 
     from nphc.utils.metrics import rel_err
     print("rel_err on C = ", rel_err(cumul.C_th,cumul.C))
-    print("rel_err on K = ", rel_err(cumul.K_part_th,cumul.K_part))
-    print("rel_err on K_part = ", rel_err(cumul.K_part_th,cumul.K_part))
+    print("rel_err on K_c = ", rel_err(cumul.K_c_th,cumul.K_c))
 
     return cumul
 

@@ -47,5 +47,5 @@ def mse_K_c(cumul, R):
         R_ = R.reshape(d,d)
     else:
         R_ = R.copy()
-    K_part_from_R = get_K_c_th(cumul.L,cumul.C,R_)
-    return .5/(cumul.dim**2) * sq_frobenius(cumul.K_part - K_part_from_R)
+    K_c_from_R = get_K_c_th(cumul.L,cumul.C,R_)
+    return .5/(cumul.dim**2) * sq_frobenius(cumul.K_c - K_c_from_R)

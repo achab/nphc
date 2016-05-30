@@ -5,7 +5,7 @@ from utils.cumulants import Cumulants
 
 def worker(infos):
     """
-    Recompute K or K_part for a given dataset
+    Recompute K or K_c for a given dataset
     infos = (filename, mode) with mode \in { 'full', 'part' }
     """
     filename, mode = infos

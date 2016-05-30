@@ -14,9 +14,9 @@ def worker(infos):
     cumul.set_all_part(H)
     # append errors
     err_C = rel_err(cumul.C_th,cumul.C)
-    err_K_part = rel_err(cumul.K_part_th,cumul.K_part)
+    err_K_c = rel_err(cumul.K_c_th,cumul.K_c)
     print("Done for ",filename," and for = ",H,)
-    return filename, H, err_C, err_K_part
+    return filename, H, err_C, err_K_c
 
 
 if __name__ == '__main__':
@@ -32,4 +32,4 @@ if __name__ == '__main__':
     results = pool.map(worker,list_infos)
 
     import pandas as pd
-    pd.DataFrame(results,columns=['name','H','err_C','err_K_part']).to_csv('err_results.csv')
+    pd.DataFrame(results,columns=['name','H','err_C','err_K_c']).to_csv('err_results.csv')

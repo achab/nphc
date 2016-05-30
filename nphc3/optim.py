@@ -47,58 +47,7 @@ def grad_ij_second_order_norm(cumul,R,i,j):
     k_ij = np.sum(L * R[i] * R[j])
     return (k_ij - C[i,j]) * grad
 
-'''
-def grad_third_order_norm(cumul,R):
-    d = cumul.dim
-    L = cumul.L
-    C = cumul.C
-    K_from_R = get_K_th(L,C,R)
-    diff_K = K_from_R - cumul.K
-    res = np.zeros((d,d))
-    for idx in ['ijk','kij','jki']:
-        res += np.einsum(idx+',im,jm->km',diff_K,R,C)
-        res += np.einsum(idx+',im,jm->km',diff_K,C,R)
-        res -= 2*np.einsum(idx+',m,im,jm->km',diff_K,L,R,R)
-    return 1./(d**3)*res
 
-def grad_ijk_third_order_norm(cumul,R,i,j,k):
-    d = cumul.dim
-    C = cumul.C
-    L = cumul.L
-    K = cumul.K
-    grad = np.zeros((d,d))
-    grad[i] = R[j]*C[k] + R[k]*C[j] - 2*L*R[j]*R[k]
-    grad[j] = R[i]*C[k] + R[k]*C[i] - 2*L*R[i]*R[k]
-    grad[k] = R[i]*C[j] + R[j]*C[i] - 2*L*R[i]*R[j]
-    k_ijk = np.sum(R[i]*R[j]*C[k] + R[i]*C[j]*R[k] + C[i]*R[j]*R[k] - 2*L*R[i]*R[j]*R[k])
-    return (k_ijk - K[i,j,k])*grad
-
-
-def grad_part_third_order_norm(cumul,R):
-    d = cumul.dim
-    L = cumul.L
-    C = cumul.C
-    K_part_from_R = get_K_part_th(L,C,R)
-    diff_K = K_part_from_R - cumul.K_part
-    res = np.einsum('ij,im,jm->im',diff_K,R,C)
-    res += np.einsum('ij,im,jm->im',diff_K,C,R)
-    res -= 2*np.einsum('ij,m,im,jm->im',diff_K,L,R,R)
-    res += np.einsum('ij,im->jm',diff_K,R*C)
-    res -= np.einsum('ij,m,im->jm',diff_K,L,R**2)
-    return 2./(d**2)*res
-
-def grad_ij_part_third_order_norm(cumul,R,i,j):
-    d = cumul.dim
-    C = cumul.C
-    L = cumul.L
-    K_part = cumul.K_part
-    grad = np.zeros((d,d))
-    grad[i] = R[i]*C[j] + R[j]*C[i] - 2*L*R[i]*R[j]
-    grad[j] = R[i]*C[i] - 2*L*R[i]**2
-    grad *= 2.
-    k_iij = np.sum(C[j]*R[i]**2 + 2*R[i]*C[i]*R[j] - 2*L*R[j]*R[i]**2)
-    return (k_iij- K_part[i,j])*grad
-'''
 #####################################
 # a closure to update metrics saved #
 #####################################

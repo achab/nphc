@@ -54,12 +54,12 @@ with tf.Session() as sess:
     # Training cycle
     for epoch in range(training_epochs):
         # Fit training using batch data
-        sess.run(optimizer, feed_dict={L: cumul.L, C: cumul.C, K_c: cumul.K_part})
-        avg_cost = sess.run(cost, feed_dict={L: cumul.L, C: cumul.C, K_c: cumul.K_part})
+        sess.run(optimizer, feed_dict={L: cumul.L, C: cumul.C, K_c: cumul.K_c})
+        avg_cost = sess.run(cost, feed_dict={L: cumul.L, C: cumul.C, K_c: cumul.K_c})
         if epoch % display_step == 0:
             print("Epoch:", '%04d' % (epoch), "log10(cost)=", "{:.9f}".format(np.log10(avg_cost)))
         # Write logs at every iteration
-        summary_str = sess.run(merged_summary_op, feed_dict={L: cumul.L, C: cumul.C, K_c: cumul.K_part})
+        summary_str = sess.run(merged_summary_op, feed_dict={L: cumul.L, C: cumul.C, K_c: cumul.K_c})
         summary_writer.add_summary(summary_str, epoch)
 
     print("Optimization Finished!")
