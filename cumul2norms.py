@@ -6,14 +6,14 @@ import numpy as np
 # Load Cumulants object
 kernel = 'exp_d100'
 mode = 'nonsym_1'
-log10T = 9 
+log10T = 10 
 url = 'https://s3-eu-west-1.amazonaws.com/nphc-data/{}_{}_log10T{}_with_params_without_N.pkl.gz'.format(kernel, mode, log10T)
 cumul, Alpha, Beta, Gamma = load_data(url)
 
 # Params
-alpha = 0.01
+alpha = 5.
 learning_rate = 1e0
-training_epochs = 20000
+training_epochs = 50000
 display_step = 100
 d = cumul.dim
 
@@ -23,7 +23,9 @@ C = tf.placeholder('float', (d, d), name='C')
 K_c = tf.placeholder('float', (d, d), name='K_c')
 
 # Set model weight
-R = tf.Variable(tf.ones([d,d]), name='R')
+#R = tf.Variable(tf.ones([d,d]), name='R')
+arr = tf.constant([[float(i+j*d)/(d**2) for i in range(d)] for j in range(d)], shape=[d,d])
+R = tf.Variable(arr, name='R')
 
 # Construct model
 activation_3 = tf.matmul(R*R,C,transpose_b=True) + tf.matmul(2*R*C,R,transpose_b=True) - tf.matmul(2*R*R,tf.matmul(tf.diag(L),R,transpose_b=True))
