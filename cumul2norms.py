@@ -6,9 +6,12 @@ import numpy as np
 # Load Cumulants object
 kernel = 'exp_d100'
 mode = 'nonsym_1'
-log10T = 10 
+log10T = 10
 url = 'https://s3-eu-west-1.amazonaws.com/nphc-data/{}_{}_log10T{}_with_params_without_N.pkl.gz'.format(kernel, mode, log10T)
-cumul, Alpha, Beta, Gamma = load_data(url)
+try:
+    cumul, Alpha, Beta, Gamma = load_data(url)
+except:
+    cumul, Beta = load_data(url)
 
 # Params
 alpha = 5.
