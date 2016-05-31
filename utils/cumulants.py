@@ -158,7 +158,7 @@ class Cumulants(SimpleHawkes):
     def set_all(self,H=0.):
         print("Starting computation of integrated cumulants...")
         self.set_C(H)
-        print("cumul.B is computed !")
+        print("cumul.C is computed !")
         self.set_E_c(H)
         print("cumul.E_c is computed !")
         self.set_J(H)
