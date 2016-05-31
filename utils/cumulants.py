@@ -14,7 +14,7 @@ class SimpleHawkes(object):
         else:
             self.N = N
         self.L = np.empty(self.dim)
-        self.time = max([x[-1] for x in N if x is not None and len(x) > 0]) * (self.dim > 0)
+        self.time = max([x[-1]-x[0] for x in N if x is not None and len(x) > 0]) * (self.dim > 0)
         self.set_L()
 
     def set_L(self):
