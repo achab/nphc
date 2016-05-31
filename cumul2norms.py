@@ -1,5 +1,5 @@
-from nphc.utils.cumulants import Cumulants
-from nphc.utils.loader import load_data
+from utils.cumulants import Cumulants
+from utils.loader import load_data
 import tensorflow as tf
 import numpy as np
 
