@@ -4,9 +4,9 @@ import tensorflow as tf
 import numpy as np
 
 # Load Cumulants object
-kernel = 'plaw_d10'
+kernel = 'exp_d100'
 mode = 'nonsym_1'
-log10T = 9
+log10T = 10
 url = 'https://s3-eu-west-1.amazonaws.com/nphc-data/{}_{}_log10T{}_with_params_without_N.pkl.gz'.format(kernel, mode, log10T)
 try:
     cumul, Alpha, Beta, Gamma = load_data(url)
@@ -14,9 +14,9 @@ except:
     cumul, Beta = load_data(url)
 
 # Params
-alpha = 5.
-learning_rate = 1e0
-training_epochs = 50000
+alpha = 10.
+learning_rate = 3e2
+training_epochs = 20000
 display_step = 100
 d = cumul.dim
 
@@ -27,8 +27,9 @@ K_c = tf.placeholder('float', (d, d), name='K_c')
 
 # Set model weight
 #R = tf.Variable(tf.ones([d,d]), name='R')
-arr = tf.constant([[float(i+j*d)/(d**2) for i in range(d)] for j in range(d)], shape=[d,d])
-R = tf.Variable(arr, name='R')
+#initial = tf.constant([[float(i+j*d)/(d**2) for i in range(d)] for j in range(d)], shape=[d,d])
+initial = tf.truncated_normal(shape=[d,d], stddev=0.1)
+R = tf.Variable(initial, name='R')
 
 # Construct model
 activation_3 = tf.matmul(R*R,C,transpose_b=True) + tf.matmul(2*R*C,R,transpose_b=True) - tf.matmul(2*R*R,tf.matmul(tf.diag(L),R,transpose_b=True))
@@ -39,6 +40,7 @@ cost = tf.reduce_mean(tf.square(activation_3 - K_c)) + alpha*tf.reduce_mean(tf.s
 #optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost)
 #optimizer = tf.train.AdagradOptimizer(learning_rate).minimize(cost)
 optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
+#optimizer = tf.train.MomentumOptimizer(learning_rate, momentum=0.95).minimize(cost)
 
 # Initialize the variables
 init = tf.initialize_all_variables()
