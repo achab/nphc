@@ -31,11 +31,11 @@ K_c = tf.placeholder('float', (d,d), name='K_c')
 R = tf.get_variable('R',shape=[d,d],initializer=tf.contrib.layers.xavier_initializer())
 
 # Construct model
-activation_3 = tf.matmul(R*R,C,transpose_b=True) + tf.matmul(2*R*C,R,transpose_b=True) - tf.matmul(2*R*R,tf.matmul(tf.diag(L),R,transpose_b=True))
+activation_3 = tf.sub(tf.add(tf.matmul(tf.square(R),C,transpose_b=True), tf.matmul(tf.scalar_mul(2.0,tf.mul(R,C)),R,transpose_b=True)), tf.matmul(tf.scalar_mul(2.0,tf.square(R)),tf.matmul(tf.diag(L),R,transpose_b=True)))
 activation_2 = tf.matmul(R,tf.matmul(tf.diag(L),R,transpose_b=True))
 
 # Minimize error
-cost = tf.reduce_mean(tf.square( tf.sub (activation_3, K_c) )) + alpha*tf.reduce_mean(tf.square( tf.sub(activation_2, C)) )
+cost = tf.add( tf.reduce_mean( tf.squared_difference( activation_3, K_c ) ), tf.scalar_mul( alpha, tf.reduce_mean( tf.squared_difference( activation_2, C ) ) ) )
 #optimizer = tf.train.AdagradOptimizer(learning_rate).minimize(cost) # 4e9 is a good learning rate for Glorot initialization
 #optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
 optimizer = tf.train.MomentumOptimizer(learning_rate, momentum=0.95).minimize(cost) # 4e9 is a good learning rate for Glorot initialization

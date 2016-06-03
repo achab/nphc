@@ -23,35 +23,39 @@ L = tf.placeholder('float', d, name='L')
 C = tf.placeholder('float', (d, d), name='C')
 K_c = tf.placeholder('float', (d, d), name='K_c')
 
-K_c_ij = tf.placeholder('float', name='K_c_ij')
-C_ij = tf.placeholder('float', name='C_ij')
-ind_i = tf.placeholder(tf.int32, shape=[2])
-ind_j = tf.placeholder(tf.int32, shape=[2])
+ind_i = tf.placeholder(tf.int32, shape=[1], name='ind_i')
+ind_j = tf.placeholder(tf.int32, shape=[1], name='ind_j')
+ind_ij = tf.placeholder(tf.int32, shape=[1,2], name='ind_ij')
+
+C_i = tf.gather(C, ind_i)
+C_j = tf.gather(C, ind_j)
+C_ij = tf.gather_nd(C, ind_ij)
+K_c_ij = tf.gather_nd(K_c, ind_ij)
 
 # Set model weight
-#R = tf.Variable(tf.ones([d,d]), name='R')
+import gzip, pickle
+f = gzip.open('out_sto.pkl.gz', 'rb')
+initial = pickle.load(f)
+f.close()
 #initial = tf.constant([[float(i+j*d)/(d**2) for i in range(d)] for j in range(d)], shape=[d,d])
-#initial = tf.truncated_normal(shape=[d,d], stddev=0.1)
-#R = tf.Variable(initial, name='R')
-R = tf.get_variable('R',shape=[d,d],initializer=tf.contrib.layers.xavier_initializer())
+initial = tf.constant(cumul.C.astype(np.float32), shape=[d,d])
+R = tf.Variable(initial, name='R')
+#R = tf.get_variable('R',shape=[d,d],initializer=tf.contrib.layers.xavier_initializer())
 
 # Construct model
-#C_ind_i = tf.slice(C, ind_i, [1,d])
-#C_ind_j = tf.slice(C, ind_j, [1,d])
-C_ind_i = tf.placeholder('float', d, name='C_ind_i')
-C_ind_j = tf.placeholder('float', d, name='C_ind_j')
-R_ind_i = tf.slice(R, ind_i, [1,d])
-R_ind_j = tf.slice(R, ind_j, [1,d])
-act_3_ij = tf.reduce_sum( tf.sub( tf.add( tf.mul( C_ind_j, tf.square( R_ind_i) ) , tf.scalar_mul(2.0, tf.mul( tf.mul( R_ind_i, C_ind_i ), R_ind_j ) ) ), tf.scalar_mul(2.0, tf.mul( tf.mul( L, R_ind_j ), tf.square( R_ind_i ) ) ) ) )
-act_2_ij = tf.reduce_sum( tf.mul( tf.mul( L, R_ind_i ), R_ind_j ) )
+R_i = tf.gather(R, ind_i)
+R_j = tf.gather(R, ind_j)
+
+act_3_ij = tf.reduce_sum( tf.sub( tf.add( tf.mul( C_j, tf.square( R_i) ) , tf.scalar_mul(2.0, tf.mul( tf.mul( R_i, C_i ), R_j ) ) ), tf.scalar_mul(2.0, tf.mul( tf.mul( L, R_j ), tf.square( R_i ) ) ) ) )
+act_2_ij = tf.reduce_sum( tf.mul( tf.mul( L, R_i ), R_j ) )
 
 # Minimize error
-activation_3 = tf.matmul(R*R,C,transpose_b=True) + tf.matmul(2*R*C,R,transpose_b=True) - tf.matmul(2*R*R,tf.matmul(tf.diag(L),R,transpose_b=True))
+activation_3 = tf.sub(tf.add(tf.matmul(tf.square(R),C,transpose_b=True), tf.matmul(tf.scalar_mul(2.0,tf.mul(R,C)),R,transpose_b=True)), tf.matmul(tf.scalar_mul(2.0,tf.square(R)),tf.matmul(tf.diag(L),R,transpose_b=True)))
 activation_2 = tf.matmul(R,tf.matmul(tf.diag(L),R,transpose_b=True))
 cost = tf.add( tf.reduce_mean( tf.squared_difference( activation_3, K_c) ), tf.scalar_mul(alpha, tf.reduce_mean( tf.squared_difference( activation_2, C ) ) ) )
 sub_cost = tf.add( tf.reduce_mean(tf.squared_difference( act_3_ij, K_c_ij ) ), tf.scalar_mul( alpha, tf.reduce_mean( tf.squared_difference( act_2_ij, C_ij ) ) ) )
-#optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
-#optimizer = tf.train.AdagradOptimizer(learning_rate).minimize(cost)
+#optimizer = tf.train.AdamOptimizer(learning_rate).minimize(sub_cost)
+#optimizer = tf.train.AdagradOptimizer(learning_rate).minimize(sub_cost)
 optimizer = tf.train.MomentumOptimizer(learning_rate, momentum=0.95).minimize(sub_cost)
 
 # Initialize the variables
@@ -63,6 +67,8 @@ init = tf.initialize_all_variables()
 # Merge all summaries to a single operator
 #merged_summary_op = tf.merge_all_summaries()
 
+from time import time
+
 # Launch the graph
 with tf.Session() as sess:
     sess.run(init)
@@ -72,16 +78,18 @@ with tf.Session() as sess:
 
     # Training cycle
     for epoch in range(training_epochs):
-        for (i, j) in product(range(d), repeat=2):
+        start = time()
+        for (i, j) in enumerate(product(range(d), repeat=2)):
         # Fit training using batch data
-            sess.run(optimizer, feed_dict={L: cumul.L, C_ij: cumul.C[i,j], K_c_ij: cumul.K_c[i,j], ind_i: [i,0], ind_j: [j,0], C_ind_i: cumul.C[i], C_ind_j: cumul.C[j]})
-        #if epoch % display_step == 0:
-            if j == 0:
-                avg_cost = sess.run(cost, feed_dict={L: cumul.L, C: cumul.C, K_c: cumul.K_c})
-                print("Epoch:", '%04d' % (epoch), "log10(cost)=", "{:.9f}".format(np.log10(avg_cost)))
+            sess.run(optimizer, feed_dict={L: cumul.L, C: cumul.C, K_c: cumul.K_c, ind_i: [i], ind_j: [j], ind_ij: [[i,j]]})
+        if epoch % display_step == 0:
+            avg_cost = sess.run(cost, feed_dict={L: cumul.L, C: cumul.C, K_c: cumul.K_c})
+            print("Epoch:", '%04d' % (epoch), "log10(cost)=", "{:.9f}".format(np.log10(avg_cost)))
         # Write logs at every iteration
         #summary_str = sess.run(merged_summary_op, feed_dict={L: cumul.L, C: cumul.C, K_c: cumul.K_c})
         #summary_writer.add_summary(summary_str, epoch)
+        elapsed = time() - start
+        print("Epoch {} lasted {0:.2f} seconds !".format(epoch, elapsed))
 
     print("Optimization Finished!")
 
