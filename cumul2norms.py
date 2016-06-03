@@ -35,7 +35,7 @@ activation_3 = tf.matmul(R*R,C,transpose_b=True) + tf.matmul(2*R*C,R,transpose_b
 activation_2 = tf.matmul(R,tf.matmul(tf.diag(L),R,transpose_b=True))
 
 # Minimize error
-cost = tf.reduce_mean(tf.square(activation_3 - K_c)) + alpha*tf.reduce_mean(tf.square(activation_2 - C))
+cost = tf.reduce_mean(tf.square( tf.sub (activation_3, K_c) )) + alpha*tf.reduce_mean(tf.square( tf.sub(activation_2, C)) )
 #optimizer = tf.train.AdagradOptimizer(learning_rate).minimize(cost) # 4e9 is a good learning rate for Glorot initialization
 #optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
 optimizer = tf.train.MomentumOptimizer(learning_rate, momentum=0.95).minimize(cost) # 4e9 is a good learning rate for Glorot initialization

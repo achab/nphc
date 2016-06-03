@@ -15,7 +15,7 @@ cumul, Alpha, Beta, Gamma = load_data(url)
 alpha = 1.
 learning_rate = 1e5
 training_epochs = 10
-display_step = 10
+display_step = 1
 d = cumul.dim
 
 # tf Graph Input
@@ -23,8 +23,8 @@ L = tf.placeholder('float', d, name='L')
 C = tf.placeholder('float', (d, d), name='C')
 K_c = tf.placeholder('float', (d, d), name='K_c')
 
-K_c_ij = tf.placeholder(tf.float32)
-C_ij = tf.placeholder(tf.float32)
+K_c_ij = tf.placeholder('float', name='K_c_ij')
+C_ij = tf.placeholder('float', name='C_ij')
 ind_i = tf.placeholder(tf.int32, shape=[2])
 ind_j = tf.placeholder(tf.int32, shape=[2])
 
@@ -36,18 +36,20 @@ ind_j = tf.placeholder(tf.int32, shape=[2])
 R = tf.get_variable('R',shape=[d,d],initializer=tf.contrib.layers.xavier_initializer())
 
 # Construct model
+#C_ind_i = tf.slice(C, ind_i, [1,d])
+#C_ind_j = tf.slice(C, ind_j, [1,d])
 C_ind_i = tf.placeholder('float', d, name='C_ind_i')
 C_ind_j = tf.placeholder('float', d, name='C_ind_j')
 R_ind_i = tf.slice(R, ind_i, [1,d])
 R_ind_j = tf.slice(R, ind_j, [1,d])
-act_3_ij = tf.reduce_sum(tf.mul(tf.mul(C_ind_j,R_ind_i),R_ind_i) + 2*R_ind_i*C_ind_i*R_ind_j - 2*L*R_ind_j*R_ind_i**2)
-act_2_ij = tf.reduce_sum(tf.mul(tf.mul(L,R_ind_i),R_ind_j))
+act_3_ij = tf.reduce_sum( tf.sub( tf.add( tf.mul( C_ind_j, tf.square( R_ind_i) ) , tf.scalar_mul(2.0, tf.mul( tf.mul( R_ind_i, C_ind_i ), R_ind_j ) ) ), tf.scalar_mul(2.0, tf.mul( tf.mul( L, R_ind_j ), tf.square( R_ind_i ) ) ) ) )
+act_2_ij = tf.reduce_sum( tf.mul( tf.mul( L, R_ind_i ), R_ind_j ) )
 
 # Minimize error
 activation_3 = tf.matmul(R*R,C,transpose_b=True) + tf.matmul(2*R*C,R,transpose_b=True) - tf.matmul(2*R*R,tf.matmul(tf.diag(L),R,transpose_b=True))
 activation_2 = tf.matmul(R,tf.matmul(tf.diag(L),R,transpose_b=True))
-cost = tf.reduce_mean(tf.square(activation_3 - K_c)) + alpha*tf.reduce_mean(tf.square(activation_2 - C))
-sub_cost = tf.reduce_mean(tf.square(act_3_ij - K_c_ij)) + alpha*tf.reduce_mean(tf.square(act_2_ij - C_ij))
+cost = tf.add( tf.reduce_mean( tf.squared_difference( activation_3, K_c) ), tf.scalar_mul(alpha, tf.reduce_mean( tf.squared_difference( activation_2, C ) ) ) )
+sub_cost = tf.add( tf.reduce_mean(tf.squared_difference( act_3_ij, K_c_ij ) ), tf.scalar_mul( alpha, tf.reduce_mean( tf.squared_difference( act_2_ij, C_ij ) ) ) )
 #optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
 #optimizer = tf.train.AdagradOptimizer(learning_rate).minimize(cost)
 optimizer = tf.train.MomentumOptimizer(learning_rate, momentum=0.95).minimize(sub_cost)

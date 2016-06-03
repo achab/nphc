@@ -11,8 +11,8 @@ def ix2str(ix):
         ix_str = str(ix)
     return ix_str
 
-symmetric = 0
-kernel = 'exp'
+symmetric = 1
+kernel = 'rect'
 d = 100
 T = 1e8
 
@@ -37,5 +37,5 @@ def worker(ix):
 if __name__ == '__main__':
 
     indices = np.arange(100)
-    pool = Pool()
+    pool = Pool(20)
     pool.map(worker,indices)
