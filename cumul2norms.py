@@ -6,7 +6,7 @@ import tensorflow as tf
 import numpy as np
 
 
-def NPHC(cumulants, starting_point, alpha=.5, training_epochs=1000, learning_rate=1e6, optimizer='momentum', display_step = 10):
+def NPHC(cumulants, starting_point, alpha=.5, training_epochs=1000, learning_rate=1e6, optimizer='momentum', display_step = 100):
 
     d = cumulants.dim
 
