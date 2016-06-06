@@ -21,9 +21,9 @@ if symmetric == 0:
 elif symmetric == 1:
     mode = 'd' + str(d) + '_nonsym_2'
 elif symmetric == 2:
-    mode = 'd' + str(d) + '_sym'
+    mode = 'd' + str(d) + '_nonsym_1_hard'
 elif symmetric == 3:
-    mode = 'd' + str(d) + '_sym_hard'
+    mode = 'd' + str(d) + '_nonsym_2_hard'
 
 
 def worker(ix):

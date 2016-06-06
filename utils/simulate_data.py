@@ -19,7 +19,7 @@ def args2params(mode, symmetric):
         Alpha[d/2:,d/2:] += 1.
         Beta[:d/2,:d/2] += 1000*beta_min
         Beta[d/2:,d/2:] += 10*beta_min
-        if symmetric == 2:
+        if mode == 'd10_sym_hard':
             Alpha[6:8,:3] += 3.
             Beta[6:8,:3] += 100*beta_min
         Alpha = .5*(Alpha+Alpha.T)
@@ -27,7 +27,7 @@ def args2params(mode, symmetric):
         Beta = .5*(Beta + Beta.T)
         Alpha /= 12
 
-    elif mode == 'd10_nonsym_1':
+    elif 'd10_nonsym_1' in mode:
         d = 10
         mu = 0.0001 * np.ones(d)
         Alpha = np.zeros((d,d))
@@ -42,10 +42,13 @@ def args2params(mode, symmetric):
                 if i >= j:
                     Alpha[i][j] = 1.
                     Beta[i][j] = 10*beta_min
+        if mode == 'd10_nonsym_1_hard':
+            Alpha[6:8,1:3] += 1
+            Beta[6:8,1:3] += 100*beta_min
         Gamma = Alpha.copy()
         Alpha /= 6
 
-    elif mode == 'd10_nonsym_2':
+    elif 'd10_nonsym_2' in mode:
         d = 10
         mu = 0.0001 * np.ones(d)
         Alpha = np.zeros((d,d))
@@ -60,26 +63,12 @@ def args2params(mode, symmetric):
                 if i >= j:
                     Alpha[i][j] = 1.
                     Gamma[i][j] = 10*beta_min
+        if mode == 'd10_nonsym_2_hard':
+            Alpha[6:8,1:3] += 1
+            Gamma[6:8,1:3] += 100*beta_min
         Gamma *= .1
         Beta = Alpha.copy()
         Alpha /= 6
-
-    elif 'd100_sym' in mode:
-        d = 100
-        mu = 0.0001 * np.ones(d)
-        Alpha = np.zeros((d,d))
-        Beta = np.zeros((d,d))
-        Alpha[:d/2,:d/2] += 1.
-        Alpha[d/2:,d/2:] += 1.
-        Beta[:d/2,:d/2] += 1000*beta_min
-        Beta[d/2:,d/2:] += 10*beta_min
-        if symmetric == 2:
-            Alpha[60:70,10:20] += 3.
-            Beta[60:70,10:20] += 100*beta_min
-        Alpha = .5*(Alpha+Alpha.T)
-        Beta = .5*(Beta + Beta.T)
-        Gamma = .5*Alpha
-        Alpha /= 120
 
     elif mode == 'd100_nonsym_1':
         d = 100
@@ -237,7 +226,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-k",help="Choose a kernel among: 'exp', 'rect' or 'plaw'.",type=str,choices=['exp','rect','plaw'])
     parser.add_argument("-d",help="Choose the dimension of the process: 10 or 100.",type=int,choices=[10,100])
-    parser.add_argument("-s",help="Simulate either from a symmetric (2), more complex symmetric (3), nonsymmetric 1 (0) or nonsymmetric 2 (1) kernel matrix.",type=int,choices=[0,1,2,3])
+    parser.add_argument("-s",help="Choose the nonsymmetric matrices Alpha, Beta and Gamma you want to simulate the process from.",type=int,choices=[0,1,2,3])
     parser.add_argument("-t",help="log_10 of the length of the simulation ie '3' gives T=1000",type=int,choices=[3,4,5,6,7,8,9,10])
     args = parser.parse_args()
 
