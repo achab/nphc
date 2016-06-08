@@ -5,6 +5,7 @@ With *N* a list of *d* arrays corresponding to the ticks of the *d* processes, a
 ```python
 from utils.cumulants import Cumulants
 cumul = Cumulants(N, hMax=H)
+```
 Then, the easier way to compute the integrated cumulants *C* and *K^c* is done via the following line.
 ```python
 cumul.set_all()
