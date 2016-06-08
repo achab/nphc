@@ -169,7 +169,7 @@ class Cumulants(SimpleHawkes):
             self.set_C_th()
             print("cumul.C_th is computed !")
             self.set_K_c_th()
-            print("cumul.K_th is computed !")
+            print("cumul.K_c_th is computed !")
         print("All cumulants are computed !")
 
 
