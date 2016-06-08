@@ -28,9 +28,9 @@ cost = tf.reduce_mean(tf.square(activation_3 - K_c)) + alpha*tf.reduce_mean(tf.s
 optimizer = tf.train.AdagradOptimizer(learning_rate).minimize(cost)
 ```
 
-# Optimization in NPHC3 is done via TensorFlow
+# Optimizationis done via TensorFlow
 
-See the file ```cumul2norms.py``` to understand how to use the library in our framework.
+See the file ```nphc.py``` to understand how to use the library in our framework.
 
 ## Example of prediction:
 
