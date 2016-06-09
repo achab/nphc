@@ -37,6 +37,12 @@ class Cumulants(SimpleHawkes):
         self.R_true = None
         self.hMax = hMax
         self.H = None
+        # Following attributes are related to weighting matrix in GMM
+        self.W_2 = None
+        self.W_3 = None
+        self.L_list = []
+        self.C_list = []
+        self.K_c_list = []
 
     #########
     ## Functions to compute third order cumulant
@@ -171,6 +177,26 @@ class Cumulants(SimpleHawkes):
             self.set_K_c_th()
             print("cumul.K_c_th is computed !")
         print("All cumulants are computed !")
+
+
+    ###########
+    ## Functions to compute weighting matrix in GMM
+    ###########
+    def set_W_2(self, R):
+        assert len(self.L_list)*len(self.C_list) > 0, "You should first fill self.L_list and self.C_list"
+        assert len(self.L_list) == len(self.C_list), "The lists self.L_list and self.C_list should have the same number of elements."
+        res = np.zeros_like(self.C_list[0])
+        for L, C in zip(self.L_list, self.C_list):
+            res += ( np.dot(R, np.dot(np.diag(L), R.T)) - C ) ** 2
+        return 1./len(self.L_list) * res
+
+    def set_W_3(self, R):
+        assert len(self.L_list)*len(self.C_list)*len(self.K_c_list) > 0, "You should first fill self.L_list, self.C_list and self.K_c_list"
+        assert len(self.L_list) == len(self.C_list) == len(self.K_c_list), "The lists self.L_list, self.C_list and self.K_c_list should have the same number of elements."
+        res = np.zeros_like(self.C_list[0])
+        for L, C, K_c in zip(self.L_list, self.C_list, self.K_c_list):
+            res = ( np.dot(R**2,C.T) + 2*np.dot(R*C,R.T) - 2*np.dot( R**2, np.dot(np.diag(L), R.T) ) - K_c ) ** 2
+        return 1./len(self.L_list) * res
 
 
 ###########
