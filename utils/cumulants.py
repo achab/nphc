@@ -38,8 +38,8 @@ class Cumulants(SimpleHawkes):
         self.hMax = hMax
         self.H = None
         # Following attributes are related to weighting matrix in GMM
-        self.W_2 = None
-        self.W_3 = None
+        self.W_2 = np.ones((self.dim,self.dim))
+        self.W_3 = np.ones((self.dim,self.dim))
         self.L_list = []
         self.C_list = []
         self.K_c_list = []

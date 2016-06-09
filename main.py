@@ -21,24 +21,37 @@ def NPHC(cumulants, starting_point, alpha=.5, training_epochs=1000, learning_rat
         C_j = tf.gather(C, ind_j)
         C_ij = tf.gather_nd(C, ind_ij)
         K_c_ij = tf.gather_nd(K_c, ind_ij)
+        W_2_ij = tf.gather_nd(cumulants.W_2, ind_ij)
+        W_3_ij = tf.gather_nd(cumulants.W_3, ind_ij)
 
     R = tf.Variable(starting_point, name='R')
     if stochastic:
         R_i = tf.gather(R, ind_i)
         R_j = tf.gather(R, ind_j)
 
+    # Set weight matrices
+    if alpha > 0:
+        cumulants.set_W_2(starting_point)
+    if alpha < 1:
+        cumulants.set_W_3(starting_point)
+
     # Construct model
-    activation_3 = tf.sub(tf.add(tf.matmul(tf.square(R),C,transpose_b=True), tf.matmul(tf.scalar_mul(2.0,tf.mul(R,C)),R,transpose_b=True)), tf.matmul(tf.scalar_mul(2.0,tf.square(R)),tf.matmul(tf.diag(L),R,transpose_b=True)))
+    activation_3 = tf.sub(tf.add(tf.matmul(tf.square(R),C,transpose_b=True), tf.matmul(tf.scalar_mul(2.0,tf.mul(R,C)),R,transpose_b=True)), \
+                          tf.matmul(tf.scalar_mul(2.0,tf.square(R)),tf.matmul(tf.diag(L),R,transpose_b=True)))
     activation_2 = tf.matmul(R,tf.matmul(tf.diag(L),R,transpose_b=True))
 
     if stochastic:
-        act_3_ij = tf.reduce_sum( tf.sub( tf.add( tf.mul( C_j, tf.square( R_i) ) , tf.scalar_mul(2.0, tf.mul( tf.mul( R_i, C_i ), R_j ) ) ), tf.scalar_mul(2.0, tf.mul( tf.mul( L, R_j ), tf.square( R_i ) ) ) ) )
+        act_3_ij = tf.reduce_sum( tf.sub( tf.add( tf.mul( C_j, tf.square( R_i) ) , \
+                                                  tf.scalar_mul(2.0, tf.mul( tf.mul( R_i, C_i ), R_j ) ) ),\
+                                          tf.scalar_mul(2.0, tf.mul( tf.mul( L, R_j ), tf.square( R_i ) ) ) ) )
         act_2_ij = tf.reduce_sum( tf.mul( tf.mul( L, R_i ), R_j ) )
-        tot_cost = tf.add( tf.scalar_mul( 1-alpha, tf.reduce_mean( tf.squared_difference( activation_3, K_c ) ) ), tf.scalar_mul( alpha, tf.reduce_mean( tf.squared_difference( activation_2, C ) ) ) )
-        cost = tf.add( tf.reduce_mean(tf.squared_difference( act_3_ij, K_c_ij ) ), tf.scalar_mul( alpha, tf.reduce_mean( tf.squared_difference( act_2_ij, C_ij ) ) ) )
+        tot_cost = tf.add( tf.scalar_mul( 1-alpha, tf.reduce_mean( tf.squared_difference( activation_3, K_c ) ) ), \
+                           tf.scalar_mul( alpha, tf.reduce_mean( tf.squared_difference( activation_2, C ) ) ) )
+        cost = tf.add( tf.reduce_mean( tf.truediv( tf.squared_difference( act_3_ij, K_c_ij ), W_3_ij) ), \
+                       tf.scalar_mul( alpha, tf.reduce_mean( tf.truediv( tf.squared_difference( act_2_ij, C_ij ), W_2_ij) ) ) )
     else:
-        pass
-        #cost = tf.add( tf.scalar_mul( 1-alpha, tf.reduce_mean( tf.squared_difference( activation_3, K_c ) ) ), tf.scalar_mul( alpha, tf.reduce_mean( tf.squared_difference( activation_2, C ) ) ) )
+        cost = tf.add( tf.scalar_mul( 1-alpha, tf.reduce_mean( tf.truediv( tf.squared_difference( activation_3, K_c ), cumulants.W_3) ) ), \
+                       tf.scalar_mul( alpha, tf.reduce_mean( tf.truediv( tf.squared_difference( activation_2, C ) , cumulants.W_2) ) ) )
 
 
     if optimizer == 'momentum':
