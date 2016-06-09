@@ -1,6 +1,8 @@
 import numpy as np
 from numba import autojit, jit, double, int32, int64, float64
+from tensorflow import Session
 from joblib import Parallel, delayed
+
 
 
 class SimpleHawkes(object):
@@ -183,6 +185,7 @@ class Cumulants(SimpleHawkes):
     ## Functions to compute weighting matrix in GMM
     ###########
     def set_W_2(self, R):
+        R = Session().run(R)
         assert len(self.L_list)*len(self.C_list) > 0, "You should first fill self.L_list and self.C_list"
         assert len(self.L_list) == len(self.C_list), "The lists self.L_list and self.C_list should have the same number of elements."
         res = np.zeros_like(self.C_list[0])
@@ -191,6 +194,7 @@ class Cumulants(SimpleHawkes):
         self.W_2 = 1./len(self.L_list) * res
 
     def set_W_3(self, R):
+        R = Session().run(R)
         assert len(self.L_list)*len(self.C_list)*len(self.K_c_list) > 0, "You should first fill self.L_list, self.C_list and self.K_c_list"
         assert len(self.L_list) == len(self.C_list) == len(self.K_c_list), "The lists self.L_list, self.C_list and self.K_c_list should have the same number of elements."
         res = np.zeros_like(self.C_list[0])
