@@ -6,7 +6,7 @@ import tensorflow as tf
 import numpy as np
 
 
-def NPHC(cumulants, starting_point, alpha=.5, training_epochs=1000, learning_rate=1e6, optimizer='momentum', stochastic=False, display_step = 100):
+def NPHC(cumulants, starting_point, alpha=.5, training_epochs=1000, learning_rate=1e6, optimizer='momentum', stochastic=False, display_step = 100, weightGMM='eye'):
 
     d = cumulants.dim
 
@@ -28,8 +28,9 @@ def NPHC(cumulants, starting_point, alpha=.5, training_epochs=1000, learning_rat
         R_j = tf.gather(R, ind_j)
 
     # Set weight matrices
-    cumulants.set_W_2(starting_point)
-    cumulants.set_W_3(starting_point)
+    cumulants.set_W_2(starting_point, weight=weightGMM)
+    cumulants.set_W_3(starting_point, weight=weightGMM)
+
     if stochastic:
         W_2_ij = tf.gather_nd(cumulants.W_2, ind_ij)
         W_3_ij = tf.gather_nd(cumulants.W_3, ind_ij)
@@ -41,13 +42,25 @@ def NPHC(cumulants, starting_point, alpha=.5, training_epochs=1000, learning_rat
     if stochastic:
         act_3_ij = tf.reduce_sum( tf.mul( C_j, tf.square( R_i) ) + 2.0*tf.mul( tf.mul( R_i, C_i ), R_j ) - 2.0*tf.mul( tf.mul( L, R_j ), tf.square( R_i ) ) )
         act_2_ij = tf.reduce_sum( tf.mul( tf.mul( tf.cast(L,tf.float32), R_i ), R_j ) )
-        tot_cost = (1-alpha) * tf.reduce_mean(tf.truediv( tf.squared_difference( activation_3, K_c ), tf.cast(cumulants.W_3,tf.float32)) ) + alpha * tf.reduce_mean( tf.truediv( tf.squared_difference( activation_2, C ) , tf.cast(cumulants.W_2,tf.float32) ) )
-        cost =  (1-alpha) * tf.reduce_mean( tf.truediv( tf.squared_difference( act_3_ij, K_c_ij ), tf.cast(W_3_ij,tf.float32)) ) + alpha * tf.reduce_mean( tf.truediv( tf.squared_difference( act_2_ij, C_ij ), tf.cast(W_2_ij,tf.float32)) )
+        if weightGMM == 'eye':
+            tot_cost = (1-alpha) * tf.reduce_mean( tf.squared_difference( activation_3, K_c ) ) + alpha * tf.reduce_mean( tf.squared_difference( activation_2, C ) )
+            cost =  (1-alpha) * tf.reduce_mean( tf.squared_difference( act_3_ij, K_c_ij ) ) + alpha * tf.reduce_mean( tf.squared_difference( act_2_ij, C_ij ) )
+        elif weightGMM == 'diag':
+            tot_cost = (1-alpha) * tf.reduce_mean( tf.mul( tf.squared_difference( activation_3, K_c ), tf.cast(cumulants.W_3,tf.float32)) ) + alpha * tf.reduce_mean( tf.mul( tf.squared_difference( activation_2, C ) , tf.cast(cumulants.W_2,tf.float32) ) )
+            cost =  (1-alpha) * tf.reduce_mean( tf.mul( tf.squared_difference( act_3_ij, K_c_ij ), tf.cast(W_3_ij,tf.float32)) ) + alpha * tf.reduce_mean( tf.mul( tf.squared_difference( act_2_ij, C_ij ), tf.cast(W_2_ij,tf.float32)) )
+        elif weightGMM == 'dense':
+            tot_cost = (1-alpha) * tf.reduce_mean( tf.mul( activation_3 - K_c , tf.matmul( tf.cast( cumulants.W_3, tf.float32), activation_3 - K_c) ) ) \
+                       + alpha * tf.reduce_mean( tf.mul( activation_2 - C , tf.matmul( tf.cast( cumulants.W_2, tf.float32), activation_2 - C) ) )
+            cost =  (1-alpha) * tf.reduce_mean( tf.mul( tf.squared_difference( act_3_ij, K_c_ij ), tf.cast(W_3_ij,tf.float32)) ) + alpha * tf.reduce_mean( tf.mul( tf.squared_difference( act_2_ij, C_ij ), tf.cast(W_2_ij,tf.float32)) )
         tot_cost = tf.cast(tot_cost, tf.float32)
         cost = tf.cast(cost, tf.float32)
     else:
-        cost = tf.add( tf.scalar_mul( 1-alpha, tf.reduce_mean( tf.truediv( tf.squared_difference( activation_3, K_c ), cumulants.W_3) ) ), \
-                       tf.scalar_mul( alpha, tf.reduce_mean( tf.truediv( tf.squared_difference( activation_2, C ) , cumulants.W_2) ) ) )
+        if weightGMM == 'eye':
+            cost =  (1-alpha) * tf.reduce_mean( tf.squared_difference( activation_3, K_c ) ) + alpha * tf.reduce_mean( tf.squared_difference( activation_2, C ) )
+        elif weightGMM == 'diag':
+            cost =  (1-alpha) * tf.reduce_mean( tf.mul( tf.squared_difference( activation_3, K_c ), tf.cast(cumulants.W_3,tf.float32) ) ) + alpha * tf.reduce_mean( tf.mul( tf.squared_difference( activation_2, C ) , tf.cast(cumulants.W_2,tf.float32) ) )
+        elif weightGMM == 'dense':
+            cost =  (1-alpha) * tf.reduce_mean( tf.mul( tf.squared_difference( activation_3, K_c ), tf.cast(cumulants.W_3,tf.float32) ) ) + alpha * tf.reduce_mean( tf.mul( tf.squared_difference( activation_2, C ) , tf.cast(cumulants.W_2,tf.float32) ) )
         cost = tf.cast(cost, tf.float32)
 
 
@@ -57,6 +70,10 @@ def NPHC(cumulants, starting_point, alpha=.5, training_epochs=1000, learning_rat
         optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
     elif optimizer == 'adagrad':
         optimizer = tf.train.AdagradOptimizer(learning_rate).minimize(cost)
+    elif optimizer == 'rmsprop':
+        optimizer = tf.train.RMSPropOptimizer(learning_rate).minimize(cost)
+    elif optimizer == 'adadelta':
+        optimizer = tf.train.AdadeltaOptimizer(learning_rate).minimize(cost)
     else:
         optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost)
 
