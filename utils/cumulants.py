@@ -1,6 +1,6 @@
 import numpy as np
 from numba import autojit, jit, double, int32, int64, float64
-from scipy.linalg import inv
+from scipy.linalg import inv, pinv
 from tensorflow import Session
 from joblib import Parallel, delayed
 
@@ -189,39 +189,43 @@ class Cumulants(SimpleHawkes):
         R = Session().run(R)
         assert len(self.L_list)*len(self.C_list) > 0, "You should first fill self.L_list and self.C_list"
         assert len(self.L_list) == len(self.C_list), "The lists self.L_list and self.C_list should have the same number of elements."
-        res = np.zeros_like(self.C_list[0])
         if weight == 'diag':
+            res = np.zeros_like(R)
             for L, C in zip(self.L_list, self.C_list):
                 X = np.dot(R, np.dot(np.diag(L), R.T)) - C
                 res += X ** 2
             self.W_2 = len(self.L_list) * 1./res
         elif weight == 'dense':
+            d = R.shape[0]
+            res = np.zeros((d**2,d**2))
             for L, C in zip(self.L_list, self.C_list):
                 X = np.dot(R, np.dot(np.diag(L), R.T)) - C
                 X = X.reshape(R.shape[0]**2,1)
                 res += np.outer(X,X)
-            self.W_2 = len(self.L_list) * inv(res)
+            self.W_2 = len(self.L_list) * pinv(res)
         else:
-            pass
+            self.W_2 = np.ones_like(R)
 
     def set_W_3(self, R, weight='diag'):
         R = Session().run(R)
         assert len(self.L_list)*len(self.C_list)*len(self.K_c_list) > 0, "You should first fill self.L_list, self.C_list and self.K_c_list"
         assert len(self.L_list) == len(self.C_list) == len(self.K_c_list), "The lists self.L_list, self.C_list and self.K_c_list should have the same number of elements."
-        res = np.zeros_like(self.C_list[0])
         if weight == 'diag':
+            res = np.zeros_like(R)
             for L, C, K_c in zip(self.L_list, self.C_list, self.K_c_list):
                 X = np.dot(R**2,C.T) + 2*np.dot(R*C,R.T) - 2*np.dot( R**2, np.dot(np.diag(L), R.T) ) - K_c
                 res += X ** 2
             self.W_3 = len(self.L_list) * 1./res
         elif weight == 'dense':
+            d = R.shape[0]
+            res = np.zeros((d**2,d**2))
             for L, C, K_c in zip(self.L_list, self.C_list, self.K_c_list):
                 X = np.dot(R**2,C.T) + 2*np.dot(R*C,R.T) - 2*np.dot( R**2, np.dot(np.diag(L), R.T) ) - K_c
                 X = X.reshape(R.shape[0]**2,1)
                 res += np.outer(X,X)
-            self.W_3 = len(self.L_list) * inv(res)
+            self.W_3 = len(self.L_list) * pinv(res)
         else:
-            pass
+            self.W_3 = np.ones_like(R)
 
 
 ###########
