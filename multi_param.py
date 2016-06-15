@@ -3,12 +3,16 @@ from scipy.optimize import minimize
 from multiprocessing import Pool
 import gzip, pickle
 import numpy as np
+import os.path
 
 def worker(kernel_mode_log10T,learning_rate=10.,training_epochs=1000,display_step=200):
 
     kernel, mode, log10T = kernel_mode_log10T
     i = kernel.find('_d10')
     filename = 'datasets/' + kernel[:i] + '/{}_{}_log10T{}_with_params_000.pkl.gz'.format(kernel, mode, log10T)
+    if not os.path.isfile(filename):
+        filename = 'datasets/' + kernel[:i] + '/{}_{}_log10T{}_with_params_000.pkl.gz'.format(kernel, mode, log10T+1)
+
     f = gzip.open(filename, 'rb')
     data = pickle.load(f)
     f.close()
@@ -32,7 +36,7 @@ if __name__ == '__main__':
     modes = ['nonsym_1', 'nonsym_1_hard', 'nonsym_2', 'nonsym_2_hard']
     log10T = [8]
     from itertools import product
-    L = list(product(kernels,modes,log10T))
+    L = list(product(kernels,modes))
     L.remove(('exp_d10','nonsym_2',log10T[0]))
     L.remove(('exp_d10','nonsym_2_hard',log10T[0]))
     L.remove(('plaw_d10','nonsym_2',log10T[0]))
