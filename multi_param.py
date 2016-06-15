@@ -1,4 +1,5 @@
 from mlpp.optim.model import ModelHawkesFixedExpKernLogLik
+from utils.cumulants import Cumulants
 from scipy.optimize import minimize
 from multiprocessing import Pool
 import gzip, pickle
