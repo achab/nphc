@@ -8,7 +8,7 @@ def worker(kernel_mode_log10T,learning_rate=10.,training_epochs=1000,display_ste
 
     kernel, mode, log10T = kernel_mode_log10T
     i = kernel.find('_d10')
-    filename = 'datasets/' + kernel[:i] + '/{}_{}_log10T{}_with_params_000.pkl.gz'
+    filename = 'datasets/' + kernel[:i] + '/{}_{}_log10T{}_with_params_000.pkl.gz'.format(kernel, mode, log10T)
     f = gzip.open(filename, 'rb')
     data = pickle.load(f)
     f.close()
