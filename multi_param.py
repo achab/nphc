@@ -1,5 +1,4 @@
-from mlpp.optim.model import ModelHawkesFixedBeta
-from mlpp.pp import HawkesKernelExp
+from mlpp.optim.model import ModelHawkesFixedExpKernLogLik
 from scipy.optimize import minimize
 from multiprocessing import Pool
 import gzip, pickle
