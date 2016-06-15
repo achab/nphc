@@ -1,7 +1,7 @@
 from multiprocessing import Pool
 from scipy.linalg import sqrtm
 import tensorflow as tf
-from main import NPHC
+from nphc.main import NPHC
 import numpy as np
 
 def worker(kernel_mode_log10T,learning_rate=10.,training_epochs=1000,display_step=200):
