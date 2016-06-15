@@ -36,7 +36,7 @@ if __name__ == '__main__':
     modes = ['nonsym_1', 'nonsym_1_hard', 'nonsym_2', 'nonsym_2_hard']
     log10T = [8]
     from itertools import product
-    L = list(product(kernels,modes))
+    L = list(product(kernels,modes,log10T))
     L.remove(('exp_d10','nonsym_2',log10T[0]))
     L.remove(('exp_d10','nonsym_2_hard',log10T[0]))
     L.remove(('plaw_d10','nonsym_2',log10T[0]))
