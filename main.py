@@ -6,14 +6,6 @@ import tensorflow as tf
 import numpy as np
 
 
-class WarmStart(object):
-    def __init__(self, f):
-        self.f = f
-
-    def __call__(self):
-        print("Call")
-        self.f()
-
 def NPHC(cumulants, starting_point, alpha=.5, training_epochs=1000, learning_rate=1e6, optimizer='momentum', \
          stochastic=False, display_step = 100, weightGMM='eye'):
 
@@ -41,9 +33,8 @@ def NPHC(cumulants, starting_point, alpha=.5, training_epochs=1000, learning_rat
     cumulants.set_W_3(starting_point, weight=weightGMM)
 
     if stochastic:
-        if weightGMM is not 'dense':
-            W_2_ij = tf.gather_nd(cumulants.W_2, ind_ij)
-            W_3_ij = tf.gather_nd(cumulants.W_3, ind_ij)
+        W_2_ij = tf.gather_nd(cumulants.W_2, ind_ij)
+        W_3_ij = tf.gather_nd(cumulants.W_3, ind_ij)
 
     # Construct model
     activation_3 = tf.matmul(tf.square(R),C,transpose_b=True) + 2.0*tf.matmul(tf.mul(R,C),R,transpose_b=True) - 2.0*tf.matmul(tf.square(R),tf.matmul(tf.diag(L),R,transpose_b=True))
@@ -61,30 +52,6 @@ def NPHC(cumulants, starting_point, alpha=.5, training_epochs=1000, learning_rat
             tot_cost = (1-alpha) * tf.reduce_mean( tf.mul( tf.squared_difference( activation_3, K_c ), tf.cast(cumulants.W_3,tf.float32)) ) + alpha * tf.reduce_mean( tf.mul( tf.squared_difference( activation_2, C ) , tf.cast(cumulants.W_2,tf.float32) ) )
             cost =  (1-alpha) * tf.reduce_mean( tf.mul( tf.squared_difference( act_3_ij, K_c_ij ), tf.cast(W_3_ij,tf.float32) ) ) + alpha * tf.reduce_mean( tf.mul( tf.squared_difference( act_2_ij, C_ij ), tf.cast(W_2_ij,tf.float32)) )
 
-        elif weightGMM == 'dense':
-            print("The implementation is not finished yet.")
-            eig, vals = cumulants.W_2
-            sqrt_W_2 = np.dot( vals.T, np.dot( np.diag(np.sqrt(eig)), vals ) ).astype(np.float32)
-            W_2 = np.dot( vals.T, np.dot( np.diag(eig), vals ) ).astype(np.float32)
-
-            eig, vals = cumulants.W_3
-            sqrt_W_3 = np.dot( vals.T, np.dot( np.diag(np.sqrt(eig)), vals ) ).astype(np.float32)
-            W_3 = np.dot( vals.T, np.dot( np.diag(eig), vals ) ).astype(np.float32)
-
-            sqrt_W_2_dot_C = tf.reshape( tf.matmul( sqrt_W_2, tf.reshape(C, shape=[d**2,1] ) ), shape=[d,d])
-            sqrt_W_3_dot_K_c = tf.reshape( tf.matmul( sqrt_W_3, tf.reshape(K_c, shape=[d**2,1] ) ), shape=[d,d])
-
-            sqrt_W_2_dot_C_ij = tf.gather_nd( sqrt_W_2_dot_C, ind_ij )
-            sqrt_W_3_dot_K_c_ij = tf.gather_nd( sqrt_W_3_dot_K_c, ind_ij )
-
-            act_2_ij = tf.gather_nd( tf.reshape(tf.matmul( sqrt_W_2, tf.reshape(activation_2,shape=[d**2,1])),shape=[d,d]), ind_ij )
-            act_3_ij = tf.gather_nd( tf.reshape(tf.matmul( sqrt_W_3, tf.reshape(activation_3,shape=[d**2,1])),shape=[d,d]), ind_ij )
-
-            tot_cost = (1-alpha) * tf.reduce_mean( tf.mul( activation_3 - K_c , tf.reshape( tf.matmul( tf.cast(W_3,tf.float32), tf.reshape(activation_3 - K_c, shape=[d**2,1] ) ), shape=[d,d] ) ) ) \
-                       + alpha * tf.reduce_mean( tf.mul( activation_2 - C , tf.reshape( tf.matmul( tf.cast(W_2,tf.float32), tf.reshape( activation_2 - C, shape=[d**2,1] ) ), shape=[d,d] ) ) )
-            cost =  (1-alpha) * tf.reduce_mean( tf.squared_difference( act_3_ij, sqrt_W_3_dot_K_c_ij )  ) \
-                    + alpha * tf.reduce_mean( tf.squared_difference( act_2_ij, sqrt_W_2_dot_C_ij ) )
-
         tot_cost = tf.cast(tot_cost, tf.float32)
         cost = tf.cast(cost, tf.float32)
 
@@ -95,10 +62,6 @@ def NPHC(cumulants, starting_point, alpha=.5, training_epochs=1000, learning_rat
 
         elif weightGMM == 'diag':
             cost =  (1-alpha) * tf.reduce_mean( tf.mul( tf.squared_difference( activation_3, K_c ), tf.cast(cumulants.W_3,tf.float32) ) ) + alpha * tf.reduce_mean( tf.mul( tf.squared_difference( activation_2, C ) , tf.cast(cumulants.W_2,tf.float32) ) )
-
-        elif weightGMM == 'dense':
-            cost = (1-alpha) * tf.reduce_mean( tf.mul( activation_3 - K_c , tf.reshape( tf.matmul( tf.cast(cumulants.W_3,tf.float32), tf.reshape(activation_3 - K_c, shape=[d**2,1] ) ), shape=[d,d] ) ) ) \
-                    + alpha * tf.reduce_mean( tf.mul( activation_2 - C , tf.reshape( tf.matmul( tf.cast(cumulants.W_2,tf.float32), tf.reshape( activation_2 - C, shape=[d**2,1] ) ), shape=[d,d] ) ) )
 
         cost = tf.cast(cost, tf.float32)
 
@@ -135,19 +98,19 @@ def NPHC(cumulants, starting_point, alpha=.5, training_epochs=1000, learning_rat
         # Training cycle
         if stochastic:
             for epoch in range(training_epochs):
-                for (i, j) in product(range(d), repeat=2):
-                # Fit training using batch data
-                    sess.run(optimizer, feed_dict={L: cumulants.L, C: cumulants.C, K_c: cumulants.K_c, ind_i: [i], ind_j: [j], ind_ij: [[i,j]]})
                 if epoch % display_step == 0:
                     avg_cost = sess.run(tot_cost, feed_dict={L: cumulants.L, C: cumulants.C, K_c: cumulants.K_c})
                     print("Epoch:", '%04d' % (epoch), "log10(cost)=", "{:.9f}".format(np.log10(avg_cost)))
+                for (i, j) in product(range(d), repeat=2):
+                # Fit training using batch data
+                    sess.run(optimizer, feed_dict={L: cumulants.L, C: cumulants.C, K_c: cumulants.K_c, ind_i: [i], ind_j: [j], ind_ij: [[i,j]]})
         else:
             for epoch in range(training_epochs):
-                # Fit training using batch data
-                sess.run(optimizer, feed_dict={L: cumulants.L, C: cumulants.C, K_c: cumulants.K_c})
                 if epoch % display_step == 0:
                     avg_cost = sess.run(cost, feed_dict={L: cumulants.L, C: cumulants.C, K_c: cumulants.K_c})
                     print("Epoch:", '%04d' % (epoch), "log10(cost)=", "{:.9f}".format(np.log10(avg_cost)))
+                # Fit training using batch data
+                sess.run(optimizer, feed_dict={L: cumulants.L, C: cumulants.C, K_c: cumulants.K_c})
                 # Write logs at every iteration
                 #summary_str = sess.run(merged_summary_op, feed_dict={L: cumul.L, C: cumul.C, K_c: cumul.K_c})
                 #summary_writer.add_summary(summary_str, epoch)
