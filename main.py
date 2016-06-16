@@ -1,6 +1,6 @@
 from nphc.utils.cumulants import Cumulants
-from itertools import product
 from nphc.utils.loader import load_data
+from itertools import product
 from scipy.linalg import inv
 import tensorflow as tf
 import numpy as np
