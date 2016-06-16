@@ -29,12 +29,18 @@ def NPHC(cumulants, starting_point, alpha=.5, training_epochs=1000, learning_rat
         R_j = tf.gather(R, ind_j)
 
     # Set weight matrices
-    cumulants.set_W_2(starting_point, weight=weightGMM)
-    cumulants.set_W_3(starting_point, weight=weightGMM)
+    try:
+        cumulants.set_W_2(starting_point, weight=weightGMM)
+        cumulants.set_W_3(starting_point, weight=weightGMM)
+        W_2 = cumulants.W_2
+        W_3 = cumulants.W_3
+    except AttributeError:
+        W_2 = np.ones((d,d))
+        W_3 = np.ones((d,d))
 
     if stochastic:
-        W_2_ij = tf.gather_nd(cumulants.W_2, ind_ij)
-        W_3_ij = tf.gather_nd(cumulants.W_3, ind_ij)
+        W_2_ij = tf.gather_nd(W_2, ind_ij)
+        W_3_ij = tf.gather_nd(W_3, ind_ij)
 
     # Construct model
     activation_3 = tf.matmul(tf.square(R),C,transpose_b=True) + 2.0*tf.matmul(tf.mul(R,C),R,transpose_b=True) - 2.0*tf.matmul(tf.square(R),tf.matmul(tf.diag(L),R,transpose_b=True))
@@ -49,7 +55,7 @@ def NPHC(cumulants, starting_point, alpha=.5, training_epochs=1000, learning_rat
             cost =  (1-alpha) * tf.reduce_mean( tf.squared_difference( act_3_ij, K_c_ij ) ) + alpha * tf.reduce_mean( tf.squared_difference( act_2_ij, C_ij ) )
 
         elif weightGMM == 'diag':
-            tot_cost = (1-alpha) * tf.reduce_mean( tf.mul( tf.squared_difference( activation_3, K_c ), tf.cast(cumulants.W_3,tf.float32)) ) + alpha * tf.reduce_mean( tf.mul( tf.squared_difference( activation_2, C ) , tf.cast(cumulants.W_2,tf.float32) ) )
+            tot_cost = (1-alpha) * tf.reduce_mean( tf.mul( tf.squared_difference( activation_3, K_c ), tf.cast(W_3,tf.float32)) ) + alpha * tf.reduce_mean( tf.mul( tf.squared_difference( activation_2, C ) , tf.cast(W_2,tf.float32) ) )
             cost =  (1-alpha) * tf.reduce_mean( tf.mul( tf.squared_difference( act_3_ij, K_c_ij ), tf.cast(W_3_ij,tf.float32) ) ) + alpha * tf.reduce_mean( tf.mul( tf.squared_difference( act_2_ij, C_ij ), tf.cast(W_2_ij,tf.float32)) )
 
         tot_cost = tf.cast(tot_cost, tf.float32)
@@ -61,7 +67,7 @@ def NPHC(cumulants, starting_point, alpha=.5, training_epochs=1000, learning_rat
             cost =  (1-alpha) * tf.reduce_mean( tf.squared_difference( activation_3, K_c ) ) + alpha * tf.reduce_mean( tf.squared_difference( activation_2, C ) )
 
         elif weightGMM == 'diag':
-            cost =  (1-alpha) * tf.reduce_mean( tf.mul( tf.squared_difference( activation_3, K_c ), tf.cast(cumulants.W_3,tf.float32) ) ) + alpha * tf.reduce_mean( tf.mul( tf.squared_difference( activation_2, C ) , tf.cast(cumulants.W_2,tf.float32) ) )
+            cost =  (1-alpha) * tf.reduce_mean( tf.mul( tf.squared_difference( activation_3, K_c ), tf.cast(W_3,tf.float32) ) ) + alpha * tf.reduce_mean( tf.mul( tf.squared_difference( activation_2, C ) , tf.cast(W_2,tf.float32) ) )
 
         cost = tf.cast(cost, tf.float32)
 
