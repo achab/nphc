@@ -2,7 +2,6 @@ from mlpp.optim.model import ModelHawkesFixedExpKernLogLik
 from nphc.utils.cumulants import Cumulants
 from scipy.optimize import minimize
 from multiprocessing import Pool
-import gzip, pickle
 import numpy as np
 import os.path
 
@@ -15,6 +14,7 @@ def worker(kernel_mode_log10T,learning_rate=10.,training_epochs=1000,display_ste
         filename = 'datasets/' + kernel[:i] + '/{}_{}_log10T{}_with_params_000.pkl.gz'.format(kernel, mode, log10T+1)
 
     try:
+        import gzip, pickle
         f = gzip.open(filename, 'rb')
         data = pickle.load(f)
         f.close()
