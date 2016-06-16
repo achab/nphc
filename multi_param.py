@@ -14,21 +14,33 @@ def worker(kernel_mode_log10T,learning_rate=10.,training_epochs=1000,display_ste
     if not os.path.isfile(filename):
         filename = 'datasets/' + kernel[:i] + '/{}_{}_log10T{}_with_params_000.pkl.gz'.format(kernel, mode, log10T+1)
 
-    f = gzip.open(filename, 'rb')
-    data = pickle.load(f)
-    f.close()
+    try:
+        f = gzip.open(filename, 'rb')
+        data = pickle.load(f)
+        f.close()
 
-    cumul, Alpha, Beta, Gamma = data
+        cumul, Alpha, Beta, Gamma = data
 
-    ticks = cumul.N
-    d = cumul.dim
+        beta = Beta[-1,-1]
 
-    model = ModelHawkesFixedExpKernLogLik(beta).fit(ticks)
-    bnds = [(.01, None) for _ in range(model.n_coeffs)]
-    result = minimize(lambda x: model.loss(x), 1*np.ones(model.n_coeffs), method='L-BFGS-B', bounds=bnds)
-    pred_G = result['x'][d:].reshape(d,d)
+        if beta > 0:
 
-    return pred_G
+            ticks = cumul.N
+            d = cumul.dim
+
+            model = ModelHawkesFixedExpKernLogLik(beta).fit(ticks)
+            bnds = [(.01, None) for _ in range(model.n_coeffs)]
+            result = minimize(lambda x: model.loss(x), 1*np.ones(model.n_coeffs), method='L-BFGS-B', bounds=bnds)
+            res = result['x'][d:].reshape(d,d)
+
+            import gzip, pickle
+            f = gzip.open('results_beta1_{}_{}.pkl.gz'.format(kernel,mode), 'wb')
+            pickle.dump(res,f,protocol=2)
+            f.close()
+
+    except ImportError:
+        print("ImportError for ",filename)
+
 
 
 if __name__ == '__main__':
