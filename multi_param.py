@@ -21,20 +21,28 @@ def worker(kernel_mode_log10T,learning_rate=10.,training_epochs=1000,display_ste
 
         cumul, Alpha, Beta, Gamma = data
 
-        beta = Beta[-1,-1]
+        if 'nonsym_2' in mode:
+            eta = Gamma[-1,-1]
+        else:
+            eta = Beta[-1,-1]
 
-        if beta > 0:
+        if eta > 0:
 
             ticks = cumul.N
             d = cumul.dim
 
-            model = ModelHawkesFixedExpKernLogLik(beta).fit(ticks)
+            model = ModelHawkesFixedExpKernLogLik(eta).fit(ticks)
             bnds = [(.01, None) for _ in range(model.n_coeffs)]
             result = minimize(lambda x: model.loss(x), 1*np.ones(model.n_coeffs), method='L-BFGS-B', bounds=bnds)
             res = result['x'][d:].reshape(d,d)
 
+            if 'nonsym_2' in mode:
+                 file_to_write = 'results_gamma1_{}_{}.pkl.gz'.format(kernel,mode)
+            else:
+                file_to_write = 'results_beta1_{}_{}.pkl.gz'.format(kernel,mode)
+
             import gzip, pickle
-            f = gzip.open('results_beta1_{}_{}.pkl.gz'.format(kernel,mode), 'wb')
+            f = gzip.open(file_to_write, 'wb')
             pickle.dump(res,f,protocol=2)
             f.close()
 
