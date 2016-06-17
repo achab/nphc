@@ -37,7 +37,12 @@ See the file ```main.py``` to understand how to use the function NPHC.
 The choice of the starting point is a paramount issue for the optimization step. A smart choice is
 ```python
 from scipy.linalg import sqrtm
+from numpy import sqrt
+sqrt_C = sqrtm(cumul.C)
+sqrt_L = sqrt(cumul.L)
+initial = np.dot(sqrt_C,sqrt_L)
 ```
+This starting point corresponds to the optimal solution of the problem for ```alpha=1.```, up to an orthogonal matrix.
 
 ## Example of prediction:
 
