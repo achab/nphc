@@ -47,6 +47,9 @@ def NPHC(cumulants, starting_point, alpha=.5, training_epochs=1000, learning_rat
     activation_3 = tf.matmul(tf.square(R),C,transpose_b=True) + 2.0*tf.matmul(tf.mul(R,C),R,transpose_b=True) - 2.0*tf.matmul(tf.square(R),tf.matmul(tf.diag(L),R,transpose_b=True))
     activation_2 = tf.matmul(R,tf.matmul(tf.diag(L),R,transpose_b=True))
 
+    cost_3 = tf.reduce_mean( tf.squared_difference( activation_3, K_c ) )
+    cost_2 = tf.reduce_mean( tf.squared_difference( activation_2, C ) )
+
     if stochastic:
         act_3_ij = tf.reduce_sum( tf.mul( C_j, tf.square( R_i) ) + 2.0*tf.mul( tf.mul( R_i, C_i ), R_j ) - 2.0*tf.mul( tf.mul( L, R_j ), tf.square( R_i ) ) )
         act_2_ij = tf.reduce_sum( tf.mul( tf.mul( tf.cast(L,tf.float32), R_i ), R_j ) )
@@ -71,7 +74,6 @@ def NPHC(cumulants, starting_point, alpha=.5, training_epochs=1000, learning_rat
             cost =  (1-alpha) * tf.reduce_mean( tf.mul( tf.squared_difference( activation_3, K_c ), tf.cast(W_3,tf.float32) ) ) + alpha * tf.reduce_mean( tf.mul( tf.squared_difference( activation_2, C ) , tf.cast(W_2,tf.float32) ) )
 
         cost = tf.cast(cost, tf.float32)
-
 
     if optimizer == 'momentum':
         optimizer = tf.train.MomentumOptimizer(learning_rate, momentum=0.9).minimize(cost)
@@ -115,7 +117,11 @@ def NPHC(cumulants, starting_point, alpha=.5, training_epochs=1000, learning_rat
             for epoch in range(training_epochs):
                 if epoch % display_step == 0:
                     avg_cost = sess.run(cost, feed_dict={L: cumulants.L, C: cumulants.C, K_c: cumulants.K_c})
+                    avg_cost_3 = sess.run(cost_3, feed_dict={L: cumulants.L, C: cumulants.C, K_c: cumulants.K_c})
+                    avg_cost_2 = sess.run(cost_2, feed_dict={L: cumulants.L, C: cumulants.C})
                     print("Epoch:", '%04d' % (epoch), "log10(cost)=", "{:.9f}".format(np.log10(avg_cost)))
+                    print("       log10(cost3)=", "{:.9f}".format(np.log10(avg_cost_3)))
+                    print("       log10(cost2)=", "{:.9f}".format(np.log10(avg_cost_2)))
                 # Fit training using batch data
                 sess.run(optimizer, feed_dict={L: cumulants.L, C: cumulants.C, K_c: cumulants.K_c})
                 # Write logs at every iteration
