@@ -29,14 +29,15 @@ def NPHC(cumulants, starting_point, alpha=.5, training_epochs=1000, learning_rat
         R_j = tf.gather(R, ind_j)
 
     # Set weight matrices
-    try:
+    if weightGMM == 'eye':
+        W_2 = np.ones((d,d))
+        W_3 = np.ones((d,d))
+    else:
         cumulants.set_W_2(starting_point, weight=weightGMM)
         cumulants.set_W_3(starting_point, weight=weightGMM)
         W_2 = cumulants.W_2
         W_3 = cumulants.W_3
-    except AttributeError:
-        W_2 = np.ones((d,d))
-        W_3 = np.ones((d,d))
+
 
     if stochastic:
         W_2_ij = tf.gather_nd(W_2, ind_ij)

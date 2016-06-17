@@ -36,10 +36,12 @@ See the file ```main.py``` to understand how to use the function NPHC.
 
 The choice of the starting point is a paramount issue for the optimization step. A smart choice is
 ```python
+import tensorflow as tf
 import numpy as np
 sqrt_C = np.linalg.sqrtm(cumul.C)
 sqrt_L = np.sqrt(cumul.L)
 initial = np.dot(sqrt_C,np.diag(sqrt_L))
+starting_point = tf.constant(initial,shape=[d,d])
 ```
 This starting point corresponds to the optimal solution of the problem for ```alpha=1.```, up to an orthogonal matrix.
 
