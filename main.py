@@ -38,7 +38,6 @@ def NPHC(cumulants, starting_point, alpha=.5, training_epochs=1000, learning_rat
         W_2 = cumulants.W_2
         W_3 = cumulants.W_3
 
-
     if stochastic:
         W_2_ij = tf.gather_nd(W_2, ind_ij)
         W_3_ij = tf.gather_nd(W_3, ind_ij)
@@ -117,8 +116,8 @@ def NPHC(cumulants, starting_point, alpha=.5, training_epochs=1000, learning_rat
             for epoch in range(training_epochs):
                 if epoch % display_step == 0:
                     avg_cost = sess.run(cost, feed_dict={L: cumulants.L, C: cumulants.C, K_c: cumulants.K_c})
-                    avg_cost_3 = sess.run(cost_3, feed_dict={L: cumulants.L, C: cumulants.C, K_c: cumulants.K_c})
-                    avg_cost_2 = sess.run(cost_2, feed_dict={L: cumulants.L, C: cumulants.C})
+                    avg_cost_3 = sess.run(tf.nn.l2_loss(tf.gradients(cost_3, R)), feed_dict={L: cumulants.L, C: cumulants.C, K_c: cumulants.K_c})
+                    avg_cost_2 = sess.run(tf.nn.l2_loss(tf.gradients(cost_2, R)), feed_dict={L: cumulants.L, C: cumulants.C})
                     print("Epoch:", '%04d' % (epoch), "log10(cost)=", "{:.9f}".format(np.log10(avg_cost)))
                     print("       log10(cost3)=", "{:.9f}".format(np.log10(avg_cost_3)))
                     print("       log10(cost2)=", "{:.9f}".format(np.log10(avg_cost_2)))
