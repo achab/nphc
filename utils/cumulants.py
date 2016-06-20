@@ -204,10 +204,8 @@ class Cumulants(SimpleHawkes):
                 X = np.dot(R, np.dot(np.diag(L), R.T)) - C
                 X = X.reshape(R.shape[0]**2,1)
                 res += np.outer(X,X)
-            eig, vals = eigh(res)
-            eig[ eig < 1e-15 ] = 0.
-            eig_inverted = [ 0 if x == 0. else 1./x for x in eig ]
-            self.W_2 = len(self.L_list)*np.array(eig_inverted), vals
+            res *= 1./len(self.L_list)
+            self.W_2 = pinv(res)
         else:
             self.W_2 = np.ones_like(R)
 
@@ -229,10 +227,8 @@ class Cumulants(SimpleHawkes):
                 X = np.dot(R**2,C.T) + 2*np.dot(R*C,R.T) - 2*np.dot( R**2, np.dot(np.diag(L), R.T) ) - K_c
                 X = X.reshape(R.shape[0]**2,1)
                 res += np.outer(X,X)
-            eig, vals = eigh(res)
-            eig[ eig < 1e-15 ] = 0.
-            eig_inverted = [ 0 if x == 0. else 1./x for x in eig ]
-            self.W_3 = len(self.L_list)*np.array(eig_inverted), vals
+            res *= 1./len(self.L_list)
+            self.W_2 = pinv(res)
         else:
             self.W_3 = np.ones_like(R)
 
