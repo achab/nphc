@@ -318,8 +318,8 @@ def E_ijk(Z_i,Z_j,Z_k,a,b,T,L_i,L_j,L_k):
 
     Computes the mean of the centered product of i's and j's jumps between \tau + a and \tau + b, that is
 
-    \frac{1}{T} \sum_{\tau \in Z^k} ( N^i_{\tau + b} - N^i_{\tau + a} - \Lambda^i * ( b - a ) )
-                                  * ( N^j_{\tau + b} - N^j_{\tau + a} - \Lambda^j * ( b - a ) )
+    \frac{1}{T} \sum_{\tau \in Z^k} ( N^i_{\tau + b1} - N^i_{\tau + a1} - \Lambda^i * ( b1 - a1 ) )
+                                  * ( N^j_{\tau + b2} - N^j_{\tau + a2} - \Lambda^j * ( b2 - a2 ) )
 
     """
     res = 0
@@ -329,7 +329,7 @@ def E_ijk(Z_i,Z_j,Z_k,a,b,T,L_i,L_j,L_k):
     n_i = Z_i.shape[0]
     n_j = Z_j.shape[0]
     n_k = Z_k.shape[0]
-    trend_i = L_j*(b-a)
+    trend_i = L_i*(b-a)
     trend_j = L_j*(b-a)
     for t in range(n_k):
         tau = Z_k[t]
