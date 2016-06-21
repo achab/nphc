@@ -405,6 +405,63 @@ def I_ij(Z_i,Z_j,H,T,L_i,L_j):
     res -= .5 * (H**2) * L_i * L_j
     return res
 
+@autojit
+def J_ijk(Z_i,Z_j,Z_k,H_i,H_j,T,L_i,L_j,L_k):
+
+    res = 0
+    u = 0
+    x = 0
+    count = 0
+    n_i = Z_i.shape[0]
+    n_j = Z_j.shape[0]
+    n_k = Z_k.shape[0]
+    for t in range(n_k):
+        tau = Z_k[t]
+        tau_minus_H_i = tau - H_i
+        if tau_minus_H_i < 0: continue
+
+        # work on Z_i
+        while u < n_i:
+            if Z_i[u] <= tau_minus_H_i:
+                u += 1
+            else:
+                break
+        v = u
+        while v < n_i:
+            tau_minus_tau_i = tau - Z_i[v]
+            if tau_minus_tau_i > 0:
+                res += tau_minus_tau_i
+                v += 1
+            else:
+                break
+
+        # work on Z_j
+        tau_minus_H_j = tau - H_j
+        while x < n_j:
+            if Z_j[x] <= tau_minus_H_j:
+                x += 1
+            else:
+                break
+        y = x
+        while y < n_j:
+            tau_minus_tau_j = tau - Z_j[y]
+            if tau_minus_tau_j > 0:
+                res += tau_minus_tau_j
+                y += 1
+            else:
+                break
+
+        # check if this step is admissible
+        if y < n_j and x > 0 and v < n_i and u > 0:
+            count += 1
+            res += tau_minus_tau_i * tau_minus_tau_j
+
+    if count < n_k and count > 0:
+        res *= n_k * 1. / count
+    res /= T
+    res -= .5 * H_i*H_j*L_i*L_j
+    return res
+
 
 if __name__ == "__main__":
     N = [np.sort(np.random.randint(0,100,size=20)),np.sort(np.random.randint(0,100,size=20))]
