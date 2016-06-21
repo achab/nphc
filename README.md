@@ -28,11 +28,8 @@ cost = (1.-alpha)*tf.reduce_mean(tf.square(activation_3 - K_c)) + alpha*tf.reduc
 optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
 ```
 
-# Optimization is done via TensorFlow
 
-See the file ```main.py``` to understand how to use the function NPHC.
-
-# Good starting point
+## Good starting point
 
 The choice of the starting point is a paramount issue for the optimization step. A smart choice is
 ```python
@@ -40,7 +37,7 @@ import tensorflow as tf
 import numpy as np
 sqrt_C = np.linalg.sqrtm(cumul.C)
 sqrt_L = np.sqrt(cumul.L)
-initial = np.dot(sqrt_C,np.diag(sqrt_L))
+initial = np.dot(sqrt_C,np.diag(1./sqrt_L))
 starting_point = tf.constant(initial,shape=[d,d])
 ```
 This starting point corresponds to the optimal solution of the problem for ```alpha=1.```, up to an orthogonal matrix.
