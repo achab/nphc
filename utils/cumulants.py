@@ -286,6 +286,7 @@ def A_ij(Z_i,Z_j,a,b,T,L_i,L_j):
     count = 0
     n_i = Z_i.shape[0]
     n_j = Z_j.shape[0]
+    trend_j = L_j*(b-a)
     for t in range(n_i):
         tau = Z_i[t]
         if tau + a < 0: continue
@@ -301,15 +302,15 @@ def A_ij(Z_i,Z_j,a,b,T,L_i,L_j):
                 v += 1
             else:
                 break
-        if v < n_j:
-            if u > 0:
-                count += 1
-                res += v-u
+        res += v-u-trend_j
+        #if v < n_j:
+        #    if u > 0:
+        #        count += 1
+        #        res += v-u
     #if count < n_i:
     #    if count > 0:
     #        res *= n_i * 1. / count
     res /= T
-    res -= (b - a) * L_i * L_j
     return res
 
 @autojit
@@ -358,10 +359,11 @@ def E_ijk(Z_i,Z_j,Z_k,a_i,b_i,a_j,b_j,T,L_i,L_j,L_k):
                 y += 1
             else:
                 break
+        res += (v-u-trend_i) * (y-x-trend_j)
         # check if this step is admissible
-        if y < n_j and x > 0 and v < n_i and u > 0:
-            count += 1
-            res += (v-u-trend_i) * (y-x-trend_j)
+        #if y < n_j and x > 0 and v < n_i and u > 0:
+        #    count += 1
+        #    res += (v-u-trend_i) * (y-x-trend_j)
     #if count < n_k and count > 0:
     #    res *= n_k * 1. / count
     res /= T
@@ -381,6 +383,7 @@ def I_ij(Z_i,Z_j,H,T,L_i,L_j):
     res = 0
     u = 0
     count = 0
+    trend_j = .5 * (H**2) * L_j
     for t in range(n_i):
         tau = Z_i[t]
         tau_minus_H = tau - H
@@ -394,7 +397,7 @@ def I_ij(Z_i,Z_j,H,T,L_i,L_j):
         while v < n_j:
             tau_minus_tau_p = tau - Z_j[v]
             if tau_minus_tau_p > 0:
-                res += tau_minus_tau_p
+                res += tau_minus_tau_p-trend_j
                 count += 1
                 v += 1
             else:
@@ -402,7 +405,6 @@ def I_ij(Z_i,Z_j,H,T,L_i,L_j):
     #if count < n_i and count > 0:
     #    res *= n_i * 1. / count
     res /= T
-    res -= .5 * (H**2) * L_i * L_j
     return res
 
 @autojit
