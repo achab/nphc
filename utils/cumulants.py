@@ -305,9 +305,9 @@ def A_ij(Z_i,Z_j,a,b,T,L_i,L_j):
             if u > 0:
                 count += 1
                 res += v-u
-    if count < n_i:
-        if count > 0:
-            res *= n_i * 1. / count
+    #if count < n_i:
+    #    if count > 0:
+    #        res *= n_i * 1. / count
     res /= T
     res -= (b - a) * L_i * L_j
     return res
@@ -362,8 +362,8 @@ def E_ijk(Z_i,Z_j,Z_k,a_i,b_i,a_j,b_j,T,L_i,L_j,L_k):
         if y < n_j and x > 0 and v < n_i and u > 0:
             count += 1
             res += (v-u-trend_i) * (y-x-trend_j)
-    if count < n_k and count > 0:
-        res *= n_k * 1. / count
+    #if count < n_k and count > 0:
+    #    res *= n_k * 1. / count
     res /= T
     return res
 
@@ -399,8 +399,8 @@ def I_ij(Z_i,Z_j,H,T,L_i,L_j):
                 v += 1
             else:
                 break
-    if count < n_i and count > 0:
-        res *= n_i * 1. / count
+    #if count < n_i and count > 0:
+    #    res *= n_i * 1. / count
     res /= T
     res -= .5 * (H**2) * L_i * L_j
     return res

@@ -1,3 +1,4 @@
+multi_*.py
 good_params.md
 check_unimodality.ipynb
 param_estimation.ipynb
