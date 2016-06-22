@@ -408,16 +408,19 @@ def I_ij(Z_i,Z_j,H,T,L_i,L_j):
 @autojit
 def J_ijk(Z_i,Z_j,Z_k,H_i,H_j,T,L_i,L_j,L_k):
 
-    res = 0
     u = 0
     x = 0
+    res = 0
     count = 0
     n_i = Z_i.shape[0]
     n_j = Z_j.shape[0]
     n_k = Z_k.shape[0]
     for t in range(n_k):
+        res_i = 0
+        res_j = 0
         tau = Z_k[t]
         tau_minus_H_i = tau - H_i
+        tau_plus_H_i = tau + H_i
         if tau_minus_H_i < 0: continue
 
         # work on Z_i
@@ -428,15 +431,16 @@ def J_ijk(Z_i,Z_j,Z_k,H_i,H_j,T,L_i,L_j,L_k):
                 break
         v = u
         while v < n_i:
-            tau_minus_tau_i = tau - Z_i[v]
-            if tau_minus_tau_i > 0:
-                res += tau_minus_tau_i
+            tau_plus_H_i_minus_tau_i = tau_plus_H_i - Z_i[v]
+            if tau_plus_H_i_minus_tau_i > 0:
+                res_i += tau_plus_H_i_minus_tau_i
                 v += 1
             else:
                 break
 
         # work on Z_j
         tau_minus_H_j = tau - H_j
+        tau_plus_H_j = tau + H_j
         while x < n_j:
             if Z_j[x] <= tau_minus_H_j:
                 x += 1
@@ -444,9 +448,9 @@ def J_ijk(Z_i,Z_j,Z_k,H_i,H_j,T,L_i,L_j,L_k):
                 break
         y = x
         while y < n_j:
-            tau_minus_tau_j = tau - Z_j[y]
-            if tau_minus_tau_j > 0:
-                res += tau_minus_tau_j
+            tau_plus_H_j_minus_tau_j = tau_plus_H_j - Z_j[y]
+            if tau_plus_H_j_minus_tau_j > 0:
+                res_j += tau_plus_H_j_minus_tau_j
                 y += 1
             else:
                 break
@@ -454,12 +458,12 @@ def J_ijk(Z_i,Z_j,Z_k,H_i,H_j,T,L_i,L_j,L_k):
         # check if this step is admissible
         if y < n_j and x > 0 and v < n_i and u > 0:
             count += 1
-            res += tau_minus_tau_i * tau_minus_tau_j
+            res += res_i * res_j
 
     if count < n_k and count > 0:
         res *= n_k * 1. / count
     res /= T
-    res -= .5 * H_i*H_j*L_i*L_j
+    res -= 4 * H_i*H_j*L_i*L_j
     return res
 
 
