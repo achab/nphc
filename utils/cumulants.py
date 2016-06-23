@@ -465,7 +465,7 @@ def J_ijk(Z_i,Z_j,Z_k,H_i,H_j,T,L_i,L_j,L_k):
 
 if __name__ == "__main__":
     import gzip, pickle
-    filename = '/Users/massil/Programmation/git/nphc/datasets/rect/rect_d100_nonsym_2_log10T6_with_params_000.pkl.gz'
+    filename = '/data/users/achab/nphc/datasets/rect/rect_d10_nonsym_2_log10T8_with_params_094.pkl.gz'
     f = gzip.open(filename)
     cumul = pickle.load(f)[0]
     f.close()
