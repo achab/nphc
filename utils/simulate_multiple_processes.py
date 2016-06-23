@@ -14,7 +14,7 @@ def ix2str(ix):
 symmetric = 1
 kernel = 'rect'
 d = 100
-T = 1e8
+T = 1e6
 
 if symmetric == 0:
     mode = 'd' + str(d) + '_nonsym_1'
@@ -36,6 +36,6 @@ def worker(ix):
 
 if __name__ == '__main__':
 
-    indices = np.arange(100)
+    indices = np.arange(4)
     pool = Pool(20)
     pool.map(worker,indices)

@@ -5,10 +5,9 @@ from tensorflow import Session
 from joblib import Parallel, delayed
 
 
+class Cumulants(object):
 
-class SimpleHawkes(object):
-
-    def __init__(self, N=[], sort_process=False):
+    def __init__(self,N=[],hMax=40.,sort_process=False):
         self.dim = len(N)
         if sort_process:
             self.N = []
@@ -19,20 +18,6 @@ class SimpleHawkes(object):
         self.L = np.empty(self.dim)
         self.time = max([x[-1]-x[0] for x in N if x is not None and len(x) > 0]) * (self.dim > 0)
         self.set_L()
-
-    def set_L(self):
-        if self.dim > 0:
-            for i, process in enumerate(self.N):
-                if process is None:
-                    self.L[i] = 0
-                else:
-                    self.L[i] = len(process) / self.time
-
-
-class Cumulants(SimpleHawkes):
-
-    def __init__(self,N=[],hMax=40.):
-        super().__init__(N)
         self.C = None
         self.C_th = None
         self.K_c = None
@@ -46,6 +31,15 @@ class Cumulants(SimpleHawkes):
         self.L_list = []
         self.C_list = []
         self.K_c_list = []
+
+    def set_L(self):
+        if self.dim > 0:
+            for i, process in enumerate(self.N):
+                if process is None:
+                    self.L[i] = 0
+                else:
+                    self.L[i] = len(process) / self.time
+
 
     #########
     ## Functions to compute third order cumulant
@@ -470,10 +464,11 @@ def J_ijk(Z_i,Z_j,Z_k,H_i,H_j,T,L_i,L_j,L_k):
 
 
 if __name__ == "__main__":
-    N = [np.sort(np.random.randint(0,100,size=20)),np.sort(np.random.randint(0,100,size=20))]
-    cumul = Cumulants(N,hMax=10)
+    import gzip, pickle
+    filename = '/Users/massil/Programmation/git/nphc/datasets/rect/rect_d100_nonsym_2_log10T6_with_params_000.pkl.gz'
+    f = gzip.open(filename)
+    cumul = pickle.load(f)[0]
+    f.close()
+    process = cumul.N
+    cumul = Cumulants(process,hMax=10)
     cumul.set_all()
-    print("cumul.C = ")
-    print(cumul.C)
-    print("cumul.J = ")
-    print(cumul.J)
