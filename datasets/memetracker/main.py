@@ -29,7 +29,7 @@ if not os.path.isdir(dir_name):
 
 if __name__ == '__main__':
 
-    from .processing import count_top, create_pp, true_G
+    from nphc.datasets.memetracker.processing import count_top, create_pp, true_G
 
     # counts the occurences of the sites for each month
     def worker1(x):
