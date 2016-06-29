@@ -451,13 +451,14 @@ def J_ijk(Z_i,Z_j,Z_k,H_i,H_j,T,L_i,L_j,L_k):
             else:
                 break
 
+        res += res_i * res_j
         # check if this step is admissible
-        if y < n_j and x > 0 and v < n_i and u > 0:
-            count += 1
-            res += res_i * res_j
+        #if y < n_j and x > 0 and v < n_i and u > 0:
+        #    count += 1
+        #    res += res_i * res_j
 
-    if count < n_k and count > 0:
-        res *= n_k * 1. / count
+    #if count < n_k and count > 0:
+    #    res *= n_k * 1. / count
     res /= T
     res -= 4 * H_i*H_j*L_i*L_j
     return res

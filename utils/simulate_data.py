@@ -1,14 +1,11 @@
 import numpy as np
 
-# ## Major key for exp kernel:
-# ### Since hMax=40 encodes the support, we ensure \beta is not too small for estimation
-# Criterion on exp kernel gives us $\beta_{\min}$ such that $$\exp(-\mbox{hMax} \times \beta_\min) = 10^{-4}$$
 
 def args2params(mode, symmetric):
 
-    hMax = 40
-    from math import log
-    beta_min = log(1000) / hMax
+    #from math import log
+    #beta0 = log(1000) / 40.
+    beta0 = 0.01
 
     if 'd10_sym' in mode:
         d = 10
@@ -17,11 +14,11 @@ def args2params(mode, symmetric):
         Beta = np.zeros((d,d))
         Alpha[:d/2,:d/2] += 1.
         Alpha[d/2:,d/2:] += 1.
-        Beta[:d/2,:d/2] += 1000*beta_min
-        Beta[d/2:,d/2:] += 10*beta_min
+        Beta[:d/2,:d/2] += 1000*beta0
+        Beta[d/2:,d/2:] += 10*beta0
         if mode == 'd10_sym_hard':
             Alpha[6:8,:3] += 3.
-            Beta[6:8,:3] += 100*beta_min
+            Beta[6:8,:3] += 100*beta0
         Alpha = .5*(Alpha+Alpha.T)
         Gamma = .5*Alpha
         Beta = .5*(Beta + Beta.T)
@@ -36,15 +33,15 @@ def args2params(mode, symmetric):
             for j in range(5):
                 if i <= j:
                     Alpha[i][j] = 1.
-                    Beta[i][j] = 1000*beta_min
+                    Beta[i][j] = 1000*beta0
         for i in range(5,10):
             for j in range(5,10):
                 if i >= j:
                     Alpha[i][j] = 1.
-                    Beta[i][j] = 10*beta_min
+                    Beta[i][j] = 10*beta0
         if mode == 'd10_nonsym_1_hard':
             Alpha[6:8,1:3] += 1
-            Beta[6:8,1:3] += 100*beta_min
+            Beta[6:8,1:3] += 100*beta0
         Gamma = Alpha.copy()
         Alpha /= 6
 
@@ -57,18 +54,71 @@ def args2params(mode, symmetric):
             for j in range(5):
                 if i <= j:
                     Alpha[i][j] = 1.
-                    Gamma[i][j] = 1000*beta_min
+                    Gamma[i][j] = 1000*beta0
         for i in range(5,10):
             for j in range(5,10):
                 if i >= j:
                     Alpha[i][j] = 1.
-                    Gamma[i][j] = 10*beta_min
+                    Gamma[i][j] = 10*beta0
         if mode == 'd10_nonsym_2_hard':
             Alpha[6:8,1:3] += 1
-            Gamma[6:8,1:3] += 100*beta_min
+            Gamma[6:8,1:3] += 100*beta0
         Gamma *= .1
         Beta = Alpha.copy()
         Alpha /= 6
+
+    elif mode == 'd20_nonsym_1_hard':
+        d = 20
+        mu = 0.001 * np.ones(d)
+        Alpha = np.zeros((d,d))
+        Beta = np.zeros((d,d))
+        for i in range(5):
+            for j in range(5):
+                if i <= j:
+                    Alpha[i][j] = 1.
+                    Beta[i][j] = 1000*beta0
+        for i in range(5,10):
+            for j in range(5,10):
+                if i >= j:
+                    Alpha[i][j] = 1.
+                    Beta[i][j] = 10*beta0
+        for i in range(10,15):
+            for j in range(15,20):
+                Alpha[i][j] = 1.
+                Beta[i][j] = 100*beta0
+        for i in range(15,20):
+            for j in range(10,15):
+                Alpha[i][j] = 1.
+                Beta[i][j] = 1*beta0
+        Gamma = Alpha.copy()
+        Alpha /= 6.
+
+    elif mode == 'd20_nonsym_2_hard':
+        d = 20
+        mu = 0.001 * np.ones(d)
+        Alpha = np.zeros((d,d))
+        Gamma = np.zeros((d,d))
+        for i in range(5):
+            for j in range(5):
+                if i <= j:
+                    Alpha[i][j] = 1.
+                    Gamma[i][j] = 1000*beta0
+        for i in range(5,10):
+            for j in range(5,10):
+                if i >= j:
+                    Alpha[i][j] = 1.
+                    Gamma[i][j] = 10*beta0
+        for i in range(10,15):
+            for j in range(15,20):
+                Alpha[i][j] = 1.
+                Gamma[i][j] = 100*beta0
+        for i in range(15,20):
+            for j in range(10,15):
+                Alpha[i][j] = 1.
+                Gamma[i][j] = 1*beta0
+        Gamma *= .1
+        Beta = Alpha.copy()
+        Alpha /= 6.
 
     elif mode == 'd100_nonsym_1':
         d = 100
@@ -79,17 +129,17 @@ def args2params(mode, symmetric):
             for j in range(50):
                 if i <= j:
                     Alpha[i][j] = 1.
-                    Beta[i][j] = 10*beta_min
+                    Beta[i][j] = 10*beta0
         for i in range(51,80):
             for j in range(51,80):
                 if i >= j:
                     Alpha[i][j] = 1.
-                    Beta[i][j] = 100.*beta_min
+                    Beta[i][j] = 100.*beta0
         for i in range(81,100):
             for j in range(81,100):
                 if i <= j:
                     Alpha[i][j] = 1.
-                    Beta[i][j] = 1000.*beta_min
+                    Beta[i][j] = 1000.*beta0
         Gamma = Alpha.copy()
         Alpha /= 40
 
@@ -102,17 +152,17 @@ def args2params(mode, symmetric):
             for j in range(50):
                 if i <= j:
                     Alpha[i][j] = 1.
-                    Gamma[i][j] = 10*beta_min
+                    Gamma[i][j] = 10*beta0
         for i in range(51,80):
             for j in range(51,80):
                 if i >= j:
                     Alpha[i][j] = 1.
-                    Gamma[i][j] = 100.*beta_min
+                    Gamma[i][j] = 100.*beta0
         for i in range(81,100):
             for j in range(81,100):
                 if i <= j:
                     Alpha[i][j] = 1.
-                    Gamma[i][j] = 1000.*beta_min
+                    Gamma[i][j] = 1000.*beta0
         Gamma *= .1
         Beta = Alpha.copy()
         Alpha /= 40
