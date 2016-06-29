@@ -1,4 +1,4 @@
-# NPHC: NonParametric Hawkes with Cumulants
+# NPHC: Non Parametric Hawkes with Cumulants
 ## Compute cumulants from a list of point processes
 
 With *N* a list of *d* arrays corresponding to the ticks of the *d* processes, and *H* half the size of the support of the truncated covariance density, one instantiates the *Cumulants* object this way

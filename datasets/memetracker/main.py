@@ -14,7 +14,7 @@ import os, gzip, pickle, glob
 
 d = 20
 
-list_df = glob.glob('df_*')
+list_df = glob.glob('df_200*.csv')
 list_df.sort()
 
 start_month = '2008-08'
