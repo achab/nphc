@@ -32,20 +32,20 @@ def worker(filename):
     with gzip.open(filename, 'rb') as f:
         #content = [x.decode().strip('\n') for x in f.readlines()]
         df_rows = []
-        hyperlink_old = ''
         for line in f:
         #for line in content:
             x = line.rstrip('\n').split('\t')
             if x[0] == 'P':
                 post_url = x[1]
+                links_in_same_post = []
             elif x[0] == 'T':
                 date = x[1]
             elif x[0] == 'L':
                 hyperlink = x[1]
                 row = [date, hyperlink, post_url]
-                if hyperlink != hyperlink_old:
+                if hyperlink not in links_in_same_post:
+                    links_in_same_post.append(hyperlink)
                     df_rows.append(row)
-                    hyperlink_old = hyperlink
         df = pd.DataFrame(df_rows, columns=['Date', 'Hyperlink', 'Blog'])
         df['Date'] = pd.to_datetime(df['Date'])
         df = apply_inplace(df, 'Hyperlink', parse_url)

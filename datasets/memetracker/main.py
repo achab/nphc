@@ -14,10 +14,13 @@ import os, gzip, pickle, glob
 
 d = 20
 
-list_df = glob.glob('new_df*')
+list_df = glob.glob('df_*')
 list_df.sort()
 
-dir_name = "top" + str(d) + "_" + str(len(list_df)) + "months_start_2008_08"
+start_month = '2008-08'
+
+
+dir_name = "top{}_{}months_start_{}".format(d,len(list_df),start_month)
 
 if not os.path.isdir(dir_name):
     os.mkdir(dir_name)
@@ -26,22 +29,19 @@ if __name__ == '__main__':
 
     from .processing import count_top, create_pp, true_G
 
-    # counts the occurences of the sites
+    # counts the occurences of the sites for each month
     def worker1(x):
         return count_top.worker(x,dir_name)
     pool1 = Pool(processes=len(list_df))
     pool1.map(worker1,list_df)
 
-    # save the top d sites
+    # aggregate the counts and save the top d sites
     count_top.save_top_d(d,dir_name)
 
     # useful variables for the worker below
-    #start_month = list_df[0][3:-4]
-    start_month = '2008-08'
     start = pd.to_datetime(start_month + '-01 00:00:00')
     top_d = pd.read_csv(dir_name + '/top_' + str(d) + '.csv')
-    ix2url = { i:x for i, x in enumerate(top_d['url']) }
-
+    ix2url = { ix:url for ix, url in enumerate(top_d['url']) }
 
     # create multivariate point process for the top d sites
     def worker2(x):

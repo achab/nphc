@@ -33,7 +33,7 @@ def worker(ind,list_df,start,ix2url,dir_name):
     process = []
     for filename in list_df :
         df = pd.read_csv(filename)
-        df_url = df[df.To == url]
+        df_url = df[df.Hyperlink == url]
         if len(df_url) == 0: continue
         df_url = apply_inplace(df_url, 'Date', time_from_start)
         process.append(df_url['Date'].values)
