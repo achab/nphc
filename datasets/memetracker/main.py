@@ -1,7 +1,9 @@
 from multiprocessing import Pool
+import os, gzip, pickle, glob
+from itertools import product
 import pandas as pd
 import numpy as np
-import os, gzip, pickle, glob
+
 
 
 # Define the parameters
@@ -53,10 +55,7 @@ if __name__ == '__main__':
     # estimate G from the labelled links
     def worker3(x):
         return true_G.worker(x,list_df,d,dir_name,ix2url)
-    tuple_indices = []
-    for i in range(d):
-        for j in range(d):
-            tuple_indices.append((i,j))
+    tuple_indices = list(product(range(d),repeat=2))
     pool3 = Pool()
 
     # save the results
