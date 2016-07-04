@@ -19,10 +19,12 @@ class Cumulants(object):
         self.time = max([x[-1]-x[0] for x in N if x is not None and len(x) > 0]) * (self.dim > 0)
         self.set_L()
         self.C = None
+        self.L_th = None
         self.C_th = None
         self.K_c = None
         self.K_c_th = None
         self.R_true = None
+        self.mu_true = None
         self.hMax = hMax
         self.H = None
         # Following attributes are related to weighting matrix in GMM
@@ -154,13 +156,22 @@ class Cumulants(object):
     def set_R_true(self,R_true):
         self.R_true = R_true
 
+    def set_mu_true(self,mu_true):
+        self.mu_true = mu_true
+
+    def set_L_th(self):
+        assert self.R_true is not None, "You should provide R_true."
+        assert self.mu_true is not None, "You should provide mu_true."
+        self.L_th = get_L_th(self.mu_true, self.R_true)
+
+
     def set_C_th(self):
         assert self.R_true is not None, "You should provide R_true."
-        self.C_th = get_C_th(self.L, self.R_true)
+        self.C_th = get_C_th(self.L_th, self.R_true)
 
     def set_K_c_th(self):
         assert self.R_true is not None, "You should provide R_true."
-        self.K_c_th = get_K_c_th(self.L,self.C_th,self.R_true)
+        self.K_c_th = get_K_c_th(self.L_th,self.C_th,self.R_true)
 
     def set_all(self,H=0.):
         print("Starting computation of integrated cumulants...")
@@ -172,7 +183,9 @@ class Cumulants(object):
         print("cumul.J is computed !")
         self.set_K_c(H)
         print("cumul.K_c is computed !")
-        if self.R_true is not None:
+        if self.R_true is not None and self.mu_true is not None:
+            self.set_L_th()
+            print("cumul.L_th is computed !")
             self.set_C_th()
             print("cumul.C_th is computed !")
             self.set_K_c_th()
@@ -246,8 +259,12 @@ def get_K_c(L,C,J,E_c,H):
     return K_c
 
 ##########
-## Theoretical cumulants C, K, K_c
+## Theoretical cumulants L, C, K, K_c
 ##########
+
+@autojit
+def get_L_th(mu, R):
+    return np.dot(R,mu)
 
 @autojit
 def get_C_th(L, R):
@@ -404,68 +421,6 @@ def I_ij(Z_i,Z_j,H,T,L_i,L_j):
     #if count < n_i and count > 0:
     #    res *= n_i * 1. / count
     res /= T
-    return res
-
-@autojit
-def J_ijk(Z_i,Z_j,Z_k,H_i,H_j,T,L_i,L_j,L_k):
-
-    u = 0
-    x = 0
-    res = 0
-    count = 0
-    n_i = Z_i.shape[0]
-    n_j = Z_j.shape[0]
-    n_k = Z_k.shape[0]
-    for t in range(n_k):
-        res_i = 0
-        res_j = 0
-        tau = Z_k[t]
-        tau_minus_H_i = tau - H_i
-        tau_plus_H_i = tau + H_i
-        if tau_minus_H_i < 0: continue
-
-        # work on Z_i
-        while u < n_i:
-            if Z_i[u] <= tau_minus_H_i:
-                u += 1
-            else:
-                break
-        v = u
-        while v < n_i:
-            tau_plus_H_i_minus_tau_i = tau_plus_H_i - Z_i[v]
-            if tau_plus_H_i_minus_tau_i > 0:
-                res_i += tau_plus_H_i_minus_tau_i
-                v += 1
-            else:
-                break
-
-        # work on Z_j
-        tau_minus_H_j = tau - H_j
-        tau_plus_H_j = tau + H_j
-        while x < n_j:
-            if Z_j[x] <= tau_minus_H_j:
-                x += 1
-            else:
-                break
-        y = x
-        while y < n_j:
-            tau_plus_H_j_minus_tau_j = tau_plus_H_j - Z_j[y]
-            if tau_plus_H_j_minus_tau_j > 0:
-                res_j += tau_plus_H_j_minus_tau_j
-                y += 1
-            else:
-                break
-
-        res += res_i * res_j
-        # check if this step is admissible
-        #if y < n_j and x > 0 and v < n_i and u > 0:
-        #    count += 1
-        #    res += res_i * res_j
-
-    #if count < n_k and count > 0:
-    #    res *= n_k * 1. / count
-    res /= T
-    res -= 4 * H_i*H_j*L_i*L_j
     return res
 
 
