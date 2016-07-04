@@ -164,7 +164,6 @@ class Cumulants(object):
         assert self.mu_true is not None, "You should provide mu_true."
         self.L_th = get_L_th(self.mu_true, self.R_true)
 
-
     def set_C_th(self):
         assert self.R_true is not None, "You should provide R_true."
         self.C_th = get_C_th(self.L_th, self.R_true)

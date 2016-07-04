@@ -220,6 +220,7 @@ def simulate_and_compute_cumul(mu, kernels, Alpha, T, hM=20):
     d = Alpha.shape[0]
     R_true = inv(np.eye(d)-Alpha)
     cumul.set_R_true(R_true)
+    cumul.set_mu_true(mu)
     cumul.set_all()
 
     from metrics import rel_err
