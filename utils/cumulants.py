@@ -395,11 +395,12 @@ def I_ij(Z_i,Z_j,H,T,L_i,L_j):
         while v < n_j:
             tau_minus_tau_p = tau - Z_j[v]
             if tau_minus_tau_p > 0:
-                res += tau_minus_tau_p-trend_j
+                res += tau_minus_tau_p
                 #count += 1
                 v += 1
             else:
                 break
+        res -= trend_j
     #if count < n_i and count > 0:
     #    res *= n_i * 1. / count
     res /= T
