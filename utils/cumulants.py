@@ -300,7 +300,7 @@ def A_ij(Z_i,Z_j,a,b,T,L_i,L_j):
                 v += 1
             else:
                 break
-        res += v-u-trend_j
+        #res += v-u-trend_j
         #if v < n_j:
         #    if u > 0:
         #        count += 1
@@ -309,6 +309,7 @@ def A_ij(Z_i,Z_j,a,b,T,L_i,L_j):
     #    if count > 0:
     #        res *= n_i * 1. / count
     res /= T
+    res -= (b-a)*L_i*L_j
     return res
 
 @autojit
@@ -373,7 +374,7 @@ def I_ij(Z_i,Z_j,H,T,L_i,L_j):
 
     Computes the integral \int_{(0,H)} t c^{ij} (t) dt. This integral equals
 
-    \sum_{\tau \in Z^i} \sum_{\tau' \in Z^j} (\tau - \tau') 1_{ \tau - H < \tau' < \tau } - H^2 / 2 \Lambda^i \Lambda^j
+    \frac{1}{T} \sum_{\tau \in Z^i} \sum_{\tau' \in Z^j} (\tau - \tau') 1_{ \tau - H < \tau' < \tau } - H^2 / 2 \Lambda^i \Lambda^j
 
     """
     n_i = Z_i.shape[0]
@@ -400,10 +401,11 @@ def I_ij(Z_i,Z_j,H,T,L_i,L_j):
                 v += 1
             else:
                 break
-        res -= trend_j
+        #res -= trend_j
     #if count < n_i and count > 0:
     #    res *= n_i * 1. / count
     res /= T
+    res -= .5 * (H**2) * L_j * L_i
     return res
 
 @autojit
