@@ -55,8 +55,12 @@ class Cumulants(object):
         self.F_c = np.zeros((d,d))
         for i in range(d):
             for j in range(d):
-                self.F_c[i,j] = 2 * ( E_ijk(self.N[j],self.N[i],self.N[j],-hM,hM,-hM,hM,self.time,self.L[j],self.L[i],self.L[j]) - self.L[j]*(2*hM*A_ij(self.N[i],self.N[j],-2*hM,2*hM,self.time,self.L[i],self.L[j]) - 2*I_ij(self.N[j],self.N[i],2*hM,self.time,self.L[j],self.L[i]) ) )
-                self.F_c[i,j] += E_ijk(self.N[j],self.N[j],self.N[i],-hM,hM,-hM,hM,self.time,self.L[j],self.L[j],self.L[i]) - self.L[i]*(2*hM*A_ij(self.N[j],self.N[j],-2*hM,2*hM,self.time,self.L[j],self.L[j])  - 2*I_ij(self.N[j],self.N[j],2*hM,self.time,self.L[j],self.L[j]))
+                self.F_c[i,j] = 2 * ( E_ijk(self.N[j],self.N[i],self.N[j],-hM,hM,-hM,hM,self.time,self.L[j],self.L[i],self.L[j]) /\
+                                      - self.L[j]*( 2*hM*A_ij(self.N[i],self.N[j],-2*hM,2*hM,self.time,self.L[i],self.L[j]) /\
+                                                    - 2*I_ij(self.N[i],self.N[j],2*hM,self.time,self.L[i],self.L[j]) ) )
+                self.F_c[i,j] += E_ijk(self.N[j],self.N[j],self.N[i],-hM,hM,-hM,hM,self.time,self.L[j],self.L[j],self.L[i]) /\
+                                 - self.L[i]*(2*hM*A_ij(self.N[j],self.N[j],-2*hM,2*hM,self.time,self.L[j],self.L[j]) /\
+                                              - 2*I_ij(self.N[j],self.N[j],2*hM,self.time,self.L[j],self.L[j]))
         self.F_c /= 3
 
     #@autojit
