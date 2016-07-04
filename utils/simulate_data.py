@@ -223,7 +223,7 @@ def simulate_and_compute_cumul(mu, kernels, Alpha, T, hM=20):
     cumul.set_mu_true(mu)
     cumul.set_all()
 
-    from metrics import rel_err
+    from nphc.utils.metrics import rel_err
     print("rel_err on C = ", rel_err(cumul.C_th,cumul.C))
     print("rel_err on K_c = ", rel_err(cumul.K_c_th,cumul.K_c))
 
