@@ -303,7 +303,7 @@ def A_ij(Z_i,Z_j,a,b,T,L_i,L_j):
     trend_j = L_j*(b-a)
     for t in range(n_i):
         tau = Z_i[t]
-        #if tau + a < 0: continue
+        if tau + a < 0: continue
         while u < n_j:
             if Z_j[u] <= tau + a:
                 u += 1
@@ -348,7 +348,7 @@ def E_ijk(Z_i,Z_j,Z_k,a_i,b_i,a_j,b_j,T,L_i,L_j,L_k):
     trend_j = L_j*(b_j-a_j)
     for t in range(n_k):
         tau = Z_k[t]
-        #if tau + a_i < 0: continue
+        if tau + a_i < 0: continue
         # work on Z_i
         while u < n_i:
             if Z_i[u] <= tau + a_i:
@@ -401,7 +401,7 @@ def I_ij(Z_i,Z_j,H,T,L_i,L_j):
     for t in range(n_i):
         tau = Z_i[t]
         tau_minus_H = tau - H
-        #if tau_minus_H < 0: continue
+        if tau_minus_H < 0: continue
         while u < n_j:
             if Z_j[u] <= tau_minus_H :
                 u += 1
