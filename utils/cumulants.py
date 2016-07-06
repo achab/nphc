@@ -309,13 +309,13 @@ def A_ij(Z_i,Z_j,a,b,T,L_i,L_j):
                 u += 1
             else:
                 break
-        if u == n_j: continue
         v = u
         while v < n_j:
             if Z_j[v] < tau + b:
                 v += 1
             else:
                 break
+        if v == n_j: continue
         res += v-u-trend_j
         #if v < n_j:
         #    if u > 0:
@@ -361,6 +361,7 @@ def E_ijk(Z_i,Z_j,Z_k,a_i,b_i,a_j,b_j,T,L_i,L_j,L_k):
                 v += 1
             else:
                 break
+        if v == n_i: continue
         # work on Z_j
         while x < n_j:
             if Z_j[x] <= tau + a_j:
@@ -373,6 +374,7 @@ def E_ijk(Z_i,Z_j,Z_k,a_i,b_i,a_j,b_j,T,L_i,L_j,L_k):
                 y += 1
             else:
                 break
+        if y == n_j: continue
         res += (v-u-trend_i) * (y-x-trend_j)
         # check if this step is admissible
         #if y < n_j and x > 0 and v < n_i and u > 0:
@@ -408,15 +410,17 @@ def I_ij(Z_i,Z_j,H,T,L_i,L_j):
             else:
                 break
         v = u
+        sub_res = 0.
         while v < n_j:
             tau_minus_tau_p = tau - Z_j[v]
             if tau_minus_tau_p > 0:
-                res += tau_minus_tau_p
+                sub_res += tau_minus_tau_p
                 #count += 1
                 v += 1
             else:
                 break
-        res -= trend_j
+        if v == n_j: continue
+        res += sub_res - trend_j
     #if count < n_i and count > 0:
     #    res *= n_i * 1. / count
     res /= T
