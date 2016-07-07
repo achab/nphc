@@ -300,7 +300,8 @@ def A_ij(Z_i,Z_j,a,b,T,L_i,L_j):
     count = 0
     n_i = Z_i.shape[0]
     n_j = Z_j.shape[0]
-    trend_j = L_j*(b-a)
+    #trend_j = L_j*(b-a)
+    trend_j = 0
     for t in range(n_i):
         tau = Z_i[t]
         if tau + a < 0: continue
@@ -324,6 +325,7 @@ def A_ij(Z_i,Z_j,a,b,T,L_i,L_j):
     #if count < n_i:
     #    if count > 0:
     #        res *= n_i * 1. / count
+    res -= L_i*L_j*(b-a)
     res /= T
     return res
 
@@ -400,6 +402,7 @@ def I_ij(Z_i,Z_j,H,T,L_i,L_j):
     u = 0
     #count = 0
     trend_j = .5 * (H**2) * L_j
+    trend_j = 0.
     for t in range(n_i):
         tau = Z_i[t]
         tau_minus_H = tau - H
@@ -423,6 +426,7 @@ def I_ij(Z_i,Z_j,H,T,L_i,L_j):
         res += sub_res - trend_j
     #if count < n_i and count > 0:
     #    res *= n_i * 1. / count
+    res -= .5 * (H**2) * L_i * L_j
     res /= T
     return res
 
