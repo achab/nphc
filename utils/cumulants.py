@@ -267,7 +267,7 @@ def E_ijk(Z_i,Z_j,Z_k,a_i,b_i,a_j,b_j,T,L_i,L_j,L_k):
     n_k = Z_k.shape[0]
     trend_i = L_i*(b_i-a_i)
     trend_j = L_j*(b_j-a_j)
-    C = .5*(A_ij(Z_i,Z_j,a_i,b_i,T,L_i,L_j)+A_ij(Z_j,Z_i,a_i,b_i,T,L_j,L_i))
+    C = .5*(A_ij(Z_i,Z_j,-(b_i-a_i),b_i-a_i,T,L_i,L_j)+A_ij(Z_j,Z_i,-(b_i-a_i),b_i-a_i,T,L_j,L_i))
     J = .5*(I_ij(Z_i,Z_j,(b_i-a_i),T,L_i,L_j)+I_ij(Z_j,Z_i,(b_i-a_i),T,L_j,L_i))
     for t in range(n_k):
         tau = Z_k[t]
