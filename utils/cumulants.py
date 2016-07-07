@@ -192,56 +192,6 @@ class Cumulants(object):
         print("All cumulants are computed !")
 
 
-    ###########
-    ## Functions to compute weighting matrix in GMM
-    ###########
-
-    def set_W_2(self, R, weight='diag'):
-        R = Session().run(R)
-        assert len(self.L_list)*len(self.C_list) > 0, "You should first fill self.L_list and self.C_list"
-        assert len(self.L_list) == len(self.C_list), "The lists self.L_list and self.C_list should have the same number of elements."
-        if weight == 'diag':
-            res = np.zeros_like(R)
-            for L, C in zip(self.L_list, self.C_list):
-                X = np.dot(R, np.dot(np.diag(L), R.T)) - C
-                res += X ** 2
-            res[res < 1e-15] = 0.
-            self.W_2 = len(self.L_list) * 1./res
-        elif weight == 'dense':
-            d = R.shape[0]
-            res = np.zeros((d**2,d**2))
-            for L, C in zip(self.L_list, self.C_list):
-                X = np.dot(R, np.dot(np.diag(L), R.T)) - C
-                X = X.reshape(R.shape[0]**2,1)
-                res += np.outer(X,X)
-            res *= 1./len(self.L_list)
-            self.W_2 = pinv(res)
-        else:
-            self.W_2 = np.ones_like(R)
-
-    def set_W_3(self, R, weight='diag'):
-        R = Session().run(R)
-        assert len(self.L_list)*len(self.C_list)*len(self.K_c_list) > 0, "You should first fill self.L_list, self.C_list and self.K_c_list"
-        assert len(self.L_list) == len(self.C_list) == len(self.K_c_list), "The lists self.L_list, self.C_list and self.K_c_list should have the same number of elements."
-        if weight == 'diag':
-            res = np.zeros_like(R)
-            for L, C, K_c in zip(self.L_list, self.C_list, self.K_c_list):
-                X = np.dot(R**2,C.T) + 2*np.dot(R*C,R.T) - 2*np.dot( R**2, np.dot(np.diag(L), R.T) ) - K_c
-                res += X ** 2
-            res[res < 1e-15] = 0.
-            self.W_3 = len(self.L_list) * 1./res
-        elif weight == 'dense':
-            d = R.shape[0]
-            res = np.zeros((d**2,d**2))
-            for L, C, K_c in zip(self.L_list, self.C_list, self.K_c_list):
-                X = np.dot(R**2,C.T) + 2*np.dot(R*C,R.T) - 2*np.dot( R**2, np.dot(np.diag(L), R.T) ) - K_c
-                X = X.reshape(R.shape[0]**2,1)
-                res += np.outer(X,X)
-            res *= 1./len(self.L_list)
-            self.W_2 = pinv(res)
-        else:
-            self.W_3 = np.ones_like(R)
-
 
 ###########
 ## Empirical cumulants with formula from the paper
@@ -300,8 +250,7 @@ def A_ij(Z_i,Z_j,a,b,T,L_i,L_j):
     count = 0
     n_i = Z_i.shape[0]
     n_j = Z_j.shape[0]
-    #trend_j = L_j*(b-a)
-    trend_j = 0
+    trend_j = L_j*(b-a)
     for t in range(n_i):
         tau = Z_i[t]
         if tau + a < 0: continue
@@ -325,7 +274,6 @@ def A_ij(Z_i,Z_j,a,b,T,L_i,L_j):
     #if count < n_i:
     #    if count > 0:
     #        res *= n_i * 1. / count
-    res -= L_i*L_j*(b-a)
     res /= T
     return res
 
@@ -402,7 +350,6 @@ def I_ij(Z_i,Z_j,H,T,L_i,L_j):
     u = 0
     #count = 0
     trend_j = .5 * (H**2) * L_j
-    trend_j = 0.
     for t in range(n_i):
         tau = Z_i[t]
         tau_minus_H = tau - H
@@ -426,7 +373,6 @@ def I_ij(Z_i,Z_j,H,T,L_i,L_j):
         res += sub_res - trend_j
     #if count < n_i and count > 0:
     #    res *= n_i * 1. / count
-    res -= .5 * (H**2) * L_i * L_j
     res /= T
     return res
 
