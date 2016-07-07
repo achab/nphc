@@ -25,14 +25,7 @@ class Cumulants(object):
         self.K_c_th = None
         self.R_true = None
         self.mu_true = None
-        self.hMax = hMax
         self.H = None
-        # Following attributes are related to weighting matrix in GMM
-        self.W_2 = np.ones((self.dim,self.dim))
-        self.W_3 = np.ones((self.dim,self.dim))
-        self.L_list = []
-        self.C_list = []
-        self.K_c_list = []
 
     def set_L(self):
         if self.dim > 0:
@@ -120,28 +113,6 @@ class Cumulants(object):
             self.E_c = np.zeros((d,d,2))
             self.E_c[:,:,0] = np.array(l1).reshape(d,d)
             self.E_c[:,:,1] = np.array(l2).reshape(d,d)
-
-    #@autojit
-    def set_H(self,method=0,N=1000):
-        """
-        Set the matrix parameter self.H using different heuristics.
-        Method 0 simply set the same H for each couple (i,j).
-        Method 1 set the H that minimizes 1/H \int_0^H u c_{ij} (u) du.
-        """
-        d = self.dim
-        if method == 0:
-            self.H = self.hMax * np.ones((d,d))
-        if method == 1:
-            self.H = np.empty((d,d))
-            for i in range(d):
-                for j in range(d):
-                    range_h = np.logspace(-3,3,N)
-                    res = []
-                    for h in range_h:
-                        val = I_ij(self.N[i],self.N[j],h,self.time,self.L[i],self.L[j]) / h
-                        res.append(val)
-                    res = np.array(res)
-                    self.H[i,j] = range_h[np.argmin(res)]
 
     def set_K_c(self,H=0.):
         if H == 0.:
@@ -296,6 +267,8 @@ def E_ijk(Z_i,Z_j,Z_k,a_i,b_i,a_j,b_j,T,L_i,L_j,L_k):
     n_k = Z_k.shape[0]
     trend_i = L_i*(b_i-a_i)
     trend_j = L_j*(b_j-a_j)
+    C = .5*(A_ij(Z_i,Z_j,a_i,b_i,T,L_i,L_j)+A_ij(Z_j,Z_i,a_i,b_i,T,L_j,L_i))
+    J = .5*(I_ij(Z_i,Z_j,(b_i-a_i),T,L_i,L_j)+I_ij(Z_j,Z_i,(b_i-a_i),T,L_j,L_i))
     for t in range(n_k):
         tau = Z_k[t]
         if tau + a_i < 0: continue
@@ -325,7 +298,7 @@ def E_ijk(Z_i,Z_j,Z_k,a_i,b_i,a_j,b_j,T,L_i,L_j,L_k):
             else:
                 break
         if y == n_j: continue
-        res += (v-u-trend_i) * (y-x-trend_j)
+        res += (v-u-trend_i) * (y-x-trend_j) - ((b_i-a_i)*C - 2*J)
         # check if this step is admissible
         #if y < n_j and x > 0 and v < n_i and u > 0:
         #    count += 1
