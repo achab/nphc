@@ -197,9 +197,9 @@ def get_K_c_th(L,C,R):
         R_ = R.reshape(d,d)
     else:
         R_ = R.copy()
-    K_c = np.dot(R*R,C.T)
+    K_c = np.dot(R_*R_,C.T)
     K_c += 2*np.dot(R_*(C-np.dot(R_,np.diag(L))),R_.T)
-    return K_c
+    return K_c.T
 
 
 ##########
