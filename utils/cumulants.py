@@ -25,7 +25,7 @@ class Cumulants(object):
         self.K_c_th = None
         self.R_true = None
         self.mu_true = None
-        self.H = None
+        self.hMax = hMax
 
     def set_L(self):
         if self.dim > 0:
@@ -197,9 +197,10 @@ def get_K_c_th(L,C,R):
         R_ = R.reshape(d,d)
     else:
         R_ = R.copy()
-    K_c = np.dot(R_*R_,C.T)
-    K_c += 2*np.dot(R_*(C-np.dot(R_,np.diag(L))),R_.T)
-    return K_c.T
+    K_c = np.dot(C,(R_*R_).T)
+    K_c += 2*np.dot(R_,(R_*C).T)
+    K_c -= 2*np.dot(np.dot(R_,np.diag(L)),(R_*R_).T)
+    return K_c
 
 
 ##########
