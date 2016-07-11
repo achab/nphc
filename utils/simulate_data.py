@@ -6,10 +6,13 @@ def args2params(mode, symmetric):
     #from math import log
     #beta0 = log(1000) / 40.
     beta0 = 0.01
+    mu_d10 = 0.1
+    mu_d20 = 0.1
+    mu_d100 = 0.01
 
     if 'd10_sym' in mode:
         d = 10
-        mu = 0.0001 * np.ones(d)
+        mu = mu_d10 * np.ones(d)
         Alpha = np.zeros((d,d))
         Beta = np.zeros((d,d))
         Alpha[:d/2,:d/2] += 1.
@@ -26,7 +29,7 @@ def args2params(mode, symmetric):
 
     elif 'd10_nonsym_1' in mode:
         d = 10
-        mu = 0.0001 * np.ones(d)
+        mu = mu_d10 * np.ones(d)
         Alpha = np.zeros((d,d))
         Beta = np.zeros((d,d))
         for i in range(5):
@@ -47,7 +50,7 @@ def args2params(mode, symmetric):
 
     elif 'd10_nonsym_2' in mode:
         d = 10
-        mu = 0.0001 * np.ones(d)
+        mu = mu_d10 * np.ones(d)
         Alpha = np.zeros((d,d))
         Gamma = np.zeros((d,d))
         for i in range(5):
@@ -69,7 +72,7 @@ def args2params(mode, symmetric):
 
     elif mode == 'd20_nonsym_1_hard':
         d = 20
-        mu = 0.001 * np.ones(d)
+        mu = mu_d20 * np.ones(d)
         Alpha = np.zeros((d,d))
         Beta = np.zeros((d,d))
         for i in range(5):
@@ -95,7 +98,7 @@ def args2params(mode, symmetric):
 
     elif mode == 'd20_nonsym_2_hard':
         d = 20
-        mu = 0.001 * np.ones(d)
+        mu = mu_d20 * np.ones(d)
         Alpha = np.zeros((d,d))
         Gamma = np.zeros((d,d))
         for i in range(5):
@@ -122,7 +125,7 @@ def args2params(mode, symmetric):
 
     elif mode == 'd100_nonsym_1':
         d = 100
-        mu = 0.0001 * np.ones(d)
+        mu = mu_d100 * np.ones(d)
         Alpha = np.zeros((d,d))
         Beta = np.zeros((d,d))
         for i in range(50):
@@ -145,7 +148,7 @@ def args2params(mode, symmetric):
 
     elif mode == 'd100_nonsym_2':
         d = 100
-        mu = 0.0001 * np.ones(d)
+        mu = mu_d100 * np.ones(d)
         Alpha = np.zeros((d,d))
         Gamma = np.zeros((d,d))
         for i in range(50):
