@@ -97,14 +97,8 @@ class Cumulants(object):
             self.E_c[:,:,1] = np.array(l2).reshape(d,d)
 
     def set_K_c(self,H=0.):
-        if H == 0.:
-            hM = self.hMax
-        else:
-            hM = H
-        assert self.C is not None, "You should first set C using the function 'set_C'."
         assert self.E_c is not None, "You should first set E using the function 'set_E_c'."
-        assert self.J is not None, "You should first set J using the function 'set_J'."
-        self.K_c = get_K_c(self.L,self.C,self.J,self.E_c,hM)
+        self.K_c = get_K_c(self.E_c)
 
     def set_R_true(self,R_true):
         self.R_true = R_true
@@ -127,13 +121,11 @@ class Cumulants(object):
 
     def set_all(self,H=0.):
         print("Starting computation of integrated cumulants...")
-        self.set_C(2*H)
+        self.set_C(H)
         print("25 %")
         self.set_E_c(H)
         print("50 %")
-        self.set_J(2*H)
-        print("75 %")
-        self.set_K_c(2*H)
+        self.set_K_c()
         print("99 %")
         if self.R_true is not None and self.mu_true is not None:
             self.set_L_th()
@@ -149,12 +141,10 @@ class Cumulants(object):
 ###########
 
 @autojit
-def get_K_c(L,C,J,E_c,H):
-    K_c = np.zeros_like(C)
+def get_K_c(E_c):
+    K_c = np.zeros_like(E_c[:,:,0])
     K_c += 2*E_c[:,:,0]
-    K_c -= np.einsum('j,ij->ij',L,H*C-2*J)
     K_c += E_c[:,:,1]
-    K_c -= np.einsum('i,jj->ij',L,H*C-2*J)
     K_c /= 3.
     return K_c
 
@@ -245,7 +235,7 @@ def E_ijk(Z_i,Z_j,Z_k,a,b,T,L_i,L_j):
     trend_i = L_i*(b-a)
     trend_j = L_j*(b-a)
     C = .5*(A_ij(Z_i,Z_j,-(b-a),b-a,T,L_j)+A_ij(Z_j,Z_i,-(b-a),b-a,T,L_i))
-    J = .5*(I_ij(Z_i,Z_j,(b-a),T,L_j)+I_ij(Z_j,Z_i,(b-a),T,L_i))
+    J = .5*(I_ij(Z_i,Z_j,b-a,T,L_j)+I_ij(Z_j,Z_i,b-a,T,L_i))
     for t in range(n_k):
         tau = Z_k[t]
         if tau + a < 0: continue
