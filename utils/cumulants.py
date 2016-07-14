@@ -40,24 +40,6 @@ class Cumulants(object):
     ## Functions to compute third order cumulant
     #########
 
-    @autojit
-    def set_F_c(self,H=0.):
-        if H == 0.:
-            hM = self.hMax
-        else:
-            hM = H
-        d = self.dim
-        self.F_c = np.zeros((d,d))
-        for i in range(d):
-            for j in range(d):
-                self.F_c[i,j] = 2 * ( E_ijk(self.N[j],self.N[i],self.N[j],-hM,hM,self.time,self.L[j],self.L[i]) /\
-                                      - self.L[j]*( 2*hM*A_ij(self.N[i],self.N[j],-2*hM,2*hM,self.time,self.L[j]) /\
-                                                    - 2*I_ij(self.N[i],self.N[j],2*hM,self.time,self.L[j]) ) )
-                self.F_c[i,j] += E_ijk(self.N[j],self.N[j],self.N[i],-hM,hM,self.time,self.L[j],self.L[j]) /\
-                                 - self.L[i]*( 2*hM*A_ij(self.N[j],self.N[j],-2*hM,2*hM,self.time,self.L[j]) /\
-                                              - 2*I_ij(self.N[j],self.N[j],2*hM,self.time,self.L[j]))
-        self.F_c /= 3
-
     #@autojit
     def set_C(self,H=0.,method='parallel'):
         if H == 0.:
@@ -122,7 +104,7 @@ class Cumulants(object):
         assert self.C is not None, "You should first set C using the function 'set_C'."
         assert self.E_c is not None, "You should first set E using the function 'set_E_c'."
         assert self.J is not None, "You should first set J using the function 'set_J'."
-        self.K_c = get_K_c(self.L,self.C,self.J,self.E_c,2*hM)
+        self.K_c = get_K_c(self.L,self.C,self.J,self.E_c,hM)
 
     def set_R_true(self,R_true):
         self.R_true = R_true
@@ -145,13 +127,13 @@ class Cumulants(object):
 
     def set_all(self,H=0.):
         print("Starting computation of integrated cumulants...")
-        self.set_C(H)
+        self.set_C(2*H)
         print("cumul.C is computed !")
         self.set_E_c(H)
         print("cumul.E_c is computed !")
-        self.set_J(H)
+        self.set_J(2*H)
         print("cumul.J is computed !")
-        self.set_K_c(H)
+        self.set_K_c(2*H)
         print("cumul.K_c is computed !")
         if self.R_true is not None and self.mu_true is not None:
             self.set_L_th()
