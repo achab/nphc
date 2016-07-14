@@ -190,7 +190,7 @@ def A_ij(Z_i,Z_j,a,b,T,L_j):
     for t in range(n_i):
         # count the number of jumps
         tau = Z_i[t]
-        if tau + a < 0: continue
+        #if tau + a < 0: continue
         while u < n_j:
             if Z_j[u] <= tau + a:
                 u += 1
@@ -203,15 +203,15 @@ def A_ij(Z_i,Z_j,a,b,T,L_j):
             else:
                 break
         # compute time_window
-        #if tau + a < 0:
-        #    time_window = tau + b
-        #elif tau + b > T:
-        #    time_window = T - (tau + a)
-        #else:
-        #    time_window = b - a
+        if tau + a < 0:
+            time_window = tau + b
+        elif tau + b > T:
+            time_window = T - (tau + a)
+        else:
+            time_window = b - a
         # compute the trend
-        #trend_j = L_j*time_window
-        if v == n_j: continue
+        trend_j = L_j*time_window
+        #if v == n_j: continue
         res += v-u-trend_j
     res /= T
     return res
