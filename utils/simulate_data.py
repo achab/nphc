@@ -6,9 +6,9 @@ def args2params(mode, symmetric):
     #from math import log
     #beta0 = log(1000) / 40.
     beta0 = 0.01
-    mu_d10 = 0.1
-    mu_d20 = 0.1
-    mu_d100 = 0.01
+    mu_d10 = 0.001
+    mu_d20 = 0.001
+    mu_d100 = 0.001
 
     if 'd10_sym' in mode:
         d = 10
