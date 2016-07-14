@@ -128,20 +128,18 @@ class Cumulants(object):
     def set_all(self,H=0.):
         print("Starting computation of integrated cumulants...")
         self.set_C(2*H)
-        print("cumul.C is computed !")
+        print("25 %")
         self.set_E_c(H)
-        print("cumul.E_c is computed !")
+        print("50 %")
         self.set_J(2*H)
-        print("cumul.J is computed !")
+        print("75 %")
         self.set_K_c(2*H)
-        print("cumul.K_c is computed !")
+        print("99 %")
         if self.R_true is not None and self.mu_true is not None:
             self.set_L_th()
-            print("cumul.L_th is computed !")
             self.set_C_th()
-            print("cumul.C_th is computed !")
             self.set_K_c_th()
-            print("cumul.K_c_th is computed !")
+        print("100 %")
         print("All cumulants are computed !")
 
 
