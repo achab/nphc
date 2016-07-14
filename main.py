@@ -1,10 +1,15 @@
 from nphc.utils.cumulants import Cumulants
 from nphc.utils.loader import load_data
+from scipy.linalg import inv, qr
 from itertools import product
-from scipy.linalg import inv
 import tensorflow as tf
 import numpy as np
 
+
+def random_orthogonal_matrix(dim):
+    M = np.random.rand(dim**2).reshape(dim, dim)
+    Q, _ = qr(M)
+    return Q
 
 def NPHC(cumulants, starting_point, alpha=.5, training_epochs=1000, learning_rate=1e6, optimizer='momentum', \
          stochastic=False, display_step = 100, weightGMM='eye'):

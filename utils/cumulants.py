@@ -211,18 +211,14 @@ def get_K_c_th(L,C,R):
 @autojit
 def A_ij(Z_i,Z_j,a,b,T,L_i,L_j):
     """
-
     Computes the mean centered number of jumps of N^j between \tau + a and \tau + b, that is
-
     \frac{1}{T} \sum_{\tau \in Z^i} ( N^j_{\tau + b} - N^j_{\tau + a} - \Lambda^j (b - a) )
-
     """
     res = 0
     u = 0
     n_i = Z_i.shape[0]
     n_j = Z_j.shape[0]
     for t in range(n_i):
-
         # count the number of jumps
         tau = Z_i[t]
         while u < n_j:
@@ -236,7 +232,6 @@ def A_ij(Z_i,Z_j,a,b,T,L_i,L_j):
                 v += 1
             else:
                 break
-
         # compute time_window
         if tau + a < 0:
             time_window = tau + b
@@ -244,10 +239,8 @@ def A_ij(Z_i,Z_j,a,b,T,L_i,L_j):
             time_window = T - (tau + a)
         else:
             time_window = b - a
-
         # compute the trend
         trend_j = L_j*time_window
-
         res += v-u-trend_j
     res /= T
     return res
@@ -255,12 +248,9 @@ def A_ij(Z_i,Z_j,a,b,T,L_i,L_j):
 @autojit
 def E_ijk(Z_i,Z_j,Z_k,a_i,b_i,a_j,b_j,T,L_i,L_j,L_k):
     """
-
     Computes the mean of the centered product of i's and j's jumps between \tau + a and \tau + b, that is
-
     \frac{1}{T} \sum_{\tau \in Z^k} ( N^i_{\tau + b_i} - N^i_{\tau + a_i} - \Lambda^i * ( b_i - a_i ) )
                                   * ( N^j_{\tau + b_j} - N^j_{\tau + a_j} - \Lambda^j * ( b_j - a_j ) )
-
     """
     res = 0
     u = 0
