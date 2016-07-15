@@ -12,7 +12,7 @@ def random_orthogonal_matrix(dim):
     return Q
 
 def NPHC(cumulants, starting_point, alpha=.5, training_epochs=1000, learning_rate=1e6, optimizer='momentum', \
-         stochastic=False, display_step = 100, weightGMM='eye', l_l1=1e-10, l_l2=1e-10):
+         stochastic=False, display_step = 100, weightGMM='eye', l_l1=0., l_l2=0.):
 
     d = cumulants.dim
 
