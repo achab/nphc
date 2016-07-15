@@ -79,7 +79,10 @@ def NPHC(cumulants, starting_point, alpha=.5, training_epochs=1000, learning_rat
 
         reg_l1 = tf.contrib.layers.l1_regularizer(l_l1)
         reg_l2 = tf.contrib.layers.l2_regularizer(l_l2)
-        cost = tf.cast(cost, tf.float32) + reg_l1(R) + reg_l2(R)
+        if l_l1*l_l2 > 0:
+            cost = tf.cast(cost, tf.float32) + reg_l1(R) + reg_l2(R)
+        else:
+            cost = tf.cast(cost, tf.float32)
 
     if optimizer == 'momentum':
         optimizer = tf.train.MomentumOptimizer(learning_rate, momentum=0.9).minimize(cost)
