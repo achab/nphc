@@ -48,7 +48,7 @@ def NPHC(cumulants, starting_point, alpha=.5, training_epochs=1000, learning_rat
         W_3_ij = tf.gather_nd(W_3, ind_ij)
 
     # Construct model
-    activation_3 = tf.matmul(tf.square(R),C,transpose_b=True) + 2.0*tf.matmul(tf.mul(R,C),R,transpose_b=True) - 2.0*tf.matmul(tf.square(R),tf.matmul(tf.diag(L),R,transpose_b=True))
+    activation_3 = tf.matmul(C,tf.square(R),transpose_b=True) + 2.0*tf.matmul(R,tf.mul(R,C),transpose_b=True) - 2.0*tf.matmul(R,tf.matmul(tf.diag(L),tf.square(R),transpose_b=True))
     activation_2 = tf.matmul(R,tf.matmul(tf.diag(L),R,transpose_b=True))
 
     #cost_3 = tf.reduce_mean( tf.squared_difference( activation_3, K_c ) )
