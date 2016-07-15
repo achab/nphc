@@ -77,7 +77,7 @@ def NPHC(cumulants, starting_point, alpha=.5, training_epochs=1000, learning_rat
         elif weightGMM == 'diag':
             cost =  (1-alpha) * tf.reduce_mean( tf.mul( tf.squared_difference( activation_3, K_c ), tf.cast(W_3,tf.float32) ) ) + alpha * tf.reduce_mean( tf.mul( tf.squared_difference( activation_2, C ) , tf.cast(W_2,tf.float32) ) )
 
-        cost = tf.cast(cost, tf.float32)
+        cost = tf.cast(cost, tf.float32) + 0.001*tf.reduce_mean(tf.square(R))
 
     if optimizer == 'momentum':
         optimizer = tf.train.MomentumOptimizer(learning_rate, momentum=0.9).minimize(cost)
