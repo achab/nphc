@@ -12,7 +12,7 @@ def random_orthogonal_matrix(dim):
     return Q
 
 def NPHC(cumulants, starting_point, alpha=.5, training_epochs=1000, learning_rate=1e6, optimizer='momentum', \
-         stochastic=False, display_step = 100, weightGMM='eye'):
+         stochastic=False, display_step = 100, weightGMM='eye', l_l1=1e-10, l_l2=1e-10):
 
     d = cumulants.dim
 
@@ -77,7 +77,9 @@ def NPHC(cumulants, starting_point, alpha=.5, training_epochs=1000, learning_rat
         elif weightGMM == 'diag':
             cost =  (1-alpha) * tf.reduce_mean( tf.mul( tf.squared_difference( activation_3, K_c ), tf.cast(W_3,tf.float32) ) ) + alpha * tf.reduce_mean( tf.mul( tf.squared_difference( activation_2, C ) , tf.cast(W_2,tf.float32) ) )
 
-        cost = tf.cast(cost, tf.float32) + 0.001*tf.reduce_mean(tf.square(R))
+        reg_l1 = tf.contrib.layers.l1_regularizer(l_l1)
+        reg_l2 = tf.contrib.layers.l2_regularizer(l_l2)
+        cost = tf.cast(cost, tf.float32) + reg_l1(R) + reg_l2(R)
 
     if optimizer == 'momentum':
         optimizer = tf.train.MomentumOptimizer(learning_rate, momentum=0.9).minimize(cost)
