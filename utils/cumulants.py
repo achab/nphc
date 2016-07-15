@@ -119,11 +119,11 @@ class Cumulants(object):
         assert self.R_true is not None, "You should provide R_true."
         self.K_c_th = get_K_c_th(self.L_th,self.C_th,self.R_true)
 
-    def set_all(self,H=0.):
+    def set_all(self,H=0.,method="parallel"):
         print("Starting computation of integrated cumulants...")
-        self.set_C(H)
+        self.set_C(H,method)
         print("C is computed !")
-        self.set_E_c(H)
+        self.set_E_c(H,method)
         self.set_K_c()
         print("K_c is computed !")
         if self.R_true is not None and self.mu_true is not None:
