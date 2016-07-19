@@ -23,7 +23,7 @@ def random_orthogonal_matrix(dim):
     Q, _ = qr(M)
     return Q
 
-def NPHC(cumulants, starting_point, alpha=.5, training_epochs=1000, learning_rate=1e6, optimizer='momentum', \
+def NPHC(cumulants, initial_point, alpha=.5, training_epochs=1000, learning_rate=1e6, optimizer='momentum', \
          stochastic=False, display_step = 100, weightGMM='eye', l_l1=0., l_l2=0.):
 
     d = cumulants.dim
@@ -40,7 +40,7 @@ def NPHC(cumulants, starting_point, alpha=.5, training_epochs=1000, learning_rat
         C_ij = tf.gather_nd(C, ind_ij)
         K_c_ij = tf.gather_nd(K_c, ind_ij)
 
-    R = tf.Variable(starting_point, name='R')
+    R = tf.Variable(initial_point, name='R')
     if stochastic:
         R_i = tf.gather(R, ind_i)
         R_j = tf.gather(R, ind_j)
