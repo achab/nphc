@@ -32,18 +32,12 @@ optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
 ## Good starting point
 
 The choice of the starting point is a paramount issue for the optimization step.
-One can prove that the optimal value writes ``R = C^{1/2} Q L^{-1/2}``, Q being an orthogonal matrix.
-Then, a smart choice would be:
+One can prove that the optimal value writes ``R = C^{1/2} M L^{-1/2}``, M being an orthogonal matrix.
+Use the function ``nphc.main.starting_point``to select such a starting point where M equals either a random orthogonal matrix, or the identity matrix. 
 ```python
-from nphc.main import random_orthogonal_matrix
-import tensorflow as tf
-import numpy as np
-
-sqrt_C = np.linalg.sqrtm(cumul.C)
-sqrt_L = np.sqrt(cumul.L)
-Q = random_orthogonal_matrix(cumul.dim)
-initial = np.dot(np.dot(sqrt_C,Q),np.diag(1./sqrt_L))
-starting_point = tf.constant(initial,shape=[d,d])
+from nphc.main import starting_point
+R0_random = starting_point(cumul,random=True)
+R0_deterministic = starting_point(cumul,random=False)
 ```
 This starting point corresponds to the optimal solution of the problem for ```alpha=1.```, up to an orthogonal matrix.
 
