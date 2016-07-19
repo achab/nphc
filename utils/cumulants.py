@@ -5,19 +5,21 @@ from tensorflow import Session
 from joblib import Parallel, delayed
 
 
+
 class Cumulants(object):
 
-    def __init__(self,N=[],hMax=40.,sort_process=False):
-        self.dim = len(N)
-        if sort_process:
-            self.N = []
-            for i, process in enumerate(N):
-                self.N.append(np.sort(N[i]))
+    def __init__(self,N=[],hMax=100.):
+        self.N = N
+        self.N_is_list_of_multivariate_processes = all(isinstance(x, list) for x in self.N)
+        if self.N_is_list_of_multivariate_processes:
+            self.dim = len(self.N[0])
         else:
-            self.N = N
-        self.L = np.empty(self.dim)
-        self.time = max([x[-1]-x[0] for x in N if x is not None and len(x) > 0]) * (self.dim > 0)
-        self.set_L()
+            self.dim = len(self.N)
+        self.L = np.zeros(self.dim)
+        if self.N_is_list_of_multivariate_processes:
+            self.time = max([max([x[-1]-x[0] for x in multivar_process if x is not None and len(x) > 0]) for multivar_process in self.N])
+        else:
+            self.time = max([x[-1]-x[0] for x in self.N if x is not None and len(x) > 0])
         self.C = None
         self.L_th = None
         self.C_th = None
@@ -27,74 +29,109 @@ class Cumulants(object):
         self.mu_true = None
         self.hMax = hMax
 
-    def set_L(self):
-        if self.dim > 0:
-            for i, process in enumerate(self.N):
-                if process is None:
-                    self.L[i] = 0
-                else:
-                    self.L[i] = len(process) / self.time
+    ###########
+    ## Decorator to compute the cumulants on each day, and average
+    ###########
 
-
+    def average_if_list_of_multivariate_processes(func):
+        def average_cumulants(self,*args,**kwargs):
+            if self.N_is_list_of_multivariate_processes:
+                for n, multivar_process in enumerate(self.N):
+                    cumul = Cumulants(N=multivar_process)
+                    res_one_process = func(cumul,*args,**kwargs)
+                    if n == 0:
+                        res = np.zeros_like(res_one_process)
+                    res += res_one_process
+                res /= n+1
+            else:
+                res = func(self,*args,**kwargs)
+            return res
+        return average_cumulants
     #########
     ## Functions to compute third order cumulant
     #########
 
-    #@autojit
-    def set_C(self,H=0.,method='parallel'):
+    @average_if_list_of_multivariate_processes
+    def compute_L(self):
+        self.dim = len(self.N)
+        L = np.zeros(self.dim)
+        for i, process in enumerate(self.N):
+            if process is None:
+                L[i] = -1.
+            else:
+                L[i] = len(process) / self.time
+        return L
+
+    @average_if_list_of_multivariate_processes
+    def compute_C(self,H=0.,method='parallel'):
         if H == 0.:
             hM = self.hMax
         else:
             hM = H
         d = self.dim
         if method == 'classic':
-            self.C = np.zeros((d,d))
+            C = np.zeros((d,d))
             for i in range(d):
                 for j in range(d):
-                    self.C[i,j] = A_ij(self.N[i],self.N[j],-hM,hM,self.time,self.L[j])
+                    C[i,j] = A_ij(self.N[i],self.N[j],-hM,hM,self.time,self.L[j])
         elif method == 'parallel':
             l = Parallel(-1)(delayed(A_ij)(self.N[i],self.N[j],-hM,hM,self.time,self.L[j]) for i in range(d) for j in range(d))
-            self.C = np.array(l).reshape(d,d)
+            C = np.array(l).reshape(d,d)
         # we keep the symmetric part to remove edge effects
-        self.C[:] = 0.5 * (self.C + self.C.T)
+        C[:] = 0.5 * (C + C.T)
+        return C
 
-    #@autojit
-    def set_J(self, H=0.,method='parallel'):
+    @average_if_list_of_multivariate_processes
+    def compute_J(self, H=0.,method='parallel'):
         if H == 0.:
             hM = self.hMax
         else:
             hM = H
         d = self.dim
         if method == 'classic':
-            self.J = np.zeros((d,d))
+            J = np.zeros((d,d))
             for i in range(d):
                 for j in range(d):
-                    self.J[i,j] = I_ij(self.N[i],self.N[j],hM,self.time,self.L[j])
+                    J[i,j] = I_ij(self.N[i],self.N[j],hM,self.time,self.L[j])
         elif method == 'parallel':
             l = Parallel(-1)(delayed(I_ij)(self.N[i],self.N[j],hM,self.time,self.L[j]) for i in range(d) for j in range(d) )
-            self.J = np.array(l).reshape(d,d)
+            J = np.array(l).reshape(d,d)
         # we keep the symmetric part to remove edge effects
-        self.J[:] = 0.5 * (self.J + self.J.T)
+        J[:] = 0.5 * (J + J.T)
+        return J
 
-    #@autojit
-    def set_E_c(self,H=0.,method='parallel'):
+    @average_if_list_of_multivariate_processes
+    def compute_E_c(self,H=0.,method='parallel'):
         if H == 0.:
             hM = self.hMax
         else:
             hM = H
         d = self.dim
         if method == 'classic':
-            self.E_c = np.zeros((d,d,2))
+            E_c = np.zeros((d,d,2))
             for i in range(d):
                 for j in range(d):
-                    self.E_c[i,j,0] = E_ijk(self.N[i],self.N[j],self.N[j],-hM,hM,self.time,self.L[i],self.L[j])
-                    self.E_c[i,j,1] = E_ijk(self.N[j],self.N[j],self.N[i],-hM,hM,self.time,self.L[j],self.L[j])
+                    E_c[i,j,0] = E_ijk(self.N[i],self.N[j],self.N[j],-hM,hM,self.time,self.L[i],self.L[j])
+                    E_c[i,j,1] = E_ijk(self.N[j],self.N[j],self.N[i],-hM,hM,self.time,self.L[j],self.L[j])
         elif method == 'parallel':
             l1 = Parallel(-1)(delayed(E_ijk)(self.N[i],self.N[j],self.N[j],-hM,hM,self.time,self.L[i],self.L[j]) for i in range(d) for j in range(d))
             l2 = Parallel(-1)(delayed(E_ijk)(self.N[j],self.N[j],self.N[i],-hM,hM,self.time,self.L[j],self.L[j]) for i in range(d) for j in range(d))
-            self.E_c = np.zeros((d,d,2))
-            self.E_c[:,:,0] = np.array(l1).reshape(d,d)
-            self.E_c[:,:,1] = np.array(l2).reshape(d,d)
+            E_c = np.zeros((d,d,2))
+            E_c[:,:,0] = np.array(l1).reshape(d,d)
+            E_c[:,:,1] = np.array(l2).reshape(d,d)
+        return E_c
+
+    def set_L(self):
+        self.L = self.compute_L()
+
+    def set_C(self,H=0.,method='parallel'):
+        self.C = self.compute_C(H,method)
+
+    def set_J(self, H=0.,method='parallel'):
+        self.J = self.compute_J(H,method)
+
+    def set_E_c(self, H=0., method='parallel'):
+        self.E_c = self.compute_E_c(H,method)
 
     def set_K_c(self,H=0.):
         assert self.E_c is not None, "You should first set E using the function 'set_E_c'."
@@ -119,19 +156,33 @@ class Cumulants(object):
         assert self.R_true is not None, "You should provide R_true."
         self.K_c_th = get_K_c_th(self.L_th,self.C_th,self.R_true)
 
-    def set_all(self,H=0.,method="parallel"):
-        print("Starting computation of integrated cumulants...")
+    def _set_all_for_one_multivar_process(self,H=0.,method="parallel"):
+        self.set_time()
+        self.set_L()
         self.set_C(H,method)
-        print("C is computed !")
         self.set_E_c(H,method)
         self.set_K_c()
-        print("K_c is computed !")
         if self.R_true is not None and self.mu_true is not None:
             self.set_L_th()
             self.set_C_th()
             self.set_K_c_th()
-        print("Theoretical cumulants are computed !")
 
+    def set_all(self,H=0.,method="parallel"):
+        if self.N_is_list_of_multivariate_processes:
+            self.L = np.zeros(self.dim)
+            self.C = np.zeros((self.dim,self.dim))
+            self.K_c = np.zeros((self.dim,self.dim))
+            for n, multivar_process in enumerate(self.N):
+                cumul = Cumulants(N=multivar_process, hMax=H)
+                cumul._set_all_for_one_multivar_process(H=H,method=method)
+                print("Cumulants are computed for day {} !".format(n+1))
+                self.L += cumul.L
+                self.C += cumul.C
+                self.K_c += cumul.K_c
+            for X in [self.L, self.C, self.K_c]:
+                X /= len(self.N)
+        else:
+            self._set_all_for_one_multivar_process(H=H,method=method)
 
 
 ###########
@@ -305,10 +356,28 @@ def I_ij(Z_i,Z_j,H,T,L_j):
 
 if __name__ == "__main__":
     import gzip, pickle
-    filename = '/data/users/achab/nphc/datasets/rect/rect_d10_nonsym_2_log10T8_with_params_094.pkl.gz'
+    #filename = '/data/users/achab/nphc/datasets/rect/rect_d10_nonsym_2_log10T8_with_params_094.pkl.gz'
+    filename = '/Users/massil/Programmation/git/nphc/test.pkl.gz'
     f = gzip.open(filename)
-    cumul = pickle.load(f)[0]
+    data = pickle.load(f)
     f.close()
-    process = cumul.N
-    cumul = Cumulants(process,hMax=10)
-    cumul.set_all()
+    cumul = Cumulants(data[:3])
+    one_day_cumul = Cumulants(data[0])
+    cumul.set_C(H=5)
+    C_H5 = cumul.C
+    cumul.set_C(H=20)
+    C_H20 = cumul.C
+    print("Same C for different H ?")
+    print(np.allclose(C_H5,C_H20))
+    cumul.set_J(H=5)
+    J_H5 = cumul.J
+    cumul.set_J(H=20)
+    J_H20 = cumul.J
+    print("Same J for different H ?")
+    print(np.allclose(J_H5,J_H20))
+    cumul.set_E_c(H=5)
+    E_c_H5 = cumul.E_c
+    cumul.set_E_c(H=20)
+    E_c_H20 = cumul.E_c
+    print("Same E_c for different H ?")
+    print(np.allclose(E_c_H5,E_c_H20))
