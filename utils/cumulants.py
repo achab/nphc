@@ -156,33 +156,18 @@ class Cumulants(object):
         assert self.R_true is not None, "You should provide R_true."
         self.K_c_th = get_K_c_th(self.L_th,self.C_th,self.R_true)
 
-    def _set_all_for_one_multivar_process(self,H=0.,method="parallel"):
-        self.set_time()
+    def set_all(self,H=0.,method="parallel"):
         self.set_L()
+        print("L is computed")
         self.set_C(H,method)
+        print("C is computed")
         self.set_E_c(H,method)
         self.set_K_c()
+        print("K_c is computed")
         if self.R_true is not None and self.mu_true is not None:
             self.set_L_th()
             self.set_C_th()
             self.set_K_c_th()
-
-    def set_all(self,H=0.,method="parallel"):
-        if self.N_is_list_of_multivariate_processes:
-            self.L = np.zeros(self.dim)
-            self.C = np.zeros((self.dim,self.dim))
-            self.K_c = np.zeros((self.dim,self.dim))
-            for n, multivar_process in enumerate(self.N):
-                cumul = Cumulants(N=multivar_process, hMax=H)
-                cumul._set_all_for_one_multivar_process(H=H,method=method)
-                print("Cumulants are computed for day {} !".format(n+1))
-                self.L += cumul.L
-                self.C += cumul.C
-                self.K_c += cumul.K_c
-            for X in [self.L, self.C, self.K_c]:
-                X /= len(self.N)
-        else:
-            self._set_all_for_one_multivar_process(H=H,method=method)
 
 
 ###########
