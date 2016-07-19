@@ -1,9 +1,21 @@
 from nphc.utils.cumulants import Cumulants
 from nphc.utils.loader import load_data
-from scipy.linalg import inv, qr
+from scipy.linalg import inv, qr, sqrtm
 from itertools import product
 import tensorflow as tf
 import numpy as np
+
+
+def starting_point(cumulants,random=False):
+    d = cumulants.dim
+    sqrt_C = sqrtm(cumulants.C)
+    sqrt_L = np.sqrt(cumulants.L)
+    if random:
+        M = random_orthogonal_matrix(d)
+    else:
+        M = np.eye(d)
+    initial = np.dot(np.dot(sqrt_C,M),np.diag(1./sqrt_L))
+    return tf.constant(initial,shape=[d,d])
 
 
 def random_orthogonal_matrix(dim):
