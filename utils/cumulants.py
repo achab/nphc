@@ -1,8 +1,8 @@
-import numpy as np
 from numba import autojit, jit, double, int32, int64, float64
 from scipy.linalg import inv, pinv, eigh
-from tensorflow import Session
 from joblib import Parallel, delayed
+from tensorflow import Session
+import numpy as np
 
 
 
@@ -36,13 +36,21 @@ class Cumulants(object):
     def average_if_list_of_multivariate_processes(func):
         def average_cumulants(self,*args,**kwargs):
             if self.N_is_list_of_multivariate_processes:
-                for n, multivar_process in enumerate(self.N):
-                    cumul = Cumulants(N=multivar_process)
-                    res_one_process = func(cumul,*args,**kwargs)
-                    if n == 0:
-                        res = np.zeros_like(res_one_process)
-                    res += res_one_process
-                res /= n+1
+                if 'parallel' in args:
+                    for n, multivar_process in enumerate(self.N):
+                        cumul = Cumulants(N=multivar_process)
+                        res_one_process = func(cumul,*args,**kwargs)
+                        if n == 0:
+                            res = np.zeros_like(res_one_process)
+                        res += res_one_process
+                    res /= n+1
+                else:
+                    def worker(multivar_process):
+                        cumul = Cumulants(N=multivar_process)
+                        res_one_process = func(cumul,*args,**kwargs)
+                        return res_one_process
+                    l = Parallel(-1)(delayed(worker)(m_p) for m_p in self.N)
+                    res = np.average(l,axis=0)
             else:
                 res = func(self,*args,**kwargs)
             return res
@@ -350,7 +358,7 @@ if __name__ == "__main__":
     one_day_cumul = Cumulants(data[0])
     cumul.set_C(H=5)
     C_H5 = cumul.C
-    cumul.set_C(H=20)
+    cumul.set_C(H=20,method='parallel')
     C_H20 = cumul.C
     print("Same C for different H ?")
     print(np.allclose(C_H5,C_H20))
