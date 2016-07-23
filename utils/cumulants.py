@@ -42,19 +42,19 @@ class Cumulants(object):
                         res_one_process = func(cumul,*args,**kwargs)
                         return res_one_process
                     l = Parallel(-1)(delayed(worker)(m_p) for m_p in self.N)
-                    res = np.average(l,axis=0)
+                    res = np.average(l, axis=0)
                 else:
-                    for n, multivar_process in enumerate(self.N):
+                    l = []
+                    for multivar_process in self.N:
                         cumul = Cumulants(N=multivar_process)
                         res_one_process = func(cumul,*args,**kwargs)
-                        if n == 0:
-                            res = np.zeros_like(res_one_process)
-                        res += res_one_process
-                    res /= n+1
+                        l.append(res_one_process)
+                    res = np.average(l, axis=0)
             else:
                 res = func(self,*args,**kwargs)
             return res
         return average_cumulants
+        
     #########
     ## Functions to compute third order cumulant
     #########
