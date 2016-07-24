@@ -45,11 +45,15 @@ class Cumulants(object):
                 #    res = np.average(l, axis=0)
                 #else:
                 l = []
-                for multivar_process in self.N:
+                for n, multivar_process in enumerate(self.N):
                     cumul = Cumulants(N=multivar_process)
                     res_one_process = func(cumul,*args,**kwargs)
-                    l.append(res_one_process)
-                res = np.average(l, axis=0)
+                    if n == 0:
+                        res = np.zeros_like(res_one_process)
+                    res += res_one_process
+                res /= n+1
+                #    l.append(res_one_process)
+                #res = np.average(l, axis=0)
             else:
                 res = func(self,*args,**kwargs)
             return res
