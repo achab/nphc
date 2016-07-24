@@ -17,9 +17,9 @@ class Cumulants(object):
             self.dim = len(self.N)
         self.L = np.zeros(self.dim)
         if self.N_is_list_of_multivariate_processes:
-            self.time = max([max([x[-1]-x[0] for x in multivar_process if x is not None and len(x) > 0]) for multivar_process in self.N])
+            self.time = float(max([max([x[-1]-x[0] for x in multivar_process if x is not None and len(x) > 0]) for multivar_process in self.N]))
         else:
-            self.time = max([x[-1]-x[0] for x in self.N if x is not None and len(x) > 0])
+            self.time = float(max([x[-1]-x[0] for x in self.N if x is not None and len(x) > 0]))
         self.C = None
         self.L_th = None
         self.C_th = None
@@ -36,25 +36,25 @@ class Cumulants(object):
     def average_if_list_of_multivariate_processes(func):
         def average_cumulants(self,*args,**kwargs):
             if self.N_is_list_of_multivariate_processes:
-                if 'classic' in args:
-                    def worker(multivar_process):
-                        cumul = Cumulants(N=multivar_process)
-                        res_one_process = func(cumul,*args,**kwargs)
-                        return res_one_process
-                    l = Parallel(-1)(delayed(worker)(m_p) for m_p in self.N)
-                    res = np.average(l, axis=0)
-                else:
-                    l = []
-                    for multivar_process in self.N:
-                        cumul = Cumulants(N=multivar_process)
-                        res_one_process = func(cumul,*args,**kwargs)
-                        l.append(res_one_process)
-                    res = np.average(l, axis=0)
+                #if 'classic' in args:
+                #    def worker(multivar_process):
+                #        cumul = Cumulants(N=multivar_process)
+                #        res_one_process = func(cumul,*args,**kwargs)
+                #        return res_one_process
+                #    l = Parallel(-1)(delayed(worker)(m_p) for m_p in self.N)
+                #    res = np.average(l, axis=0)
+                #else:
+                l = []
+                for multivar_process in self.N:
+                    cumul = Cumulants(N=multivar_process)
+                    res_one_process = func(cumul,*args,**kwargs)
+                    l.append(res_one_process)
+                res = np.average(l, axis=0)
             else:
                 res = func(self,*args,**kwargs)
             return res
         return average_cumulants
-        
+
     #########
     ## Functions to compute third order cumulant
     #########
