@@ -36,15 +36,6 @@ class Cumulants(object):
     def average_if_list_of_multivariate_processes(func):
         def average_cumulants(self,*args,**kwargs):
             if self.N_is_list_of_multivariate_processes:
-                #if 'classic' in args:
-                #    def worker(multivar_process):
-                #        cumul = Cumulants(N=multivar_process)
-                #        res_one_process = func(cumul,*args,**kwargs)
-                #        return res_one_process
-                #    l = Parallel(-1)(delayed(worker)(m_p) for m_p in self.N)
-                #    res = np.average(l, axis=0)
-                #else:
-                l = []
                 for n, multivar_process in enumerate(self.N):
                     cumul = Cumulants(N=multivar_process)
                     res_one_process = func(cumul,*args,**kwargs)
@@ -52,8 +43,6 @@ class Cumulants(object):
                         res = np.zeros_like(res_one_process)
                     res += res_one_process
                 res /= n+1
-                #    l.append(res_one_process)
-                #res = np.average(l, axis=0)
             else:
                 res = func(self,*args,**kwargs)
             return res
