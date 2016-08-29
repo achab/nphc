@@ -35,7 +35,8 @@ class Cumulants(object):
 
     def average_if_list_of_multivariate_processes(func):
         def average_cumulants(self,*args,**kwargs):
-            if self.N_is_list_of_multivariate_processes:
+            if getattr(self, 'N_is_list_of_multivariate_processes', False):
+            #if self.N_is_list_of_multivariate_processes:
                 for n, multivar_process in enumerate(self.N):
                     cumul = Cumulants(N=multivar_process)
                     res_one_process = func(cumul,*args,**kwargs)
