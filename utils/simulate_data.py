@@ -123,7 +123,7 @@ def args2params(mode, symmetric):
         Beta = Alpha.copy()
         Alpha /= 6.
 
-    elif mode == 'd100_nonsym_1':
+    elif 'd100_nonsym_1' in mode:
         d = 100
         mu = mu_d100 * np.ones(d)
         Alpha = np.zeros((d,d))
@@ -143,10 +143,13 @@ def args2params(mode, symmetric):
                 if i <= j:
                     Alpha[i][j] = 1.
                     Beta[i][j] = 1000.*beta0
+        if mode == 'd100_nonsym_1_hard':
+            Alpha[60:80,10:30] += 1
+            Gamma[60:80,10:30] += 100*beta0
         Gamma = Alpha.copy()
         Alpha /= 40
 
-    elif mode == 'd100_nonsym_2':
+    elif 'd100_nonsym_2' in mode:
         d = 100
         mu = mu_d100 * np.ones(d)
         Alpha = np.zeros((d,d))
@@ -166,6 +169,9 @@ def args2params(mode, symmetric):
                 if i <= j:
                     Alpha[i][j] = 1.
                     Gamma[i][j] = 1000.*beta0
+        if mode == 'd100_nonsym_2_hard':
+            Alpha[60:80,10:30] += 1
+            Gamma[60:80,10:30] += 100*beta0
         Gamma *= .1
         Beta = Alpha.copy()
         Alpha /= 40
