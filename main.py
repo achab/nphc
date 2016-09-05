@@ -15,8 +15,7 @@ def starting_point(cumulants,random=False):
     else:
         M = np.eye(d)
     initial = np.dot(np.dot(sqrt_C,M),np.diag(1./sqrt_L))
-    return tf.constant(initial,shape=[d,d])
-
+    return initial
 
 def random_orthogonal_matrix(dim):
     M = np.random.rand(dim**2).reshape(dim, dim)
@@ -27,6 +26,8 @@ def NPHC(cumulants, initial_point, alpha=.5, training_epochs=1000, learning_rate
          stochastic=False, display_step = 100, weightGMM='eye', l_l1=0., l_l2=0.):
 
     d = cumulants.dim
+
+    R0 = tf.constant(initial_point, shape=[d,d])
 
     L = tf.placeholder(tf.float32, d, name='L')
     C = tf.placeholder(tf.float32, (d,d), name='C')

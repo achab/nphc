@@ -11,9 +11,9 @@ def ix2str(ix):
         ix_str = str(ix)
     return ix_str
 
-symmetric = 0
-kernel = 'plaw'
-d = 10
+symmetric = 3
+kernel = 'rect'
+d = 100
 T = 1e8
 
 if symmetric == 0:
@@ -30,12 +30,12 @@ def worker(ix):
     ix_str = '_' + ix2str(ix)
     mu, Alpha, Beta, Gamma = args2params(mode, symmetric)
     kernels = params2kernels(kernel, Alpha, Beta, Gamma)
-    cumul = simulate_and_compute_cumul(mu, kernels, Alpha, T, 20)
+    cumul = simulate_and_compute_cumul(mu, kernels, Alpha, T, 100)
     save(cumul, Alpha, Beta, Gamma, kernel, mode, T, suffix=ix_str)
 
 
 if __name__ == '__main__':
 
     indices = np.arange(100)
-    pool = Pool(20)
+    pool = Pool(10)
     pool.map(worker,indices)

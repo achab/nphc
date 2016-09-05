@@ -17,9 +17,9 @@ class Cumulants(object):
             self.dim = len(self.N)
         self.L = np.zeros(self.dim)
         if self.N_is_list_of_multivariate_processes:
-            self.time = max([max([x[-1]-x[0] for x in multivar_process if x is not None and len(x) > 0]) for multivar_process in self.N])
+            self.time = float(max([max([x[-1]-x[0] for x in multivar_process if x is not None and len(x) > 0]) for multivar_process in self.N]))
         else:
-            self.time = max([x[-1]-x[0] for x in self.N if x is not None and len(x) > 0])
+            self.time = float(max([x[-1]-x[0] for x in self.N if x is not None and len(x) > 0]))
         self.C = None
         self.L_th = None
         self.C_th = None
@@ -35,26 +35,20 @@ class Cumulants(object):
 
     def average_if_list_of_multivariate_processes(func):
         def average_cumulants(self,*args,**kwargs):
-            if self.N_is_list_of_multivariate_processes:
-                if 'parallel' in args:
-                    for n, multivar_process in enumerate(self.N):
-                        cumul = Cumulants(N=multivar_process)
-                        res_one_process = func(cumul,*args,**kwargs)
-                        if n == 0:
-                            res = np.zeros_like(res_one_process)
-                        res += res_one_process
-                    res /= n+1
-                else:
-                    def worker(multivar_process):
-                        cumul = Cumulants(N=multivar_process)
-                        res_one_process = func(cumul,*args,**kwargs)
-                        return res_one_process
-                    l = Parallel(-1)(delayed(worker)(m_p) for m_p in self.N)
-                    res = np.average(l,axis=0)
+            if getattr(self, 'N_is_list_of_multivariate_processes', False):
+            #if self.N_is_list_of_multivariate_processes:
+                for n, multivar_process in enumerate(self.N):
+                    cumul = Cumulants(N=multivar_process)
+                    res_one_process = func(cumul,*args,**kwargs)
+                    if n == 0:
+                        res = np.zeros_like(res_one_process)
+                    res += res_one_process
+                res /= n+1
             else:
                 res = func(self,*args,**kwargs)
             return res
         return average_cumulants
+
     #########
     ## Functions to compute third order cumulant
     #########
@@ -133,13 +127,13 @@ class Cumulants(object):
         self.L = self.compute_L()
 
     def set_C(self,H=0.,method='parallel'):
-        self.C = self.compute_C(H,method)
+        self.C = self.compute_C(H=H,method=method)
 
     def set_J(self, H=0.,method='parallel'):
-        self.J = self.compute_J(H,method)
+        self.J = self.compute_J(H=H,method=method)
 
     def set_E_c(self, H=0., method='parallel'):
-        self.E_c = self.compute_E_c(H,method)
+        self.E_c = self.compute_E_c(H=H,method=method)
 
     def set_K_c(self,H=0.):
         assert self.E_c is not None, "You should first set E using the function 'set_E_c'."
@@ -167,9 +161,9 @@ class Cumulants(object):
     def set_all(self,H=0.,method="parallel"):
         self.set_L()
         print("L is computed")
-        self.set_C(H,method)
+        self.set_C(H=H,method=method)
         print("C is computed")
-        self.set_E_c(H,method)
+        self.set_E_c(H=H,method=method)
         self.set_K_c()
         print("K_c is computed")
         if self.R_true is not None and self.mu_true is not None:
@@ -356,7 +350,7 @@ if __name__ == "__main__":
     f.close()
     cumul = Cumulants(data[:3])
     one_day_cumul = Cumulants(data[0])
-    cumul.set_C(H=5)
+    cumul.set_C(H=5,method='classic')
     C_H5 = cumul.C
     cumul.set_C(H=20,method='parallel')
     C_H20 = cumul.C
