@@ -145,7 +145,7 @@ def args2params(mode, symmetric):
                     Beta[i][j] = 1000.*beta0
         if mode == 'd100_nonsym_1_hard':
             Alpha[60:80,10:30] += 1
-            Gamma[60:80,10:30] += 100*beta0
+            Beta[60:80,10:30] += 100*beta0
         Gamma = Alpha.copy()
         Alpha /= 40
 
