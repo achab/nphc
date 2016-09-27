@@ -23,7 +23,7 @@ def random_orthogonal_matrix(dim):
     return Q
 
 def NPHC(cumulants, initial_point, alpha=.5, training_epochs=1000, learning_rate=1e6, optimizer='momentum', \
-         stochastic=False, display_step = 100, weightGMM='eye', l_l1=0., l_l2=0.):
+         display_step = 100, l_l1=0., l_l2=0.):
 
     d = cumulants.dim
 
@@ -32,33 +32,12 @@ def NPHC(cumulants, initial_point, alpha=.5, training_epochs=1000, learning_rate
     L = tf.placeholder(tf.float32, d, name='L')
     C = tf.placeholder(tf.float32, (d,d), name='C')
     K_c = tf.placeholder(tf.float32, (d,d), name='K_c')
-    if stochastic:
-        ind_i = tf.placeholder(tf.int32, shape=[1], name='ind_i')
-        ind_j = tf.placeholder(tf.int32, shape=[1], name='ind_j')
-        ind_ij = tf.placeholder(tf.int32, shape=[1,2], name='ind_ij')
-        C_i = tf.gather(C, ind_i)
-        C_j = tf.gather(C, ind_j)
-        C_ij = tf.gather_nd(C, ind_ij)
-        K_c_ij = tf.gather_nd(K_c, ind_ij)
 
     R = tf.Variable(initial_point, name='R')
-    if stochastic:
-        R_i = tf.gather(R, ind_i)
-        R_j = tf.gather(R, ind_j)
 
     # Set weight matrices
-    if weightGMM == 'eye':
-        W_2 = np.ones((d,d))
-        W_3 = np.ones((d,d))
-    else:
-        cumulants.set_W_2(starting_point, weight=weightGMM)
-        cumulants.set_W_3(starting_point, weight=weightGMM)
-        W_2 = cumulants.W_2
-        W_3 = cumulants.W_3
-
-    if stochastic:
-        W_2_ij = tf.gather_nd(W_2, ind_ij)
-        W_3_ij = tf.gather_nd(W_3, ind_ij)
+    W_2 = np.ones((d,d))
+    W_3 = np.ones((d,d))
 
     # Construct model
     activation_3 = tf.matmul(C,tf.square(R),transpose_b=True) + 2.0*tf.matmul(R,tf.mul(R,C),transpose_b=True) - 2.0*tf.matmul(R,tf.matmul(tf.diag(L),tf.square(R),transpose_b=True))
@@ -67,35 +46,14 @@ def NPHC(cumulants, initial_point, alpha=.5, training_epochs=1000, learning_rate
     #cost_3 = tf.reduce_mean( tf.squared_difference( activation_3, K_c ) )
     #cost_2 = tf.reduce_mean( tf.squared_difference( activation_2, C ) )
 
-    if stochastic:
-        act_3_ij = tf.reduce_sum( tf.mul( C_j, tf.square( R_i) ) + 2.0*tf.mul( tf.mul( R_i, C_i ), R_j ) - 2.0*tf.mul( tf.mul( L, R_j ), tf.square( R_i ) ) )
-        act_2_ij = tf.reduce_sum( tf.mul( tf.mul( tf.cast(L,tf.float32), R_i ), R_j ) )
+    cost =  (1-alpha) * tf.reduce_mean( tf.squared_difference( activation_3, K_c ) ) + alpha * tf.reduce_mean( tf.squared_difference( activation_2, C ) )
 
-        if weightGMM == 'eye':
-            tot_cost = (1-alpha) * tf.reduce_mean( tf.squared_difference( activation_3, K_c ) ) + alpha * tf.reduce_mean( tf.squared_difference( activation_2, C ) )
-            cost =  (1-alpha) * tf.reduce_mean( tf.squared_difference( act_3_ij, K_c_ij ) ) + alpha * tf.reduce_mean( tf.squared_difference( act_2_ij, C_ij ) )
-
-        elif weightGMM == 'diag':
-            tot_cost = (1-alpha) * tf.reduce_mean( tf.mul( tf.squared_difference( activation_3, K_c ), tf.cast(W_3,tf.float32)) ) + alpha * tf.reduce_mean( tf.mul( tf.squared_difference( activation_2, C ) , tf.cast(W_2,tf.float32) ) )
-            cost =  (1-alpha) * tf.reduce_mean( tf.mul( tf.squared_difference( act_3_ij, K_c_ij ), tf.cast(W_3_ij,tf.float32) ) ) + alpha * tf.reduce_mean( tf.mul( tf.squared_difference( act_2_ij, C_ij ), tf.cast(W_2_ij,tf.float32)) )
-
-        tot_cost = tf.cast(tot_cost, tf.float32)
-        cost = tf.cast(cost, tf.float32)
-
+    reg_l1 = tf.contrib.layers.l1_regularizer(l_l1)
+    reg_l2 = tf.contrib.layers.l2_regularizer(l_l2)
+    if l_l1*l_l2 > 0:
+        cost = tf.cast(cost, tf.float32) + reg_l1(R) + reg_l2(R)
     else:
-
-        if weightGMM == 'eye':
-            cost =  (1-alpha) * tf.reduce_mean( tf.squared_difference( activation_3, K_c ) ) + alpha * tf.reduce_mean( tf.squared_difference( activation_2, C ) )
-
-        elif weightGMM == 'diag':
-            cost =  (1-alpha) * tf.reduce_mean( tf.mul( tf.squared_difference( activation_3, K_c ), tf.cast(W_3,tf.float32) ) ) + alpha * tf.reduce_mean( tf.mul( tf.squared_difference( activation_2, C ) , tf.cast(W_2,tf.float32) ) )
-
-        reg_l1 = tf.contrib.layers.l1_regularizer(l_l1)
-        reg_l2 = tf.contrib.layers.l2_regularizer(l_l2)
-        if l_l1*l_l2 > 0:
-            cost = tf.cast(cost, tf.float32) + reg_l1(R) + reg_l2(R)
-        else:
-            cost = tf.cast(cost, tf.float32)
+        cost = tf.cast(cost, tf.float32)
 
     if optimizer == 'momentum':
         optimizer = tf.train.MomentumOptimizer(learning_rate, momentum=0.9).minimize(cost)
@@ -127,28 +85,19 @@ def NPHC(cumulants, initial_point, alpha=.5, training_epochs=1000, learning_rate
         #summary_writer = tf.train.SummaryWriter('/tmp/tf_cumul', graph=sess.graph)
 
         # Training cycle
-        if stochastic:
-            for epoch in range(training_epochs):
-                if epoch % display_step == 0:
-                    avg_cost = sess.run(tot_cost, feed_dict={L: cumulants.L, C: cumulants.C, K_c: cumulants.K_c})
-                    print("Epoch:", '%04d' % (epoch), "log10(cost)=", "{:.9f}".format(np.log10(avg_cost)))
-                for (i, j) in product(range(d), repeat=2):
-                # Fit training using batch data
-                    sess.run(optimizer, feed_dict={L: cumulants.L, C: cumulants.C, K_c: cumulants.K_c, ind_i: [i], ind_j: [j], ind_ij: [[i,j]]})
-        else:
-            for epoch in range(training_epochs):
-                if epoch % display_step == 0:
-                    avg_cost = sess.run(cost, feed_dict={L: cumulants.L, C: cumulants.C, K_c: cumulants.K_c})
-                    #avg_cost_3 = sess.run(tf.nn.l2_loss(tf.gradients(cost_3, R)), feed_dict={L: cumulants.L, C: cumulants.C, K_c: cumulants.K_c})
-                    #avg_cost_2 = sess.run(tf.nn.l2_loss(tf.gradients(cost_2, R)), feed_dict={L: cumulants.L, C: cumulants.C})
-                    print("Epoch:", '%04d' % (epoch), "log10(cost)=", "{:.9f}".format(np.log10(avg_cost)))
-                    #print("       log10(cost3)=", "{:.9f}".format(np.log10(avg_cost_3)))
-                    #print("       log10(cost2)=", "{:.9f}".format(np.log10(avg_cost_2)))
-                # Fit training using batch data
-                sess.run(optimizer, feed_dict={L: cumulants.L, C: cumulants.C, K_c: cumulants.K_c})
-                # Write logs at every iteration
-                #summary_str = sess.run(merged_summary_op, feed_dict={L: cumul.L, C: cumul.C, K_c: cumul.K_c})
-                #summary_writer.add_summary(summary_str, epoch)
+        for epoch in range(training_epochs):
+            if epoch % display_step == 0:
+                avg_cost = sess.run(cost, feed_dict={L: cumulants.L, C: cumulants.C, K_c: cumulants.K_c})
+                #avg_cost_3 = sess.run(tf.nn.l2_loss(tf.gradients(cost_3, R)), feed_dict={L: cumulants.L, C: cumulants.C, K_c: cumulants.K_c})
+                #avg_cost_2 = sess.run(tf.nn.l2_loss(tf.gradients(cost_2, R)), feed_dict={L: cumulants.L, C: cumulants.C})
+                print("Epoch:", '%04d' % (epoch), "log10(cost)=", "{:.9f}".format(np.log10(avg_cost)))
+                #print("       log10(cost3)=", "{:.9f}".format(np.log10(avg_cost_3)))
+                #print("       log10(cost2)=", "{:.9f}".format(np.log10(avg_cost_2)))
+            # Fit training using batch data
+            sess.run(optimizer, feed_dict={L: cumulants.L, C: cumulants.C, K_c: cumulants.K_c})
+            # Write logs at every iteration
+            #summary_str = sess.run(merged_summary_op, feed_dict={L: cumul.L, C: cumul.C, K_c: cumul.K_c})
+            #summary_writer.add_summary(summary_str, epoch)
 
         print("Optimization Finished!")
 
