@@ -27,13 +27,13 @@ def NPHC(cumulants, initial_point, alpha=.5, training_epochs=1000, learning_rate
 
     d = cumulants.dim
 
-    R0 = tf.constant(initial_point, shape=[d,d])
+    R0 = tf.constant(initial_point.astype(np.float32), shape=[d,d])
 
     L = tf.placeholder(tf.float32, d, name='L')
     C = tf.placeholder(tf.float32, (d,d), name='C')
     K_c = tf.placeholder(tf.float32, (d,d), name='K_c')
 
-    R = tf.Variable(initial_point, name='R')
+    R = tf.Variable(R0, name='R')
 
     # Set weight matrices
     W_2 = np.ones((d,d))

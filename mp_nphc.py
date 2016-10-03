@@ -16,7 +16,8 @@ def worker(kernel_mode_log10T,learning_rate=1e-1,training_epochs=1001,display_st
     # Starting point
     sqrt_C = sqrtm(cumulants.C)
     sqrt_L = np.sqrt(cumulants.L)
-    initial = tf.constant(np.dot(sqrt_C,np.diag(1./sqrt_L)).astype(np.float32),shape=[d,d])
+    #initial = tf.constant(np.dot(sqrt_C,np.diag(1./sqrt_L)).astype(np.float32),shape=[d,d])
+    initial = np.dot(sqrt_C,np.diag(1./sqrt_L))
     
     R = NPHC(cumulants,initial,alpha=0.5,training_epochs=training_epochs,\
          display_step=display_step,learning_rate=learning_rate,optimizer='adam') #,l_l1=0.,l_l2=0.)
