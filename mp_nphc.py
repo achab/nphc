@@ -24,7 +24,7 @@ def worker(kernel_mode_log10T,learning_rate=1e-1,training_epochs=1001,display_st
     
     G = np.eye(d) - inv(R)
     
-    file_to_write = 'results_nphc_{}_{}.pkl.gz'.format(kernel,mode)
+    file_to_write = 'results/results_nphc_{}_{}.pkl.gz'.format(kernel,mode)
     
     import gzip, pickle
     f = gzip.open(file_to_write, 'wb')
