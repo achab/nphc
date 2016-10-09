@@ -48,7 +48,7 @@ def worker(filename):
                     links.append(link)
             elif x[0] == '':
                 if len(links) == 0:
-                    row = [date, ' ', post_url, num_post, 0]
+                    row = [date, ' ', post_url, num_post, 1]
                     df_rows.append(row)
                 else:
                     for link in links:
