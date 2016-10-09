@@ -39,12 +39,20 @@ def worker(filename):
             if x[0] == 'P':
                 num_post += 1
                 post_url = parse_url(x[1])
+                links = []
             elif x[0] == 'T':
                 date = x[1]
             elif x[0] == 'L':
-                hyperlink = parse_url(x[1])
-                row = [date, hyperlink, post_url, num_post]
-                df_rows.append(row)
+                link = parse_url(x[1])
+                links.append(link)
+            elif x[0] == '':
+                if len(links) == 0:
+                    row = [date, '', post_url, num_post]
+                    df_rows.append(row)
+                else:
+                    for link in links:
+                        row = [date, link, post_url, num_post]
+                        df_rows.append(row)
         df = pd.DataFrame(df_rows, columns=['Date', 'Hyperlink', 'Blog', 'PostNb'])
         df['Date'] = pd.to_datetime(df['Date'])
         #df = apply_inplace(df, 'Hyperlink', parse_url)
