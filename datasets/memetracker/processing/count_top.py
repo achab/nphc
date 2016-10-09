@@ -10,12 +10,11 @@ def worker(filename,dir_name):
     tmp = post_nb[1:] - post_nb[:-1]
     tmp = np.insert(tmp, 0, 1)
     idx_to_keep = np.arange(len(tmp))[tmp == 1]
-    data = data[idx_to_keep]
-    posts = data.Blog
-    counts = posts.value_counts()
+    data = data.iloc[idx_to_keep]
+    counts = data.Blog.value_counts()
     counts = pd.concat([pd.DataFrame(counts.index),pd.DataFrame(counts.values)],axis=1)
     counts.columns = ['url','count']
-    counts.to_csv(dir_name+"/counts_"+filename[3:],index=False)
+    counts.to_csv(dir_name+"/counts_"+filename[8:],index=False)
 
 def save_top_d(d,dir_name):
     import glob
