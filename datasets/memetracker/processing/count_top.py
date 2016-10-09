@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 def worker(filename,dir_name):
@@ -5,10 +6,13 @@ def worker(filename,dir_name):
     Return counts by url for the DataFrame in filename
     """
     data = pd.read_csv(filename)
-    #posts = data['Blog']
-    links = data['Hyperlink']
-    #counts = pd.concat([posts,links]).value_counts()
-    counts = links.value_counts()
+    post_nb = data.PostNb.values
+    tmp = post_nb[1:] - post_nb[:-1]
+    tmp = np.insert(tmp, 0, 1)
+    idx_to_keep = np.arange(len(tmp))[tmp == 1]
+    data = data[idx_to_keep]
+    posts = data.Blog
+    counts = posts.value_counts()
     counts = pd.concat([pd.DataFrame(counts.index),pd.DataFrame(counts.values)],axis=1)
     counts.columns = ['url','count']
     counts.to_csv(dir_name+"/counts_"+filename[3:],index=False)

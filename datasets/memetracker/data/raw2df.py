@@ -44,16 +44,17 @@ def worker(filename):
                 date = x[1]
             elif x[0] == 'L':
                 link = parse_url(x[1])
-                links.append(link)
+                if link not in links:
+                    links.append(link)
             elif x[0] == '':
                 if len(links) == 0:
-                    row = [date, '', post_url, num_post]
+                    row = [date, ' ', post_url, num_post, 0]
                     df_rows.append(row)
                 else:
                     for link in links:
-                        row = [date, link, post_url, num_post]
+                        row = [date, link, post_url, num_post, 1./len(links)]
                         df_rows.append(row)
-        df = pd.DataFrame(df_rows, columns=['Date', 'Hyperlink', 'Blog', 'PostNb'])
+        df = pd.DataFrame(df_rows, columns=['Date', 'Hyperlink', 'Blog', 'PostNb', 'WeightOfLink'])
         df['Date'] = pd.to_datetime(df['Date'])
         #df = apply_inplace(df, 'Hyperlink', parse_url)
         #df = apply_inplace(df, 'Blog', parse_url)

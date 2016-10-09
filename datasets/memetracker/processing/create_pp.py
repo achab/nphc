@@ -33,7 +33,12 @@ def worker(ind,list_df,start,ix2url,dir_name):
     process = []
     for filename in list_df :
         df = pd.read_csv(filename)
-        df_url = df[df.Hyperlink == url]
+        post_nb = df.PostNb.values
+        tmp = post_nb[1:] - post_nb[:-1]
+        tmp = np.insert(tmp, 0, 1)
+        idx_to_keep = np.arange(len(tmp))[tmp == 1]
+        df = df[idx_to_keep]
+        df_url = df[df.Blog == url]
         if len(df_url) == 0: continue
         df_url = apply_inplace(df_url, 'Date', time_from_start)
         process.append(df_url['Date'].values)
