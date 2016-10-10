@@ -26,12 +26,13 @@ def worker(ind,list_df,d,dir_name,ix2url):
         res = 0
         for filename in list_df:
             data = pd.read_csv(filename)
-            df_to_i = df[df.Blog == url_i]
-            if len(df_to_i) == 0: continue
-            N_to_i = df_to_i.WeightOfLink.sum()
-            df_from_j_to_i = df_to_i[df_to_i.Hyperlink == url_j]
-            N_from_j_to_i = df_from_j_to_i.WeightOfLink.sum()
-            res += N_from_j_to_i / N_to_i
+            df_j = df[df.Blog == url_j]
+            df_i =  df[df.Blog == url_i]
+            if len(df_i) == 0: continue
+            N_j = df_j.WeightOfLink.sum()
+            df_i_from_j = df_i[df_i.Hyperlink == url_j]
+            N_i_from_j = df_from_j_to_i.WeightOfLink.sum()
+            res += N_i_from_j / N_j
         res *= 1.0/len(list_df)
         return res
     else:
