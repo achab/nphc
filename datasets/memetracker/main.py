@@ -16,10 +16,11 @@ import numpy as np
 
 d = 100
 
-list_df = glob.glob('data/df_200*.csv')
-list_df.sort()
+#list_df = glob.glob('data/df_2009*.csv')
+#list_df.sort()
+list_df = ['data/df_2009-01.csv', 'data/df_2009-02.csv']
 
-start_month = '2008-08'
+start_month = '2009-01'
 
 dir_name = "top{}_{}months_start_{}".format(d,len(list_df),start_month)
 

@@ -37,7 +37,7 @@ def worker(ind,list_df,start,ix2url,dir_name):
         tmp = post_nb[1:] - post_nb[:-1]
         tmp = np.insert(tmp, 0, 1)
         idx_to_keep = np.arange(len(tmp))[tmp == 1]
-        df = df[idx_to_keep]
+        df = df.iloc[idx_to_keep]
         df_url = df[df.Blog == url]
         if len(df_url) == 0: continue
         df_url = apply_inplace(df_url, 'Date', time_from_start)

@@ -26,7 +26,7 @@ def worker(ind,list_df,d,dir_name,ix2url):
         res = 0
         for filename in list_df:
             data = pd.read_csv(filename)
-            df_to_i = df[df.Blog == url_i]
+            df_to_i = data[data.Blog == url_i]
             if len(df_to_i) == 0: continue
             N_to_i = df_to_i.WeightOfLink.sum()
             df_from_j_to_i = df_to_i[df_to_i.Hyperlink == url_j]
