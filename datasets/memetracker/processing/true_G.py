@@ -31,7 +31,7 @@ def worker(ind,list_df,d,dir_name,ix2url):
             if len(df_i) == 0: continue
             N_j = df_j.WeightOfLink.sum()
             df_i_from_j = df_i[df_i.Hyperlink == url_j]
-            N_i_from_j = df_from_j_to_i.WeightOfLink.sum()
+            N_i_from_j = df_i_from_j.WeightOfLink.sum()
             res += N_i_from_j / N_j
         res *= 1.0/len(list_df)
         return res
