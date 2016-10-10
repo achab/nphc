@@ -25,7 +25,7 @@ def worker(ind,list_df,d,dir_name,ix2url):
         url_j = ix2url[j]
         res = 0
         for filename in list_df:
-            data = pd.read_csv(filename)
+            df = pd.read_csv(filename)
             df_j = df[df.Blog == url_j]
             df_i =  df[df.Blog == url_i]
             if len(df_i) == 0: continue
