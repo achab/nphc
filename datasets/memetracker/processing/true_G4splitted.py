@@ -20,7 +20,7 @@ def plain_worker(ind,list_df,d,dir_name,ix2url):
     \int_0^infty \phi^{ij} = N_T^{i \leftarrow j} / N_T^i
     """
     i,j = ind
-    f = gzip.open(dir_name+'/new_process_'+ix2str(i)+'.pkl.gz','r')
+    f = gzip.open(dir_name+'/process_'+ix2str(i)+'.pkl.gz','r')
     process_i = pickle.load(f,encoding='latin1')
     f.close()
     res = []
