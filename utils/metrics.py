@@ -15,7 +15,15 @@ def rank_corr(A_true, A_pred):
     """
     RankCorr is defined as the averaged Kendall's rank correlation coefficient between each row of A_true and A_pred
     """
-    return np.mean([kendalltau(x_true, x_pred) for (x_true, x_pred) in zip(A_true, A_pred)])
+    import math
+    res = 0.
+    tmp = 0
+    for (x_true, x_pred) in zip(A_true, A_pred):
+        corr = kendalltau(x_true, x_pred)
+        if math.isnan(corr) == False:
+            res += corr
+            tmp += 1
+    return corr / tmp
 
 def l1_norm(X):
     return np.linalg.norm(X.reshape(len(X)**2,),ord=1)
