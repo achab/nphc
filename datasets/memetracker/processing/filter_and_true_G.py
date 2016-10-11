@@ -3,6 +3,7 @@ from itertools import product
 import pandas as pd
 import numpy as np
 import gzip, pickle
+import true_G
 import glob
 
 
@@ -30,19 +31,16 @@ def filter_df(filename):
 if __name__ == '__main__':
 
     d = 50
-    tuple_indices = list(product(range(d),repeat=2))
     list_df = glob.glob('../data/df*')
 
     pool1 = Pool()
     pool1.map(filter_df, list_df)
 
     L = glob.glob('../data/filtered*')
-    idx = 0
+    L.sort()
+    idx = 3
     filename = L[idx]
-    new_list_df = list(filename)
-    a = filename.find('/filt')
-    dir_name = filename[:(a+1)]
-    df_name = filename[(a+1):]
+    new_list_df = [filename]
 
     a = filename.find('20')
     year = filename[a:(a+4)]
@@ -55,6 +53,7 @@ if __name__ == '__main__':
     def worker(x):
         return true_G.worker(x,new_list_df,ix2url)
     pool2 = Pool()
+    tuple_indices = list(product(range(d),repeat=2))
     res = pool2.map(worker, tuple_indices)
 
     # save the results
