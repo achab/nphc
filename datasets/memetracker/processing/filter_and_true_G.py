@@ -1,4 +1,5 @@
 from multiprocessing import Pool
+from itertools import product
 import pandas as pd
 import numpy as np
 import gzip, pickle
