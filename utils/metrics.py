@@ -19,7 +19,7 @@ def rank_corr(A_true, A_pred):
     res = 0.
     tmp = 0
     for (x_true, x_pred) in zip(A_true, A_pred):
-        corr = kendalltau(x_true, x_pred)
+        corr = kendalltau(x_true, x_pred)[0]
         if math.isnan(corr) == False:
             res += corr
             tmp += 1
