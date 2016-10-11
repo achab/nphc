@@ -44,7 +44,7 @@ if __name__ == '__main__':
     dir_name = filename[:(a+1)]
     df_name = filename[(a+1):]
 
-    top_d = pd.read_csv('{}/top_{}.csv'.format(dir_name, d))
+    top_d = pd.read_csv('{}top_{}.csv'.format(dir_name, d))
     ix2url = { ix:url for ix, url in enumerate(top_d['url']) }
 
     def worker(x):
