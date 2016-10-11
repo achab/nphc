@@ -54,7 +54,7 @@ if __name__ == '__main__':
 
     # estimate G from the labelled links
     def worker3(x):
-        return true_G.worker(x,list_df,d,dir_name,ix2url)
+        return true_G.worker(x,list_df,ix2url)
     tuple_indices = list(product(range(d),repeat=2))
     pool3 = Pool()
 
@@ -64,5 +64,3 @@ if __name__ == '__main__':
     f = gzip.open(dir_name+'/true_G.pkl.gz','wb')
     pickle.dump(res_mat,f,protocol=2)
     f.close()
-
-
