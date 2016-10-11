@@ -17,7 +17,7 @@ def ix2str(ix):
 
 def filter_df(filename):
     df = pd.read_csv(filename)
-    df.set_index('Date')
+    df = df.set_index('Date')
     df.index = pd.to_datetime(df.index)
     df = df[df.index.weekday < 5]
     df = df[(df.index.hour > 13) & (df.index.hour < 23)]
