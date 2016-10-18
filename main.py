@@ -25,6 +25,7 @@ def random_orthogonal_matrix(dim):
 def NPHC(list_cumulants, initial_point, alpha=.5, training_epochs=1000, learning_rate=1e6, optimizer='momentum', \
          display_step = 100, l_l1=0., l_l2=0.):
 
+    if not isinstance(list_cumulants, list): list_cumulants = [list_cumulants]
     cumulants = list_cumulants[0]
 
     d = cumulants.dim
@@ -92,14 +93,12 @@ def NPHC(list_cumulants, initial_point, alpha=.5, training_epochs=1000, learning
             cumulants = np.random.choice(list_cumulants)
 
             if epoch % display_step == 0:
-                avg_cost = sess.run(cost, feed_dict={L: cumulants.L, C: cumulants.C, K_c: cumulants.K_c})
-                #avg_cost_3 = sess.run(tf.nn.l2_loss(tf.gradients(cost_3, R)), feed_dict={L: cumulants.L, C: cumulants.C, K_c: cumulants.K_c})
-                #avg_cost_2 = sess.run(tf.nn.l2_loss(tf.gradients(cost_2, R)), feed_dict={L: cumulants.L, C: cumulants.C})
+                avg_cost = np.average([sess.run(cost, feed_dict={L: cumul.L, C: cumul.C, K_c: cumul.K_c}) for cumul in list_cumulants])
                 print("Epoch:", '%04d' % (epoch), "log10(cost)=", "{:.9f}".format(np.log10(avg_cost)))
-                #print("       log10(cost3)=", "{:.9f}".format(np.log10(avg_cost_3)))
-                #print("       log10(cost2)=", "{:.9f}".format(np.log10(avg_cost_2)))
+
             # Fit training using batch data
             sess.run(optimizer, feed_dict={L: cumulants.L, C: cumulants.C, K_c: cumulants.K_c})
+            
             # Write logs at every iteration
             #summary_str = sess.run(merged_summary_op, feed_dict={L: cumul.L, C: cumul.C, K_c: cumul.K_c})
             #summary_writer.add_summary(summary_str, epoch)
@@ -112,28 +111,3 @@ def NPHC(list_cumulants, initial_point, alpha=.5, training_epochs=1000, learning
 Run the command line: tensorboard --logdir=/tmp/tf_cumul
 Open http://localhost:6006/ into your web browser
 '''
-
-if __name__ == '__main__':
-
-    # Load Cumulants object
-    kernel = 'exp_d10'
-    mode = 'nonsym_1'
-    log10T = 10
-    url = 'https://s3-eu-west-1.amazonaws.com/nphc-data/{}_{}_log10T{}_with_params_without_N.pkl.gz'.format(kernel, mode, log10T)
-    cumul, Alpha, Beta, Gamma = load_data(url)
-
-    # Params
-    learning_rate = 1e7
-    training_epochs = 1000
-    display_step = 100
-    d = cumul.dim
-
-    _, s, _ = np.linalg.svd(cumul.C)
-    lbd_max = s[0]
-    initial = tf.constant(inv(np.eye(d) - cumul.C / (1.1*lbd_max)).astype(np.float32), shape=[d,d])
-
-    out_1 = NPHC(cumul, initial, alpha=.99, learning_rate=learning_rate)
-    print("First step is done!")
-
-    out_2 = NPHC(cumul, out_1, alpha=.5, learning_rate=learning_rate)
-    print("Second step is done!")
