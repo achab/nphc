@@ -22,8 +22,10 @@ def random_orthogonal_matrix(dim):
     Q, _ = qr(M)
     return Q
 
-def NPHC(cumulants, initial_point, alpha=.5, training_epochs=1000, learning_rate=1e6, optimizer='momentum', \
+def NPHC(list_cumulants, initial_point, alpha=.5, training_epochs=1000, learning_rate=1e6, optimizer='momentum', \
          display_step = 100, l_l1=0., l_l2=0.):
+
+    cumulants = list_cumulants[0]
 
     d = cumulants.dim
 
@@ -86,6 +88,9 @@ def NPHC(cumulants, initial_point, alpha=.5, training_epochs=1000, learning_rate
 
         # Training cycle
         for epoch in range(training_epochs):
+
+            cumulants = np.random.choice(list_cumulants)
+
             if epoch % display_step == 0:
                 avg_cost = sess.run(cost, feed_dict={L: cumulants.L, C: cumulants.C, K_c: cumulants.K_c})
                 #avg_cost_3 = sess.run(tf.nn.l2_loss(tf.gradients(cost_3, R)), feed_dict={L: cumulants.L, C: cumulants.C, K_c: cumulants.K_c})
