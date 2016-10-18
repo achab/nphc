@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 import glob
 
-list_dir_name = ['top50_1months_start_2008-12']
-#list_dir_name = glob.glob('top10_1months*')
+#list_dir_name = ['top50_1months_start_2008-12']
+list_dir_name = glob.glob('top50_1months_start_2009*')
 
 for dir_name in list_dir_name:
 
