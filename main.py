@@ -12,7 +12,7 @@ def starting_point(list_cumulants,random=False):
     d = cumulants.dim
     sqrt_C = sqrtm(np.average([cumul.C for cumul in list_cumulants]))
     #sqrt_C = sqrtm(cumulants.C)
-    sqrt_L = np.sqrt(np.average([cumul.L for cumul in list_cumulants])
+    sqrt_L = np.sqrt(np.average([cumul.L for cumul in list_cumulants]))
     #sqrt_L = np.sqrt(cumulants.L)
     if random:
         M = random_orthogonal_matrix(d)
