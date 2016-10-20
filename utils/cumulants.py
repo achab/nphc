@@ -271,8 +271,8 @@ def E_ijk(Z_i,Z_j,Z_k,a,b,T,L_i,L_j,weight='constant',sigma=1.0):
     n_k = Z_k.shape[0]
     trend_i = L_i*(b-a)
     trend_j = L_j*(b-a)
-    C = .5*(A_ij(Z_i,Z_j,-(b-a),b-a,T,L_j)+A_ij(Z_j,Z_i,-(b-a),b-a,T,L_i,weight=weight,sigma=1.0))
-    J = .5*(I_ij(Z_i,Z_j,b-a,T,L_j)+I_ij(Z_j,Z_i,b-a,T,L_i,weight=weight,sigma=1.0))
+    C = .5*(A_ij(Z_i,Z_j,-(b-a),b-a,T,L_j)+A_ij(Z_j,Z_i,-(b-a),b-a,T,L_i,weight=weight,sigma=sigma))
+    J = .5*(I_ij(Z_i,Z_j,b-a,T,L_j)+I_ij(Z_j,Z_i,b-a,T,L_i,weight=weight,sigma=sigma))
     for t in range(n_k):
         tau = Z_k[t]
         if tau + a < 0: continue
