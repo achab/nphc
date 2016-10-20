@@ -213,6 +213,13 @@ def get_K_c_th(L,C,R):
 ##########
 ## Useful fonctions to set_ empirical integrated cumulants
 ##########
+@autojit
+def weight_fun(x, width, sigma, mode='constant'):
+    if mode == 'constant':
+        return 1.
+    elif mode == 'gaussian':
+        return width * norm.pdf(x ,scale=sigma)
+
 #@jit(double(double[:],double[:],int32,int32,double,double,double), nogil=True, nopython=True)
 #@jit(float64(float64[:],float64[:],int64,int64,int64,float64,float64), nogil=True, nopython=True)
 @autojit
@@ -226,13 +233,6 @@ def A_ij(Z_i,Z_j,a,b,T,L_j,weight='constant',sigma=1.0):
     n_i = Z_i.shape[0]
     n_j = Z_j.shape[0]
     trend_j = L_j*(b-a)
-    # weighting function
-    if weight == 'constant':
-        def weight_fun(x):
-            return 1.
-    elif weight == 'gaussian':
-        def weight_fun(x):
-            return (b-a) * norm.pdf(x, scale=sigma)
     for t in range(n_i):
         # count the number of jumps
         tau = Z_i[t]
@@ -246,7 +246,7 @@ def A_ij(Z_i,Z_j,a,b,T,L_j,weight='constant',sigma=1.0):
         v = u
         while v < n_j:
             if Z_j[v] < tau + b:
-                delta += weight_fun(Z_j[v] - tau)
+                delta += weight_fun(Z_j[v]-tau, b-a, sigma, mode=weight)
                 v += 1
             else:
                 break
@@ -273,11 +273,6 @@ def E_ijk(Z_i,Z_j,Z_k,a,b,T,L_i,L_j,weight='constant',sigma=1.0):
     trend_j = L_j*(b-a)
     C = .5*(A_ij(Z_i,Z_j,-(b-a),b-a,T,L_j)+A_ij(Z_j,Z_i,-(b-a),b-a,T,L_i,weight=weight,sigma=1.0))
     J = .5*(I_ij(Z_i,Z_j,b-a,T,L_j)+I_ij(Z_j,Z_i,b-a,T,L_i,weight=weight,sigma=1.0))
-    # weighting function
-    if weight == 'constant':
-        weight_fun = lambda x: 1.
-    elif weight == 'gaussian':
-        weight_fun = lambda x: (b-a)*norm.pdf(x, scale=sigma)
     for t in range(n_k):
         tau = Z_k[t]
         if tau + a < 0: continue
@@ -291,7 +286,7 @@ def E_ijk(Z_i,Z_j,Z_k,a,b,T,L_i,L_j,weight='constant',sigma=1.0):
         delta_i = 0.
         while v < n_i:
             if Z_i[v] < tau + b:
-                delta_i += weight_fun(Z_i[v] - tau)
+                delta_i += weight_fun(Z_i[v]-tau, b-a, sigma, mode=weight)
                 v += 1
             else:
                 break
@@ -306,7 +301,7 @@ def E_ijk(Z_i,Z_j,Z_k,a,b,T,L_i,L_j,weight='constant',sigma=1.0):
         delta_j = 0.
         while y < n_j:
             if Z_j[y] < tau + b:
-                delta_j += weight_fun(Z_j[y] - tau)
+                delta_j += weight_fun(Z_j[y]-tau, b-a, sigma, mode=weight)
                 y += 1
             else:
                 break
