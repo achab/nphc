@@ -66,7 +66,7 @@ class Cumulants(object):
         return L
 
     @average_if_list_of_multivariate_processes
-    def compute_C(self,H=0.,method='parallel',kernel='constant',sigma=1.0):
+    def compute_C(self,H=0.,method='parallel',weight='constant',sigma=1.0):
         if H == 0.:
             hM = self.hMax
         else:
@@ -76,16 +76,16 @@ class Cumulants(object):
             C = np.zeros((d,d))
             for i in range(d):
                 for j in range(d):
-                    C[i,j] = A_ij(self.N[i],self.N[j],-hM,hM,self.time,self.L[j],kernel=kernel,sigma=sigma)
+                    C[i,j] = A_ij(self.N[i],self.N[j],-hM,hM,self.time,self.L[j],weight=weight,sigma=sigma)
         elif method == 'parallel':
-            l = Parallel(-1)(delayed(A_ij)(self.N[i],self.N[j],-hM,hM,self.time,self.L[j],kernel=kernel,sigma=sigma) for i in range(d) for j in range(d))
+            l = Parallel(-1)(delayed(A_ij)(self.N[i],self.N[j],-hM,hM,self.time,self.L[j],weight=weight,sigma=sigma) for i in range(d) for j in range(d))
             C = np.array(l).reshape(d,d)
         # we keep the symmetric part to remove edge effects
         C[:] = 0.5 * (C + C.T)
         return C
 
     @average_if_list_of_multivariate_processes
-    def compute_J(self, H=0.,method='parallel',kernel='constant',sigma=1.0):
+    def compute_J(self, H=0.,method='parallel',weight='constant',sigma=1.0):
         if H == 0.:
             hM = self.hMax
         else:
@@ -95,16 +95,16 @@ class Cumulants(object):
             J = np.zeros((d,d))
             for i in range(d):
                 for j in range(d):
-                    J[i,j] = I_ij(self.N[i],self.N[j],hM,self.time,self.L[j],kernel=kernel,sigma=sigma)
+                    J[i,j] = I_ij(self.N[i],self.N[j],hM,self.time,self.L[j],weight=weight,sigma=sigma)
         elif method == 'parallel':
-            l = Parallel(-1)(delayed(I_ij)(self.N[i],self.N[j],hM,self.time,self.L[j],kernel=kernel,sigma=sigma) for i in range(d) for j in range(d) )
+            l = Parallel(-1)(delayed(I_ij)(self.N[i],self.N[j],hM,self.time,self.L[j],weight=weight,sigma=sigma) for i in range(d) for j in range(d) )
             J = np.array(l).reshape(d,d)
         # we keep the symmetric part to remove edge effects
         J[:] = 0.5 * (J + J.T)
         return J
 
     @average_if_list_of_multivariate_processes
-    def compute_E_c(self,H=0.,method='parallel',kernel='constant',sigma=1.0):
+    def compute_E_c(self,H=0.,method='parallel',weight='constant',sigma=1.0):
         if H == 0.:
             hM = self.hMax
         else:
@@ -114,11 +114,11 @@ class Cumulants(object):
             E_c = np.zeros((d,d,2))
             for i in range(d):
                 for j in range(d):
-                    E_c[i,j,0] = E_ijk(self.N[i],self.N[j],self.N[j],-hM,hM,self.time,self.L[i],self.L[j],kernel=kernel,sigma=sigma)
-                    E_c[i,j,1] = E_ijk(self.N[j],self.N[j],self.N[i],-hM,hM,self.time,self.L[j],self.L[j],kernel=kernel,sigma=sigma)
+                    E_c[i,j,0] = E_ijk(self.N[i],self.N[j],self.N[j],-hM,hM,self.time,self.L[i],self.L[j],weight=weight,sigma=sigma)
+                    E_c[i,j,1] = E_ijk(self.N[j],self.N[j],self.N[i],-hM,hM,self.time,self.L[j],self.L[j],weight=weight,sigma=sigma)
         elif method == 'parallel':
-            l1 = Parallel(-1)(delayed(E_ijk)(self.N[i],self.N[j],self.N[j],-hM,hM,self.time,self.L[i],self.L[j],kernel=kernel,sigma=sigma) for i in range(d) for j in range(d))
-            l2 = Parallel(-1)(delayed(E_ijk)(self.N[j],self.N[j],self.N[i],-hM,hM,self.time,self.L[j],self.L[j],kernel=kernel,sigma=sigma) for i in range(d) for j in range(d))
+            l1 = Parallel(-1)(delayed(E_ijk)(self.N[i],self.N[j],self.N[j],-hM,hM,self.time,self.L[i],self.L[j],weight=weight,sigma=sigma) for i in range(d) for j in range(d))
+            l2 = Parallel(-1)(delayed(E_ijk)(self.N[j],self.N[j],self.N[i],-hM,hM,self.time,self.L[j],self.L[j],weight=weight,sigma=sigma) for i in range(d) for j in range(d))
             E_c = np.zeros((d,d,2))
             E_c[:,:,0] = np.array(l1).reshape(d,d)
             E_c[:,:,1] = np.array(l2).reshape(d,d)
@@ -127,14 +127,14 @@ class Cumulants(object):
     def set_L(self):
         self.L = self.compute_L()
 
-    def set_C(self,H=0.,method='parallel',kernel='constant',sigma=1.0):
-        self.C = self.compute_C(H=H,method=method,kernel=kernel,sigma=sigma)
+    def set_C(self,H=0.,method='parallel',weight='constant',sigma=1.0):
+        self.C = self.compute_C(H=H,method=method,weight=weight,sigma=sigma)
 
-    def set_J(self, H=0.,method='parallel',kernel='constant',sigma=1.0):
-        self.J = self.compute_J(H=H,method=method,kernel=kernel,sigma=sigma)
+    def set_J(self, H=0.,method='parallel',weight='constant',sigma=1.0):
+        self.J = self.compute_J(H=H,method=method,weight=weight,sigma=sigma)
 
-    def set_E_c(self, H=0., method='parallel',kernel='constant',sigma=1.0):
-        self.E_c = self.compute_E_c(H=H,method=method,kernel=kernel,sigma=sigma)
+    def set_E_c(self, H=0., method='parallel',weight='constant',sigma=1.0):
+        self.E_c = self.compute_E_c(H=H,method=method,weight=weight,sigma=sigma)
 
     def set_K_c(self):
         assert self.E_c is not None, "You should first set E_c using the function 'set_E_c'."
@@ -159,12 +159,12 @@ class Cumulants(object):
         assert self.R_true is not None, "You should provide R_true."
         self.K_c_th = get_K_c_th(self.L_th,self.C_th,self.R_true)
 
-    def set_all(self,H=0.,method="parallel",kernel='constant',sigma=1.0):
+    def set_all(self,H=0.,method="parallel",weight='constant',sigma=1.0):
         self.set_L()
         print("L is computed")
-        self.set_C(H=H,method=method,kernel=kernel,sigma=sigma)
+        self.set_C(H=H,method=method,weight=weight,sigma=sigma)
         print("C is computed")
-        self.set_E_c(H=H,method=method,kernel=kernel,sigma=sigma)
+        self.set_E_c(H=H,method=method,weight=weight,sigma=sigma)
         self.set_K_c()
         print("K_c is computed")
         if self.R_true is not None and self.mu_true is not None:
@@ -216,7 +216,7 @@ def get_K_c_th(L,C,R):
 #@jit(double(double[:],double[:],int32,int32,double,double,double), nogil=True, nopython=True)
 #@jit(float64(float64[:],float64[:],int64,int64,int64,float64,float64), nogil=True, nopython=True)
 @autojit
-def A_ij(Z_i,Z_j,a,b,T,L_j,kernel='constant',sigma=1.0):
+def A_ij(Z_i,Z_j,a,b,T,L_j,weight='constant',sigma=1.0):
     """
     Computes the mean centered number of jumps of N^j between \tau + a and \tau + b, that is
     \frac{1}{T} \sum_{\tau \in Z^i} ( N^j_{\tau + b} - N^j_{\tau + a} - \Lambda^j (b - a) )
@@ -254,7 +254,7 @@ def A_ij(Z_i,Z_j,a,b,T,L_j,kernel='constant',sigma=1.0):
     return res
 
 @autojit
-def E_ijk(Z_i,Z_j,Z_k,a,b,T,L_i,L_j,kernel='constant',sigma=1.0):
+def E_ijk(Z_i,Z_j,Z_k,a,b,T,L_i,L_j,weight='constant',sigma=1.0):
     """
     Computes the mean of the centered product of i's and j's jumps between \tau + a and \tau + b, that is
     \frac{1}{T} \sum_{\tau \in Z^k} ( N^i_{\tau + b} - N^i_{\tau + a} - \Lambda^i * ( b - a ) )
@@ -269,8 +269,8 @@ def E_ijk(Z_i,Z_j,Z_k,a,b,T,L_i,L_j,kernel='constant',sigma=1.0):
     n_k = Z_k.shape[0]
     trend_i = L_i*(b-a)
     trend_j = L_j*(b-a)
-    C = .5*(A_ij(Z_i,Z_j,-(b-a),b-a,T,L_j)+A_ij(Z_j,Z_i,-(b-a),b-a,T,L_i,kernel='constant',sigma=1.0))
-    J = .5*(I_ij(Z_i,Z_j,b-a,T,L_j)+I_ij(Z_j,Z_i,b-a,T,L_i,kernel='constant',sigma=1.0))
+    C = .5*(A_ij(Z_i,Z_j,-(b-a),b-a,T,L_j)+A_ij(Z_j,Z_i,-(b-a),b-a,T,L_i,weight=weight,sigma=1.0))
+    J = .5*(I_ij(Z_i,Z_j,b-a,T,L_j)+I_ij(Z_j,Z_i,b-a,T,L_i,weight=weight,sigma=1.0))
     # weighting function
     if weight == 'constant':
         weight_fun = lambda x: 1.
