@@ -230,7 +230,7 @@ def A_ij(Z_i,Z_j,a,b,T,L_j,kernel='constant',sigma=1.0):
     if weight == 'constant':
         weight_fun = lambda x: 1.
     elif weight == 'gaussian':
-        weight_fun = lambda x: norm.pdf(x, scale=sigma)
+        weight_fun = lambda x: (b-a)*norm.pdf(x, scale=sigma)
     for t in range(n_i):
         # count the number of jumps
         tau = Z_i[t]
@@ -275,7 +275,7 @@ def E_ijk(Z_i,Z_j,Z_k,a,b,T,L_i,L_j,kernel='constant',sigma=1.0):
     if weight == 'constant':
         weight_fun = lambda x: 1.
     elif weight == 'gaussian':
-        weight_fun = lambda x: norm.pdf(x, scale=sigma)
+        weight_fun = lambda x: (b-a)*norm.pdf(x, scale=sigma)
     for t in range(n_k):
         tau = Z_k[t]
         if tau + a < 0: continue
