@@ -10,7 +10,7 @@ def starting_point(list_cumulants,random=False):
     if not isinstance(list_cumulants, list): list_cumulants = [list_cumulants]
     cumulants = list_cumulants[0]
     d = cumulants.dim
-    sqrt_C = sqrtm(np.average([cumul.C for cumul in list_cumulants])
+    sqrt_C = sqrtm(np.average([cumul.C for cumul in list_cumulants]))
     #sqrt_C = sqrtm(cumulants.C)
     sqrt_L = np.sqrt(np.average([cumul.L for cumul in list_cumulants])
     #sqrt_L = np.sqrt(cumulants.L)
@@ -102,7 +102,7 @@ def NPHC(list_cumulants, initial_point, alpha=.5, training_epochs=1000, learning
 
             # Fit training using batch data
             sess.run(optimizer, feed_dict={L: cumulants.L, C: cumulants.C, K_c: cumulants.K_c})
-            
+
             # Write logs at every iteration
             #summary_str = sess.run(merged_summary_op, feed_dict={L: cumul.L, C: cumul.C, K_c: cumul.K_c})
             #summary_writer.add_summary(summary_str, epoch)
