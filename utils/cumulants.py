@@ -318,7 +318,7 @@ def E_ijk(Z_i,Z_j,Z_k,a,b,T,L_i,L_j,weight='constant',sigma=1.0):
 
 # I did not implement the weighting function for that part
 @autojit
-def I_ij(Z_i,Z_j,H,T,L_j):
+def I_ij(Z_i,Z_j,H,T,L_j,weight='constant',sigma=1.0):
     """
     Computes the integral \int_{(0,H)} t c^{ij} (t) dt. This integral equals
     \frac{1}{T} \sum_{\tau \in Z^i} \sum_{\tau' \in Z^j} [ (\tau - \tau') 1_{ \tau - H < \tau' < \tau } - H^2 / 2 \Lambda^j ]
