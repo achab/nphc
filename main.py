@@ -10,10 +10,8 @@ def starting_point(list_cumulants,random=False):
     if not isinstance(list_cumulants, list): list_cumulants = [list_cumulants]
     cumulants = list_cumulants[0]
     d = cumulants.dim
-    sqrt_C = sqrtm(np.average([cumul.C for cumul in list_cumulants]))
-    #sqrt_C = sqrtm(cumulants.C)
-    sqrt_L = np.sqrt(np.average([cumul.L for cumul in list_cumulants]))
-    #sqrt_L = np.sqrt(cumulants.L)
+    sqrt_C = sqrtm(np.mean([cumul.C for cumul in list_cumulants],axis=0))
+    sqrt_L = np.sqrt(np.mean([cumul.L for cumul in list_cumulants],axis=0))
     if random:
         M = random_orthogonal_matrix(d)
     else:
