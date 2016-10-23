@@ -1,5 +1,3 @@
-test
-
 # NPHC: Non Parametric Hawkes with Cumulants
 ## Compute cumulants from a list of point processes
 
