@@ -1,8 +1,9 @@
 from numba import autojit, jit, double, int32, int64, float64
 from scipy.linalg import inv, pinv, eigh
-from scipy.stats import norm
 from joblib import Parallel, delayed
 from tensorflow import Session
+from math import sqrt, pi, exp
+from scipy.stats import norm
 import numpy as np
 
 
@@ -214,11 +215,11 @@ def get_K_c_th(L,C,R):
 ## Useful fonctions to set_ empirical integrated cumulants
 ##########
 @autojit
-def weight_fun(x, width, sigma, mode='constant'):
+def weight_fun(x, sigma, mode='constant'):
     if mode == 'constant':
         return 1.
     elif mode == 'gaussian':
-        return width * norm.pdf(x ,scale=sigma)
+        return sigma * sqrt(2*pi) * norm.pdf(x, scale=sigma)
 
 #@jit(double(double[:],double[:],int32,int32,double,double,double), nogil=True, nopython=True)
 #@jit(float64(float64[:],float64[:],int64,int64,int64,float64,float64), nogil=True, nopython=True)
@@ -232,7 +233,10 @@ def A_ij(Z_i,Z_j,a,b,T,L_j,weight='constant',sigma=1.0):
     u = 0
     n_i = Z_i.shape[0]
     n_j = Z_j.shape[0]
-    trend_j = L_j*(b-a)
+    if weight == 'constant':
+        trend_j = L_j*(b-a)
+    elif weight == 'gaussian':
+        trend_j = L_j*sigma*sqrt(2*pi)*(norm.sf(a)-norm.sf(b))
     for t in range(n_i):
         # count the number of jumps
         tau = Z_i[t]
@@ -246,7 +250,7 @@ def A_ij(Z_i,Z_j,a,b,T,L_j,weight='constant',sigma=1.0):
         v = u
         while v < n_j:
             if Z_j[v] < tau + b:
-                delta += weight_fun(Z_j[v]-tau, b-a, sigma, mode=weight)
+                delta += weight_fun(Z_j[v]-tau, sigma, mode=weight)
                 v += 1
             else:
                 break
@@ -269,8 +273,12 @@ def E_ijk(Z_i,Z_j,Z_k,a,b,T,L_i,L_j,weight='constant',sigma=1.0):
     n_i = Z_i.shape[0]
     n_j = Z_j.shape[0]
     n_k = Z_k.shape[0]
-    trend_i = L_i*(b-a)
-    trend_j = L_j*(b-a)
+    if weight == 'constant':
+        trend_i = L_i*(b-a)
+        trend_j = L_j*(b-a)
+    elif weight == 'gaussian':
+        trend_i = L_i*sigma*sqrt(2*pi)*(norm.sf(a)-norm.sf(b))
+        trend_j = L_j*sigma*sqrt(2*pi)*(norm.sf(a)-norm.sf(b))
     C = .5*(A_ij(Z_i,Z_j,-(b-a),b-a,T,L_j,weight=weight,sigma=sigma)+A_ij(Z_j,Z_i,-(b-a),b-a,T,L_i,weight=weight,sigma=sigma))
     J = .5*(I_ij(Z_i,Z_j,b-a,T,L_j,weight=weight,sigma=sigma)+I_ij(Z_j,Z_i,b-a,T,L_i,weight=weight,sigma=sigma))
     for t in range(n_k):
@@ -286,7 +294,7 @@ def E_ijk(Z_i,Z_j,Z_k,a,b,T,L_i,L_j,weight='constant',sigma=1.0):
         delta_i = 0.
         while v < n_i:
             if Z_i[v] < tau + b:
-                delta_i += weight_fun(Z_i[v]-tau, b-a, sigma, mode=weight)
+                delta_i += weight_fun(Z_i[v]-tau, sigma, mode=weight)
                 v += 1
             else:
                 break
@@ -301,7 +309,7 @@ def E_ijk(Z_i,Z_j,Z_k,a,b,T,L_i,L_j,weight='constant',sigma=1.0):
         delta_j = 0.
         while y < n_j:
             if Z_j[y] < tau + b:
-                delta_j += weight_fun(Z_j[y]-tau, b-a, sigma, mode=weight)
+                delta_j += weight_fun(Z_j[y]-tau, sigma, mode=weight)
                 y += 1
             else:
                 break
@@ -327,7 +335,10 @@ def I_ij(Z_i,Z_j,H,T,L_j,weight='constant',sigma=1.0):
     n_j = Z_j.shape[0]
     res = 0
     u = 0
-    trend_j = .5 * (H**2) * L_j
+    if weight == 'constant':
+        trend_j = .5 * (H**2) * L_j
+    elif weight == 'gaussian':
+        trend_j = sigma**2 * (1 - exp(-.5*(H/sigma)**2)) * L_j
     delta = 0.
     for t in range(n_i):
         tau = Z_i[t]
