@@ -10,7 +10,17 @@ def args2params(mode, symmetric):
     mu_d20 = 0.001
     mu_d100 = 0.001
 
-    if 'd10_sym' in mode:
+    if 'd4' in mode:
+        d = 4
+        mu = mu_d10 * np.ones(d)
+        Alpha = np.zeros((d,d))
+        Beta = np.ones((d,d))
+        Gamma = .01 * np.ones((d,d))
+        Alpha[:d/2,:d/2] += 1
+        Alpha[:d/2,d/2:] += 2
+        Alpha[d/2:,d/2:] += 3
+
+    elif 'd10_sym' in mode:
         d = 10
         mu = mu_d10 * np.ones(d)
         Alpha = np.zeros((d,d))
@@ -191,7 +201,7 @@ def params2kernels(kernel, Alpha, Beta, Gamma):
         def kernel_plaw(alpha,beta,gamma,support=-1):
             """
             Alternative definition.
-            phi(t) = alpha * beta / (1 + beta t) ** (1 + gamma)
+            phi(t) = alpha * beta * gamma / (1 + beta t) ** (1 + gamma)
             """
             if beta > 0:
                 return hk.HawkesKernelPowerLaw(alpha/(beta**gamma),1./beta,1.+gamma,support)

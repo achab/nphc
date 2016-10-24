@@ -11,9 +11,9 @@ def ix2str(ix):
         ix_str = str(ix)
     return ix_str
 
-symmetric = 3
-kernel = 'rect'
-d = 100
+symmetric = 0 
+kernel = 'plaw'
+d = 4 
 T = 1e8
 
 if symmetric == 0:
