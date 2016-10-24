@@ -19,6 +19,7 @@ def args2params(mode, symmetric):
         Alpha[:d/2,:d/2] += 1
         Alpha[:d/2,d/2:] += 2
         Alpha[d/2:,d/2:] += 3
+        Alpha /= 8.
 
     elif 'd10_sym' in mode:
         d = 10
