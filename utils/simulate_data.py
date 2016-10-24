@@ -16,9 +16,9 @@ def args2params(mode, symmetric):
         Alpha = np.zeros((d,d))
         Beta = np.ones((d,d))
         Gamma = .01 * np.ones((d,d))
-        Alpha[:d/2,:d/2] += 1
-        Alpha[:d/2,d/2:] += 2
-        Alpha[d/2:,d/2:] += 3
+        Alpha[:d/2,:d/2] += 1.
+        Alpha[:d/2,d/2:] += 2.
+        Alpha[d/2:,d/2:] += 3.
         Alpha /= 8.
 
     elif 'd10_sym' in mode:
