@@ -204,10 +204,10 @@ def params2kernels(kernel, Alpha, Beta, Gamma):
             phi(t) = alpha * beta * gamma / (1 + beta t) ** (1 + gamma)
             """
             if beta > 0:
-                return hk.HawkesKernelPowerLaw(alpha/(beta**gamma),1./beta,1.+gamma,support)
+                return hk.HawkesKernelPowerLaw(alpha*gamma/(beta**gamma),1./beta,1.+gamma,support)
             else:
                 return hk.HawkesKernelPowerLaw(0.,1.,1.,support)
-        kernels = [[kernel_plaw(a*g, b, g, -1) for (a, b, g) in zip(a_list, b_list, g_list)] for (a_list, b_list, g_list) in zip(Alpha, Beta, Gamma)]
+        kernels = [[kernel_plaw(a, b, g, -1) for (a, b, g) in zip(a_list, b_list, g_list)] for (a_list, b_list, g_list) in zip(Alpha, Beta, Gamma)]
 
     elif kernel == 'rect':
         def kernel_rect(alpha, beta, gamma):
