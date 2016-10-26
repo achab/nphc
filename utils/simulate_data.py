@@ -12,7 +12,7 @@ def args2params(mode, symmetric):
 
     if 'd4' in mode:
         d = 4
-        mu = mu_d10 * np.ones(d)
+        mu = 100 * mu_d10 * np.ones(d)
         Alpha = np.zeros((d,d))
         Beta = np.ones((d,d))
         Gamma = .01 * np.ones((d,d))
