@@ -2,7 +2,7 @@ from numba import autojit, jit, double, int32, int64, float64
 from scipy.linalg import inv, pinv, eigh
 from joblib import Parallel, delayed
 from tensorflow import Session
-from math import sqrt, pi, exp
+from math import sqrt, pi, exp, cos
 from scipy.stats import norm
 import numpy as np
 
@@ -220,6 +220,11 @@ def weight_fun(x, sigma, mode='constant'):
         return 1.
     elif mode == 'gaussian':
         return sigma * sqrt(2*pi) * norm.pdf(x, scale=sigma)
+    elif mode == 'centered_triangle':
+        if abs(x) < sigma:
+            return (1-abs(x)/sigma)*cos(x*pi/sigma)/(2*pi)
+        else:
+            return 0
 
 #@jit(double(double[:],double[:],int32,int32,double,double,double), nogil=True, nopython=True)
 #@jit(float64(float64[:],float64[:],int64,int64,int64,float64,float64), nogil=True, nopython=True)
@@ -237,6 +242,8 @@ def A_ij(Z_i,Z_j,a,b,T,L_j,weight='constant',sigma=1.0):
         trend_j = L_j*(b-a)
     elif weight == 'gaussian':
         trend_j = L_j*sigma*sqrt(2*pi)*(norm.sf(a)-norm.sf(b))
+    elif weight == 'centered_triangle':
+        trend_j = 0.
     for t in range(n_i):
         # count the number of jumps
         tau = Z_i[t]
