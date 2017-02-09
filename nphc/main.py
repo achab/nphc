@@ -1,4 +1,4 @@
-from nphc.utils.cumulants import Cumulants
+from nphc.cumulants import Cumulants
 from nphc.utils.loader import load_data
 from scipy.linalg import inv, qr, sqrtm
 from itertools import product
@@ -23,6 +23,91 @@ def random_orthogonal_matrix(dim):
     M = np.random.rand(dim**2).reshape(dim, dim)
     Q, _ = qr(M)
     return Q
+
+
+class NPHC(object):
+    """
+    A class that implements non-parametric estimation described in th paper
+    `Uncovering Causality from Multivariate Hawkes Integrated Cumulants` by
+    Achab, Bacry, Gaïffas, Mastromatteo and Muzy (2016, Preprint).
+
+    Parameters
+    ----------
+
+        alpha : `float`
+            The parameter used in the objective function: alpha * error_second_cumulant + (1-alpha) * error_third_cumulant.
+
+        l_l1 : `float`
+            The L1-regularization parameter
+
+        l_l2 : `float`
+            The L2-regularization parameter
+
+    Attributes
+    ----------
+
+        L : `np.array` shape=(dim,)
+            Estimated means
+
+        C : `np.array` shape=(dim,dim)
+            Estimated covariance
+
+        K : `np.array` shape=(dim,dim)
+            Estimated skewness (sliced)
+
+        R : `np.array` shape=(dim,dim)
+            Parameter of interest, linked to the integrals of Hawkes kernels
+    """
+
+    def __init__(self, alpha: float = .5, l_l1: float = 0., l_l2: float = 0.):
+
+        object.__init__(self)
+        self.alpha = alpha
+        self.l_l1 = l_l1
+        self.l_l2 = l_l2
+
+    def fit(self, realizations: list, H: float = 100., weight: str = 'constant'):
+        """
+        Set the corresponding realization(s) of the process.
+        Compute the cumulants.
+
+        Parameters
+        ----------
+
+            realizations : `list`
+                * Either a single realization as a list of np_arrays each representing
+                the time stamps of a node of the Hawkes process
+                * Or a list of realizations represented as above.
+
+        """
+        if isinstance(realizations, list):
+            self._realizations = realizations
+        else:
+            self._realizations = [realizations]
+
+        cumul = Cumulants(realizations, hMax=H)
+        cumul.set_all(H,weight=weight,sigma=H/5.)
+
+        self.L = cumul.L.copy()
+        self.C = cumul.C.copy()
+        self.K_c = cumul.K_c.copy()
+
+    def solve(self, initial_point=None):
+        """
+
+        Parameters
+        ----------
+
+            training_epochs : `int`
+                The number of training epochs.
+
+            learning_rate : `float`
+                The learning rate used by the optimizer.
+
+            optimizer : `str`
+                The optimizer used to minimize the objective function. We use optimizers from TensorFlow.
+        """
+
 
 def NPHC(list_cumulants, initial_point, alpha=.5, training_epochs=1000, learning_rate=1e6, optimizer='momentum', \
          display_step = 100, l_l1=0., l_l2=0.):
