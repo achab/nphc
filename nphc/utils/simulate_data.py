@@ -1,3 +1,4 @@
+from itertools import product
 import numpy as np
 
 
@@ -9,6 +10,7 @@ def args2params(mode, symmetric):
     mu_d10 = 0.001
     mu_d20 = 0.001
     mu_d100 = 0.001
+    mu_d500 = 0.01
 
     if 'd4' in mode:
         d = 4
@@ -186,6 +188,31 @@ def args2params(mode, symmetric):
         Gamma *= .1
         Beta = Alpha.copy()
         Alpha /= 40
+
+    elif 'd500_nonsym_1' in mode:
+        d = 500
+        mu = mu_d500 * np.ones(d)
+        Alpha = np.zeros((d,d))
+        Beta = np.zeros((d,d))
+        for (i,j) in product(range(200), repeat=2):
+             if i <= j:
+                Alpha[i][j] = 1.
+                Beta[i][j] = beta0
+        for (i,j) in product(range(201,300), repeat=2):
+            if i >= j:
+                Alpha[i][j] = 1.
+                Beta[i][j] = 10*beta0
+        for (i,j) in product(range(301,400), repeat=2):
+            if i <= j:
+                Alpha[i][j] = 1.
+                Beta[i][j] = 100*beta0
+        for (i,j) in product(range(401,500), repeat=2):
+            if i >= j:
+                Alpha[i][j] = 1.
+                Beta[i][j] = 1000*beta0
+        if mode == 'd500_nonsym_1_hard':
+            Alpha[301:400] += 1.
+            Beta[101:200] += 10000*beta0
 
     return mu, Alpha, Beta, Gamma
 
