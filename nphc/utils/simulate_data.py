@@ -219,7 +219,7 @@ def args2params(mode, symmetric):
 
 def params2kernels(kernel, Alpha, Beta, Gamma):
 
-    import mlpp.pp.hawkes as hk
+    import mlpp.simulation as hk
     from mlpp.base.utils import TimeFunction
 
     if kernel == 'exp':
@@ -255,24 +255,24 @@ def params2kernels(kernel, Alpha, Beta, Gamma):
 
 
 def simulate_and_compute_cumul(mu, kernels, Alpha, T, hM=20):
-    import mlpp.pp.hawkes as hk
-    h = hk.Hawkes(kernels=kernels, mus=list(mu))
-    h.simulate(T)
+    import mlpp.simulation as hk
+    h = hk.SimuHawkes(kernels=kernels, baseline=list(mu), end_time=T)
+    h.simulate()
     # use the class Cumulants
-    from nphc.utils.cumulants import Cumulants
-    N = h.get_full_process()
-    cumul = Cumulants(N,hMax=hM)
+    from nphc.cumulants import Cumulants
+    N = h.timestamps
+    cumul = Cumulants(realizations=N,half_width=hM)
     # compute everything
     from scipy.linalg import inv
     d = Alpha.shape[0]
     R_true = inv(np.eye(d)-Alpha)
     cumul.set_R_true(R_true)
     cumul.set_mu_true(mu)
-    cumul.set_all()
+    cumul.compute_cumulants(method="parallel")
 
     from nphc.utils.metrics import rel_err
-    print("rel_err on C = ", rel_err(cumul.C_th,cumul.C))
-    print("rel_err on K_c = ", rel_err(cumul.K_c_th,cumul.K_c))
+    print("rel_err on C = ", np.mean( [rel_err(cumul.C_th, C) for C in cumul.C] ) )
+    print("rel_err on K_c = ", np.mean([rel_err(cumul.K_c_th, K_c) for K_c in cumul.K_c]))
 
     return cumul
 
@@ -284,7 +284,7 @@ def save(cumul, Alpha, Beta, Gamma, kernel, mode, T, with_params=True, without_N
     name = kernel + '_' + mode + '_log10T' + str(int(log10(T)))
 
     # Create folders if they don't exist yet
-    dir_name = '../datasets/' + kernel
+    dir_name = 'nphc/datasets/' + kernel
     import os
     if not os.path.isdir(dir_name):
         os.mkdir(dir_name)

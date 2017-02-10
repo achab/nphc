@@ -11,17 +11,14 @@ def ix2str(ix):
         ix_str = str(ix)
     return ix_str
 
-<<<<<<< HEAD
-symmetric = 2 
+symmetric = 0
 kernel = 'exp'
 d = 10
-T = 1e8
-=======
-symmetric = 0 
-kernel = 'plaw'
-d = 4 
-T = 1e5
->>>>>>> f6a85c5b140f0ad55904b7e11666bfac37e96fe8
+T = 1e7
+#symmetric = 0
+#kernel = 'plaw'
+#d = 4
+#T = 1e5
 
 if symmetric == 0:
     mode = 'd' + str(d) + '_nonsym_1'
@@ -37,12 +34,14 @@ def worker(ix):
     ix_str = '_' + ix2str(ix)
     mu, Alpha, Beta, Gamma = args2params(mode, symmetric)
     kernels = params2kernels(kernel, Alpha, Beta, Gamma)
-    cumul = simulate_and_compute_cumul(mu, kernels, Alpha, T, 100)
+    cumul = simulate_and_compute_cumul(mu, kernels, Alpha, T, 1000)
     save(cumul, Alpha, Beta, Gamma, kernel, mode, T, suffix=ix_str)
 
 
-if __name__ == '__main__':
+#if __name__ == '__main__':
 
-    indices = np.arange(10)
-    pool = Pool()
-    pool.map(worker,indices)
+#    indices = np.arange(10)
+#    pool = Pool()
+#    pool.map(worker,indices)
+
+worker(2)

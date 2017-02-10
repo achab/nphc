@@ -55,7 +55,8 @@ class Cumulants(object):
         L_list = []
         for realization in self.realizations:
             L = np.zeros(self.dim)
-            for i, process in enumerate(realization):
+            for i in range(self.dim):
+                process = realization[i]
                 if process is None:
                     L[i] = -1.
                 else:
@@ -72,7 +73,8 @@ class Cumulants(object):
         d = self.dim
 
         C_list = []
-        for day, realization in enumerate(self.realizations):
+        for day in range(len(self.realizations)):
+            realization = self.realizations[day]
             if method == 'classic':
                 C = np.zeros((d, d))
                 for i in range(d):
@@ -98,7 +100,8 @@ class Cumulants(object):
         d = self.dim
 
         J_list = []
-        for day, realization in enumerate(self.realizations):
+        for day in range(len(self.realizations)):
+            realization = self.realizations[day]
             if method == 'classic':
                 J = np.zeros((d, d))
                 for i in range(d):
@@ -125,7 +128,8 @@ class Cumulants(object):
         d = self.dim
 
         E_c_list = []
-        for day, realization in enumerate(self.realizations):
+        for day in range(len(self.realizations)):
+            realization = self.realizations[day]
             E_c = np.zeros((d, d, 2))
             if method == 'classic':
                 for i in range(d):
@@ -165,7 +169,7 @@ class Cumulants(object):
 
     def set_K_c(self):
         assert len(self.E_c) > 0, "You should first set E_c using the function 'set_E_c'."
-        self.K_c = get_K_c(self.E_c)
+        self.K_c = [ get_K_c(X) for X in self.E_c ]
 
     def set_R_true(self, R_true):
         self.R_true = R_true
@@ -188,12 +192,12 @@ class Cumulants(object):
 
     def compute_cumulants(self, half_width=0., method="parallel", weight='constant', sigma=1.0):
         self.set_L()
-        print("L is computed")
+        #print("L is computed")
         self.set_C(half_width=half_width, method=method, weight=weight, sigma=sigma)
-        print("C is computed")
+        #print("C is computed")
         self.set_E_c(half_width=half_width, method=method, weight=weight, sigma=sigma)
         self.set_K_c()
-        print("K_c is computed")
+        #print("K_c is computed")
         if self.R_true is not None and self.mu_true is not None:
             self.set_L_th()
             self.set_C_th()
@@ -245,13 +249,13 @@ def get_K_c_th(L, C, R):
 ##########
 
 @autojit
-def weight_fun(x, sigma, mode='constant'):
+def filter_fun(X, sigma, mode='constant'):
     if mode == 'constant':
-        return 1.
+        return np.ones_like(X)
     elif mode == 'gaussian':
-        return sigma * sqrt(2 * pi) * norm.pdf(x, scale=sigma)
+        return sigma * sqrt(2 * pi) * norm.pdf(X, scale=sigma)
     else:
-        return 0
+        return np.zeros_like(X)
 
 
 # @jit(double(double[:],double[:],int32,int32,double,double,double), nogil=True, nopython=True)
@@ -279,16 +283,19 @@ def A_ij(realization_i, realization_j, a, b, T, L_j, weight='constant', sigma=1.
                 u += 1
             else:
                 break
-        time_delta = []
+        time_delta = np.zeros(n_j)
+        indicator = np.zeros(n_j)
         v = u
         while v < n_j:
             if realization_j[v] < tau + b:
-                time_delta.append(realization_j[v] - tau)
+                time_delta[v] = realization_j[v] - tau
+                indicator[v] = 1.
                 v += 1
             else:
                 break
         if v == n_j: continue
-        delta = weight_fun(time_delta, sigma, mode=weight).sum()
+        filtered_times = filter_fun(time_delta, sigma, mode=weight)
+        delta = np.dot(indicator, filtered_times)
         res += delta - trend_j
     res /= T
     return res
@@ -328,10 +335,12 @@ def E_ijk(realization_i, realization_j, realization_k, a, b, T, L_i, L_j, weight
             else:
                 break
         v = u
-        time_delta_i = []
+        time_delta_i = np.zeros(n_i)
+        indicator_i = np.zeros(n_i)
         while v < n_i:
             if realization_i[v] < tau + b:
-                time_delta_i.append(realization_i[v] - tau)
+                time_delta_i[v] = realization_i[v] - tau
+                indicator_i[v] = 1.
                 v += 1
             else:
                 break
@@ -343,16 +352,20 @@ def E_ijk(realization_i, realization_j, realization_k, a, b, T, L_i, L_j, weight
             else:
                 break
         y = x
-        time_delta_j = []
+        time_delta_j = np.zeros(n_j)
+        indicator_j = np.zeros(n_j)
         while y < n_j:
             if realization_j[y] < tau + b:
-                time_delta_j.append(realization_j[y] - tau)
+                time_delta_j[y] = realization_j[y] - tau
+                indicator_j[y] = 1.
                 y += 1
             else:
                 break
         if y == n_j: continue
-        delta_i = weight_fun(time_delta_i, sigma, mode=weight).sum()
-        delta_j = weight_fun(time_delta_j, sigma, mode=weight).sum()
+        filtered_times_i = filter_fun(time_delta_i, sigma, mode=weight)
+        delta_i = np.dot(time_delta_i, filtered_times_i)
+        filtered_times_j = filter_fun(time_delta_j, sigma, mode=weight)
+        delta_j = np.dot(time_delta_j, filtered_times_j)
         res += (delta_i - trend_i) * (delta_j - trend_j) - ((b - a) * C - 2 * J)
     res /= T
     return res

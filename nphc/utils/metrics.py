@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.stats import kendalltau
-from nphc.utils.cumulants import get_K_c_th
+from nphc.cumulants import get_K_c_th
 
 def rel_err(A_true, A_pred):
     assert A_pred.shape == A_true.shape, "A_pred and A_true should have the same dimensions."

@@ -1,5 +1,5 @@
-from nphc.cumulants import Cumulants
-from nphc.utils.loader import load_data
+from cumulants import Cumulants
+from utils.loader import load_data
 from scipy.linalg import inv, qr, sqrtm
 from itertools import product
 import tensorflow as tf
@@ -28,7 +28,7 @@ class NPHC(object):
     """
     A class that implements non-parametric estimation described in th paper
     `Uncovering Causality from Multivariate Hawkes Integrated Cumulants` by
-    Achab, Bacry, Gaïffas, Mastromatteo and Muzy (2016, Preprint).
+    Achab, Bacry, Gaiffas, Mastromatteo and Muzy (2016, Preprint).
 
     Parameters
     ----------
@@ -58,14 +58,14 @@ class NPHC(object):
             Parameter of interest, linked to the integrals of Hawkes kernels
     """
 
-    def __init__(self, alpha: float = .5, l_l1: float = 0., l_l2: float = 0.):
+    def __init__(self, alpha=.5, l_l1=0., l_l2=0.):
 
         object.__init__(self)
         self.alpha = alpha
         self.l_l1 = l_l1
         self.l_l2 = l_l2
 
-    def fit(self, realizations: list, H: float = 100., weight: str = 'constant'):
+    def fit(self, realizations=[], half_wifth=100., weight='constant'):
         """
         Set the corresponding realization(s) of the process.
         Compute the cumulants.
@@ -84,8 +84,8 @@ class NPHC(object):
         else:
             self.realizations = [realizations]
 
-        cumul = Cumulants(realizations, hMax=H)
-        cumul.compute_cumulants(H,weight=weight,sigma=H/5.)
+        cumul = Cumulants(realizations, hMax=half_wifth)
+        cumul.compute_cumulants(H,weight=weight,sigma=half_wifth/5.)
 
         self.L = cumul.L.copy()
         self.C = cumul.C.copy()
