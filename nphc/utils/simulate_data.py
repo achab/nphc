@@ -271,6 +271,7 @@ def simulate_and_compute_cumul(mu, kernels, Alpha, T, hM=20):
     cumul.compute_cumulants(method="parallel")
 
     from nphc.utils.metrics import rel_err
+    print("rel_err on L = ", np.mean( [rel_err(cumul.L_th, L) for L in cumul.L] ) )
     print("rel_err on C = ", np.mean( [rel_err(cumul.C_th, C) for C in cumul.C] ) )
     print("rel_err on K_c = ", np.mean([rel_err(cumul.K_c_th, K_c) for K_c in cumul.K_c]))
 

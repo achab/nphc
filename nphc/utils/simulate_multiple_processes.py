@@ -14,7 +14,7 @@ def ix2str(ix):
 symmetric = 0
 kernel = 'exp'
 d = 10
-T = 1e7
+T = 1e6
 #symmetric = 0
 #kernel = 'plaw'
 #d = 4

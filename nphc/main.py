@@ -165,15 +165,14 @@ class NPHC(object):
             # Training cycle
             for epoch in range(training_epochs):
 
-                cumulants = np.random.choice(list_cumulants)
-
                 if epoch % display_step == 0:
-                    avg_cost = np.average([sess.run(cost, feed_dict={L: cumul.L, C: cumul.C, K_c: cumul.K_c})
-                                           for cumul in list_cumulants])
+                    avg_cost = np.average([sess.run(cost, feed_dict={L: L_, C: C_, K_c: K_c_})
+                                           for (L_, C_, K_c_) in zip(self.L, self.C, self.K_c)])
                     print("Epoch:", '%04d' % (epoch), "log10(cost)=", "{:.9f}".format(np.log10(avg_cost)))
 
                 # Fit training using batch data
-                sess.run(optimizer, feed_dict={L: cumulants.L, C: cumulants.C, K_c: cumulants.K_c})
+                i = np.random.randint(0,len(self.realizations))
+                sess.run(optimizer, feed_dict={L: self.L[i], C: self.C[i], K_c: self.K_c[i]})
 
                 # Write logs at every iteration
                 #summary_str = sess.run(merged_summary_op, feed_dict={L: cumul.L, C: cumul.C, K_c: cumul.K_c})
