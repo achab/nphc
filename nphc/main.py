@@ -80,10 +80,10 @@ class NPHC(object):
                 * Or a list of realizations represented as above.
 
         """
-        if isinstance(realizations, list):
-            self._realizations = realizations
+        if all(isinstance(x,list) for x in realizations):
+            self.realizations = realizations
         else:
-            self._realizations = [realizations]
+            self.realizations = [realizations]
 
         cumul = Cumulants(realizations, hMax=H)
         cumul.set_all(H,weight=weight,sigma=H/5.)
@@ -107,6 +107,7 @@ class NPHC(object):
             optimizer : `str`
                 The optimizer used to minimize the objective function. We use optimizers from TensorFlow.
         """
+        pass
 
 
 def NPHC(list_cumulants, initial_point, alpha=.5, training_epochs=1000, learning_rate=1e6, optimizer='momentum', \
