@@ -47,7 +47,7 @@ print("mean rel_err on K_c = ", np.mean( [rel_err(nphc.K_c_th, K_c) for K_c in n
 #################################################
 ### Solve (=> minimize the objective function ###
 #################################################
-R_pred = nphc.solve(alpha=.9,training_epochs=100,display_step=20,learning_rate=1e-1,optimizer='adam')
+R_pred = nphc.solve(alpha=.9,training_epochs=300,display_step=20,learning_rate=1e-2,optimizer='adam')
 
 # print final error of estimation
 G_pred = np.eye(d) - inv(R_pred)
