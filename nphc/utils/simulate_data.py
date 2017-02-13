@@ -268,7 +268,7 @@ def simulate_and_compute_cumul(mu, kernels, Alpha, T, hM=20):
     R_true = inv(np.eye(d)-Alpha)
     cumul.set_R_true(R_true)
     cumul.set_mu_true(mu)
-    cumul.compute_cumulants(method="parallel", weight="constant")
+    cumul.compute_cumulants(method="parallel", filter="rectangular")
 
     from nphc.utils.metrics import rel_err
     print("rel_err on L = ", np.mean( [rel_err(cumul.L_th, L) for L in cumul.L] ))

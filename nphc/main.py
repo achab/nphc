@@ -1,6 +1,6 @@
-from cumulants import Cumulants
-from utils.loader import load_data
-from scipy.linalg import inv, qr, sqrtm
+from nphc.cumulants import Cumulants
+from nphc.utils.loader import load_data
+from scipy.linalg import inv, qr, sqrtm, norm
 from itertools import product
 import tensorflow as tf
 import numpy as np
@@ -30,42 +30,37 @@ class NPHC(object):
     `Uncovering Causality from Multivariate Hawkes Integrated Cumulants` by
     Achab, Bacry, Gaiffas, Mastromatteo and Muzy (2016, Preprint).
 
-    Parameters
-    ----------
 
-        alpha : `float`
-            The parameter used in the objective function: alpha * error_second_cumulant + (1-alpha) * error_third_cumulant.
+    Methods
+    -------
 
-        l_l1 : `float`
-            The L1-regularization parameter
+        fit : compute the Cumulants using function from `cumulants.py`
 
-        l_l2 : `float`
-            The L2-regularization parameter
+        solve : minimize the objective function
+
 
     Attributes
     ----------
 
-        L : `np.array` shape=(dim,)
+        L : list of `np.array` shape=(dim,)
             Estimated means
 
-        C : `np.array` shape=(dim,dim)
+        C : list of `np.array` shape=(dim,dim)
             Estimated covariance
 
-        K : `np.array` shape=(dim,dim)
+        K : list of `np.array` shape=(dim,dim)
             Estimated skewness (sliced)
 
         R : `np.array` shape=(dim,dim)
             Parameter of interest, linked to the integrals of Hawkes kernels
     """
 
-    def __init__(self, alpha=.5, l_l1=0., l_l2=0.):
+    def __init__(self):
 
         object.__init__(self)
-        self.alpha = alpha
-        self.l_l1 = l_l1
-        self.l_l2 = l_l2
 
-    def fit(self, realizations=[], half_wifth=100., weight='constant'):
+
+    def fit(self, realizations=[], half_wifth=100., filter='rectangular', mu_true=None, R_true=None):
         """
         Set the corresponding realization(s) of the process.
         Compute the cumulants.
@@ -84,15 +79,25 @@ class NPHC(object):
         else:
             self.realizations = [realizations]
 
-        cumul = Cumulants(realizations, hMax=half_wifth)
-        cumul.compute_cumulants(H,weight=weight,sigma=half_wifth/5.)
+        cumul = Cumulants(realizations, half_width=half_wifth)
+        cumul.mu_true = mu_true
+        cumul.R_true = R_true
+        cumul.compute_cumulants(half_wifth,filter=filter,sigma=half_wifth/5.)
 
         self.L = cumul.L.copy()
         self.C = cumul.C.copy()
         self.K_c = cumul.K_c.copy()
+        if R_true is not None and mu_true is not None:
+            self.L_th = cumul.L_th
+            self.C_th = cumul.C_th
+            self.K_c_th = cumul.K_c_th
+        else:
+            self.L_th = None
+            self.C_th = None
+            self.K_c_th = None
 
 
-    def solve(self, initial_point=None, training_epochs=1000, learning_rate=1e6, optimizer='momentum', \
+    def solve(self, alpha=0., l_l1=0., l_l2=0., initial_point=None, training_epochs=1000, learning_rate=1e6, optimizer='momentum', \
          display_step = 100):
         """
 
@@ -108,6 +113,14 @@ class NPHC(object):
             optimizer : `str`
                 The optimizer used to minimize the objective function. We use optimizers from TensorFlow.
         """
+
+        if alpha == 0.:
+            self.alpha = 1./(1. + (norm(np.mean([C for C in self.C]))**2) / (norm(np.mean([K_c for K_c in self.K_c]))**2) )
+        else:
+            self.alpha = alpha
+        self.l_l1 = l_l1
+        self.l_l2 = l_l2
+
 
         cumulants_list = [self.L, self.C, self.K_c]
         d = len(self.L[0])
@@ -132,9 +145,9 @@ class NPHC(object):
         cost =  (1-self.alpha) * tf.reduce_mean( tf.squared_difference( activation_3, K_c ) ) \
         + self.alpha * tf.reduce_mean( tf.squared_difference( activation_2, C ) )
 
-        reg_l1 = tf.contrib.layers.l1_regularizer(l_l1)
-        reg_l2 = tf.contrib.layers.l2_regularizer(l_l2)
-        if l_l1*l_l2 > 0:
+        reg_l1 = tf.contrib.layers.l1_regularizer(self.l_l1)
+        reg_l2 = tf.contrib.layers.l2_regularizer(self.l_l2)
+        if self.l_l1*self.l_l2 > 0:
             cost = tf.cast(cost, tf.float32) + reg_l1(R) + reg_l2(R)
         else:
             cost = tf.cast(cost, tf.float32)

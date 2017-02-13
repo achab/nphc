@@ -68,7 +68,7 @@ class Cumulants(object):
             self.L[day] = L.copy()
 
 
-    def compute_C(self, half_width=0., method='parallel', weight='constant', sigma=1.0):
+    def compute_C(self, half_width=0., method='parallel', filter='rectangular', sigma=1.0):
         if half_width == 0.:
             h_w = self.half_width
         else:
@@ -82,10 +82,10 @@ class Cumulants(object):
                 for i in range(d):
                     for j in range(d):
                         C[i, j] = A_ij(realization[i], realization[j], -h_w, h_w, self.time[day], self.L[day][j],
-                                       weight=weight, sigma=sigma)
+                                       filter=filter, sigma=sigma)
             elif method == 'parallel':
                 l = Parallel(-1)(delayed(A_ij)(realization[i], realization[j], -h_w, h_w, self.time[day], self.L[day][j],
-                                               weight=weight, sigma=sigma)
+                                               filter=filter, sigma=sigma)
                                  for i in range(d) for j in range(d))
                 C = np.array(l).reshape(d, d)
             # we keep the symmetric part to remove edge effects
@@ -93,7 +93,7 @@ class Cumulants(object):
             self.C[day] = C.copy()
 
 
-    def compute_J(self, half_width=0., method='parallel', weight='constant', sigma=1.0):
+    def compute_J(self, half_width=0., method='parallel', filter='rectangular', sigma=1.0):
         if half_width == 0.:
             h_w = self.half_width
         else:
@@ -106,11 +106,11 @@ class Cumulants(object):
                 J = np.zeros((d, d))
                 for i in range(d):
                     for j in range(d):
-                        J[i, j] = I_ij(realization[i], realization[j], h_w, self.time[day], self.L[day][j], weight=weight,
+                        J[i, j] = I_ij(realization[i], realization[j], h_w, self.time[day], self.L[day][j], filter=filter,
                                        sigma=sigma)
             elif method == 'parallel':
                 l = Parallel(-1)(
-                        delayed(I_ij)(realization[i], realization[j], h_w, self.time[day], self.L[day][j], weight=weight,
+                        delayed(I_ij)(realization[i], realization[j], h_w, self.time[day], self.L[day][j], filter=filter,
                                       sigma=sigma)
                         for i in range(d) for j in range(d))
                 J = np.array(l).reshape(d, d)
@@ -119,7 +119,7 @@ class Cumulants(object):
             self._J[day] = J.copy()
 
 
-    def compute_E_c(self, half_width=0., method='parallel', weight='constant', sigma=1.0):
+    def compute_E_c(self, half_width=0., method='parallel', filter='rectangular', sigma=1.0):
         if half_width == 0.:
             h_w = self.half_width
         else:
@@ -134,19 +134,19 @@ class Cumulants(object):
                     for j in range(d):
                         E_c[i, j, 0] = E_ijk(realization[i], realization[j], realization[j], -h_w, h_w,
                                              self.time[day], self.L[day][i], self.L[day][j],
-                                             weight=weight, sigma=sigma)
+                                             filter=filter, sigma=sigma)
                         E_c[i, j, 1] = E_ijk(realization[j], realization[j], realization[i], -h_w, h_w,
                                              self.time[day], self.L[day][j], self.L[day][j],
-                                             weight=weight, sigma=sigma)
+                                             filter=filter, sigma=sigma)
             elif method == 'parallel':
                 l1 = Parallel(-1)(
                         delayed(E_ijk)(realization[i], realization[j], realization[j], -h_w, h_w,
                                        self.time[day], self.L[day][i], self.L[day][j],
-                                       weight=weight, sigma=sigma) for i in range(d) for j in range(d))
+                                       filter=filter, sigma=sigma) for i in range(d) for j in range(d))
                 l2 = Parallel(-1)(
                         delayed(E_ijk)(realization[j], realization[j], realization[i], -h_w, h_w,
                                        self.time[day], self.L[day][j], self.L[day][j],
-                                       weight=weight, sigma=sigma) for i in range(d) for j in range(d))
+                                       filter=filter, sigma=sigma) for i in range(d) for j in range(d))
                 E_c[:, :, 0] = np.array(l1).reshape(d, d)
                 E_c[:, :, 1] = np.array(l2).reshape(d, d)
             self._E_c[day] = E_c.copy()
@@ -155,14 +155,14 @@ class Cumulants(object):
     def set_L(self):
         self.compute_L()
 
-    def set_C(self, half_width=0., method='parallel', weight='constant', sigma=1.0):
-        self.compute_C(half_width=half_width, method=method, weight=weight, sigma=sigma)
+    def set_C(self, half_width=0., method='parallel', filter='rectangular', sigma=1.0):
+        self.compute_C(half_width=half_width, method=method, filter=filter, sigma=sigma)
 
-    def set_J(self, half_width=0., method='parallel', weight='constant', sigma=1.0):
-        self.compute_J(half_width=half_width, method=method, weight=weight, sigma=sigma)
+    def set_J(self, half_width=0., method='parallel', filter='rectangular', sigma=1.0):
+        self.compute_J(half_width=half_width, method=method, filter=filter, sigma=sigma)
 
-    def set_E_c(self, half_width=0., method='parallel', weight='constant', sigma=1.0):
-        self.compute_E_c(half_width=half_width, method=method, weight=weight, sigma=sigma)
+    def set_E_c(self, half_width=0., method='parallel', filter='rectangular', sigma=1.0):
+        self.compute_E_c(half_width=half_width, method=method, filter=filter, sigma=sigma)
 
     def set_K_c(self):
         assert len(self._E_c) > 0, "You should first set E_c using the function 'set_E_c'."
@@ -188,12 +188,12 @@ class Cumulants(object):
         assert self.R_true is not None, "You should provide R_true."
         self.K_c_th = get_K_c_th(self.L_th, self.C_th, self.R_true)
 
-    def compute_cumulants(self, half_width=0., method="parallel", weight='constant', sigma=1.0):
+    def compute_cumulants(self, half_width=0., method="parallel", filter='rectangular', sigma=1.0):
         self.set_L()
         #print("L is computed")
-        self.set_C(half_width=half_width, method=method, weight=weight, sigma=sigma)
+        self.set_C(half_width=half_width, method=method, filter=filter, sigma=sigma)
         #print("C is computed")
-        self.set_E_c(half_width=half_width, method=method, weight=weight, sigma=sigma)
+        self.set_E_c(half_width=half_width, method=method, filter=filter, sigma=sigma)
         self.set_K_c()
         #print("K_c is computed")
         if self.R_true is not None and self.mu_true is not None:
@@ -247,10 +247,10 @@ def get_K_c_th(L, C, R):
 ##########
 
 @autojit
-def filter_fun(X, sigma, mode='constant'):
-    if mode == 'constant':
+def filter_fun(X, sigma, filter='rectangular'):
+    if filter == 'rectangular':
         return np.ones_like(X)
-    elif mode == 'gaussian':
+    elif filter == 'gaussian':
         return sigma * sqrt(2 * pi) * norm.pdf(X, scale=sigma)
     else:
         return np.zeros_like(X)
@@ -259,7 +259,7 @@ def filter_fun(X, sigma, mode='constant'):
 # @jit(double(double[:],double[:],int32,int32,double,double,double), nogil=True, nopython=True)
 # @jit(float64(float64[:],float64[:],int64,int64,int64,float64,float64), nogil=True, nopython=True)
 @autojit
-def A_ij(realization_i, realization_j, a, b, T, L_j, weight='constant', sigma=1.0):
+def A_ij(realization_i, realization_j, a, b, T, L_j, filter='rectangular', sigma=1.0):
     """
     Computes the mean centered number of jumps of N^j between \tau + a and \tau + b, that is
     \frac{1}{T} \sum_{\tau \in Z^i} ( N^j_{\tau + b} - N^j_{\tau + a} - \Lambda^j (b - a) )
@@ -268,9 +268,9 @@ def A_ij(realization_i, realization_j, a, b, T, L_j, weight='constant', sigma=1.
     u = 0
     n_i = realization_i.shape[0]
     n_j = realization_j.shape[0]
-    if weight == 'constant':
+    if filter == 'rectangular':
         trend_j = L_j * (b - a)
-    elif weight == 'gaussian':
+    elif filter == 'gaussian':
         trend_j = L_j * sigma * sqrt(2 * pi) * (norm.sf(a) - norm.sf(b))
     for t in range(n_i):
         # count the number of jumps
@@ -292,7 +292,7 @@ def A_ij(realization_i, realization_j, a, b, T, L_j, weight='constant', sigma=1.
             else:
                 break
         if v == n_j: continue
-        filtered_times = filter_fun(time_delta, sigma, mode=weight)
+        filtered_times = filter_fun(time_delta, sigma, filter=filter)
         delta = np.dot(indicator, filtered_times)
         res += delta - trend_j
     res /= T
@@ -300,7 +300,7 @@ def A_ij(realization_i, realization_j, a, b, T, L_j, weight='constant', sigma=1.
 
 
 @autojit
-def E_ijk(realization_i, realization_j, realization_k, a, b, T, L_i, L_j, weight='constant', sigma=1.0):
+def E_ijk(realization_i, realization_j, realization_k, a, b, T, L_i, L_j, filter='rectangular', sigma=1.0):
     """
     Computes the mean of the centered product of i's and j's jumps between \tau + a and \tau + b, that is
     \frac{1}{T} \sum_{\tau \in Z^k} ( N^i_{\tau + b} - N^i_{\tau + a} - \Lambda^i * ( b - a ) )
@@ -312,16 +312,16 @@ def E_ijk(realization_i, realization_j, realization_k, a, b, T, L_i, L_j, weight
     n_i = realization_i.shape[0]
     n_j = realization_j.shape[0]
     n_k = realization_k.shape[0]
-    if weight == 'constant':
+    if filter == 'rectangular':
         trend_i = L_i * (b - a)
         trend_j = L_j * (b - a)
-    elif weight == 'gaussian':
+    elif filter == 'gaussian':
         trend_i = L_i * sigma * sqrt(2 * pi) * (norm.sf(a) - norm.sf(b))
         trend_j = L_j * sigma * sqrt(2 * pi) * (norm.sf(a) - norm.sf(b))
-    C = .5 * (A_ij(realization_i, realization_j, -(b-a), b-a, T, L_j, weight=weight, sigma=sigma)
-              + A_ij(realization_j, realization_i, -(b-a), b-a, T, L_i, weight=weight, sigma=sigma))
-    J = .5 * (I_ij(realization_i, realization_j, b-a, T, L_j, weight=weight, sigma=sigma)
-              + I_ij(realization_j, realization_i, b-a, T, L_i, weight=weight, sigma=sigma))
+    C = .5 * (A_ij(realization_i, realization_j, -(b-a), b-a, T, L_j, filter=filter, sigma=sigma)
+              + A_ij(realization_j, realization_i, -(b-a), b-a, T, L_i, filter=filter, sigma=sigma))
+    J = .5 * (I_ij(realization_i, realization_j, b-a, T, L_j, filter=filter, sigma=sigma)
+              + I_ij(realization_j, realization_i, b-a, T, L_i, filter=filter, sigma=sigma))
 
     for t in range(n_k):
         tau = realization_k[t]
@@ -362,18 +362,18 @@ def E_ijk(realization_i, realization_j, realization_k, a, b, T, L_i, L_j, weight
             else:
                 break
         if y == n_j: continue
-        filtered_times_i = filter_fun(time_delta_i, sigma, mode=weight)
+        filtered_times_i = filter_fun(time_delta_i, sigma, filter=filter)
         delta_i = np.dot(indicator_i, filtered_times_i)
-        filtered_times_j = filter_fun(time_delta_j, sigma, mode=weight)
+        filtered_times_j = filter_fun(time_delta_j, sigma, filter=filter)
         delta_j = np.dot(indicator_j, filtered_times_j)
         res += (delta_i - trend_i) * (delta_j - trend_j) - ((b - a) * C - 2 * J)
     res /= T
     return res
 
 
-# I did not implement the weighting function for that part
+# I did not implement the filtering function for that part
 @autojit
-def I_ij(realization_i, realization_j, half_width, T, L_j, weight='constant', sigma=1.0):
+def I_ij(realization_i, realization_j, half_width, T, L_j, filter='rectangular', sigma=1.0):
     """
     Computes the integral \int_{(0,H)} t c^{ij} (t) dt. This integral equals
     \frac{1}{T} \sum_{\tau \in Z^i} \sum_{\tau' \in Z^j} [ (\tau - \tau') 1_{ \tau - H < \tau' < \tau } - H^2 / 2 \Lambda^j ]
@@ -382,9 +382,9 @@ def I_ij(realization_i, realization_j, half_width, T, L_j, weight='constant', si
     n_j = realization_j.shape[0]
     res = 0
     u = 0
-    if weight == 'constant':
+    if filter == 'rectangular':
         trend_j = .5 * (half_width ** 2) * L_j
-    elif weight == 'gaussian':
+    elif filter == 'gaussian':
         trend_j = sigma ** 2 * (1 - exp(-.5 * (half_width / sigma) ** 2)) * L_j
     delta = 0.
     for t in range(n_i):
