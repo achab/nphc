@@ -6,21 +6,21 @@ def args2params(mode, symmetric):
 
     #from math import log
     #beta0 = log(1000) / 40.
-    beta0 = 0.01
-    mu_d10 = 0.001
-    mu_d20 = 0.001
-    mu_d100 = 0.001
+    beta0 = 10.
+    mu_d10 = 0.01
+    mu_d20 = 0.01
+    mu_d100 = 0.01
     mu_d500 = 0.01
 
     if 'd4' in mode:
         d = 4
-        mu = 100 * mu_d10 * np.ones(d)
+        mu = mu_d10 * np.ones(d)
         Alpha = np.zeros((d,d))
         Beta = np.ones((d,d))
         Gamma = .01 * np.ones((d,d))
-        Alpha[:d/2,:d/2] += 1.
-        Alpha[:d/2,d/2:] += 2.
-        Alpha[d/2:,d/2:] += 3.
+        Alpha[:2,:2] += 1.
+        Alpha[:2,2:] += 2.
+        Alpha[2:,2:] += 3.
         Alpha /= 8.
 
     elif 'd10_sym' in mode:
@@ -261,19 +261,19 @@ def simulate_and_compute_cumul(mu, kernels, Alpha, T, hM=20):
     # use the class Cumulants
     from nphc.cumulants import Cumulants
     N = h.timestamps
-    cumul = Cumulants(realizations=N,half_width=hM)
+    cumul = Cumulants(realizations=N, half_width=hM)
     # compute everything
     from scipy.linalg import inv
     d = Alpha.shape[0]
     R_true = inv(np.eye(d)-Alpha)
     cumul.set_R_true(R_true)
     cumul.set_mu_true(mu)
-    cumul.compute_cumulants(method="parallel")
+    cumul.compute_cumulants(method="parallel", weight="constant")
 
     from nphc.utils.metrics import rel_err
-    print("rel_err on L = ", np.mean( [rel_err(cumul.L_th, L) for L in cumul.L] ) )
-    print("rel_err on C = ", np.mean( [rel_err(cumul.C_th, C) for C in cumul.C] ) )
-    print("rel_err on K_c = ", np.mean([rel_err(cumul.K_c_th, K_c) for K_c in cumul.K_c]))
+    print("rel_err on L = ", np.mean( [rel_err(cumul.L_th, L) for L in cumul.L] ))
+    print("rel_err on C = ", np.mean( [rel_err(cumul.C_th, C) for C in cumul.C] ))
+    print("rel_err on K_c = ", np.mean( [rel_err(cumul.K_c_th, K_c) for K_c in cumul.K_c] ))
 
     return cumul
 
@@ -291,13 +291,13 @@ def save(cumul, Alpha, Beta, Gamma, kernel, mode, T, with_params=True, without_N
         os.mkdir(dir_name)
 
     if with_params and without_N:
-        tmp = cumul.N.copy()
-        cumul.N = None
+        tmp = cumul.realizations.copy()
+        cumul.realizations = None
         data = (cumul,Alpha,Beta,Gamma)
         f = gzip.open(dir_name + '/' + name + '_with_params_without_N' + suffix + '.pkl.gz','wb')
         pickle.dump(data, f, protocol=2)
         f.close()
-        cumul.N = tmp
+        cumul.realizations = tmp
 
     elif with_params and not without_N:
         data = (cumul,Alpha,Beta,Gamma)
@@ -306,12 +306,12 @@ def save(cumul, Alpha, Beta, Gamma, kernel, mode, T, with_params=True, without_N
         f.close()
 
     elif not with_params and without_N:
-        tmp = cumul.N.copy()
-        cumul.N = None
+        tmp = cumul.realizations.copy()
+        cumul.realizations = None
         f = gzip.open(dir_name + '/' + name + '_without_N' + suffix + '.pkl.gz','wb')
         pickle.dump(cumul, f, protocol=2)
         f.close()
-        cumul.N = tmp
+        cumul.realizations = tmp
 
     elif not with_params and not without_N:
         f = gzip.open(dir_name + '/' + name + suffix + '.pkl.gz','wb')

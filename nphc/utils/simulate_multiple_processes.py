@@ -14,7 +14,7 @@ def ix2str(ix):
 symmetric = 0
 kernel = 'exp'
 d = 10
-T = 1e6
+T = 1e5
 #symmetric = 0
 #kernel = 'plaw'
 #d = 4
@@ -34,7 +34,7 @@ def worker(ix):
     ix_str = '_' + ix2str(ix)
     mu, Alpha, Beta, Gamma = args2params(mode, symmetric)
     kernels = params2kernels(kernel, Alpha, Beta, Gamma)
-    cumul = simulate_and_compute_cumul(mu, kernels, Alpha, T, 1000)
+    cumul = simulate_and_compute_cumul(mu, kernels, Alpha, T, 10)
     save(cumul, Alpha, Beta, Gamma, kernel, mode, T, suffix=ix_str)
 
 
@@ -44,4 +44,4 @@ def worker(ix):
 #    pool = Pool()
 #    pool.map(worker,indices)
 
-worker(2)
+worker(0)

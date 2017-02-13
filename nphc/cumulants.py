@@ -14,11 +14,16 @@ class Cumulants(object):
         else:
             self.realizations = [realizations]
         self.dim = len(self.realizations[0])
-        self.time = float(max([max([x[-1] - x[0] for x in multivar_process if x is not None and len(x) > 0])
-                               for multivar_process in self.realizations]))
-        self.L = []
-        self.C = []
-        self.K_c = []
+        self.n_realizations = len(self.realizations)
+        self.time = np.zeros(self.n_realizations)
+        for day, realization in enumerate(self.realizations):
+            T_day = float(max(x[-1] for x in realization)) - float(min(x[0] for x in realization))
+            self.time[day] = T_day
+        self.L = np.zeros((self.n_realizations, self.dim))
+        self.C = np.zeros((self.n_realizations, self.dim, self.dim))
+        self._J = np.zeros((self.n_realizations, self.dim, self.dim))
+        self._E_c = np.zeros((self.n_realizations, self.dim, self.dim, 2))
+        self.K_c = np.zeros((self.n_realizations, self.dim, self.dim))
         self.L_th = None
         self.C_th = None
         self.K_c_th = None
@@ -52,17 +57,15 @@ class Cumulants(object):
     #########
 
     def compute_L(self):
-        L_list = []
-        for realization in self.realizations:
+        for day, realization in enumerate(self.realizations):
             L = np.zeros(self.dim)
             for i in range(self.dim):
                 process = realization[i]
                 if process is None:
                     L[i] = -1.
                 else:
-                    L[i] = len(process) / self.time
-            L_list.append(L)
-        return L_list
+                    L[i] = len(process) / self.time[day]
+            self.L[day] = L.copy()
 
 
     def compute_C(self, half_width=0., method='parallel', weight='constant', sigma=1.0):
@@ -72,24 +75,22 @@ class Cumulants(object):
             h_w = half_width
         d = self.dim
 
-        C_list = []
         for day in range(len(self.realizations)):
             realization = self.realizations[day]
             if method == 'classic':
                 C = np.zeros((d, d))
                 for i in range(d):
                     for j in range(d):
-                        C[i, j] = A_ij(realization[i], realization[j], -h_w, h_w, self.time, self.L[day][j],
+                        C[i, j] = A_ij(realization[i], realization[j], -h_w, h_w, self.time[day], self.L[day][j],
                                        weight=weight, sigma=sigma)
             elif method == 'parallel':
-                l = Parallel(-1)(delayed(A_ij)(realization[i], realization[j], -h_w, h_w, self.time, self.L[day][j],
+                l = Parallel(-1)(delayed(A_ij)(realization[i], realization[j], -h_w, h_w, self.time[day], self.L[day][j],
                                                weight=weight, sigma=sigma)
                                  for i in range(d) for j in range(d))
                 C = np.array(l).reshape(d, d)
             # we keep the symmetric part to remove edge effects
             C[:] = 0.5 * (C + C.T)
-            C_list.append(C)
-        return C_list
+            self.C[day] = C.copy()
 
 
     def compute_J(self, half_width=0., method='parallel', weight='constant', sigma=1.0):
@@ -99,25 +100,23 @@ class Cumulants(object):
             h_w = half_width
         d = self.dim
 
-        J_list = []
         for day in range(len(self.realizations)):
             realization = self.realizations[day]
             if method == 'classic':
                 J = np.zeros((d, d))
                 for i in range(d):
                     for j in range(d):
-                        J[i, j] = I_ij(realization[i], realization[j], h_w, self.time, self.L[day][j], weight=weight,
+                        J[i, j] = I_ij(realization[i], realization[j], h_w, self.time[day], self.L[day][j], weight=weight,
                                        sigma=sigma)
             elif method == 'parallel':
                 l = Parallel(-1)(
-                        delayed(I_ij)(realization[i], realization[j], h_w, self.time, self.L[day][j], weight=weight,
+                        delayed(I_ij)(realization[i], realization[j], h_w, self.time[day], self.L[day][j], weight=weight,
                                       sigma=sigma)
                         for i in range(d) for j in range(d))
                 J = np.array(l).reshape(d, d)
             # we keep the symmetric part to remove edge effects
             J[:] = 0.5 * (J + J.T)
-            J_list.append(J)
-        return J_list
+            self._J[day] = J.copy()
 
 
     def compute_E_c(self, half_width=0., method='parallel', weight='constant', sigma=1.0):
@@ -127,7 +126,6 @@ class Cumulants(object):
             h_w = half_width
         d = self.dim
 
-        E_c_list = []
         for day in range(len(self.realizations)):
             realization = self.realizations[day]
             E_c = np.zeros((d, d, 2))
@@ -135,41 +133,41 @@ class Cumulants(object):
                 for i in range(d):
                     for j in range(d):
                         E_c[i, j, 0] = E_ijk(realization[i], realization[j], realization[j], -h_w, h_w,
-                                             self.time, self.L[day][i], self.L[day][j],
+                                             self.time[day], self.L[day][i], self.L[day][j],
                                              weight=weight, sigma=sigma)
                         E_c[i, j, 1] = E_ijk(realization[j], realization[j], realization[i], -h_w, h_w,
-                                             self.time, self.L[day][j], self.L[day][j],
+                                             self.time[day], self.L[day][j], self.L[day][j],
                                              weight=weight, sigma=sigma)
             elif method == 'parallel':
                 l1 = Parallel(-1)(
                         delayed(E_ijk)(realization[i], realization[j], realization[j], -h_w, h_w,
-                                       self.time, self.L[day][i], self.L[day][j],
+                                       self.time[day], self.L[day][i], self.L[day][j],
                                        weight=weight, sigma=sigma) for i in range(d) for j in range(d))
                 l2 = Parallel(-1)(
                         delayed(E_ijk)(realization[j], realization[j], realization[i], -h_w, h_w,
-                                       self.time, self.L[day][j], self.L[day][j],
+                                       self.time[day], self.L[day][j], self.L[day][j],
                                        weight=weight, sigma=sigma) for i in range(d) for j in range(d))
                 E_c[:, :, 0] = np.array(l1).reshape(d, d)
                 E_c[:, :, 1] = np.array(l2).reshape(d, d)
-            E_c_list.append(E_c)
-        return E_c_list
+            self._E_c[day] = E_c.copy()
 
 
     def set_L(self):
-        self.L = self.compute_L()
+        self.compute_L()
 
     def set_C(self, half_width=0., method='parallel', weight='constant', sigma=1.0):
-        self.C = self.compute_C(half_width=half_width, method=method, weight=weight, sigma=sigma)
+        self.compute_C(half_width=half_width, method=method, weight=weight, sigma=sigma)
 
     def set_J(self, half_width=0., method='parallel', weight='constant', sigma=1.0):
-        self.J = self.compute_J(half_width=half_width, method=method, weight=weight, sigma=sigma)
+        self.compute_J(half_width=half_width, method=method, weight=weight, sigma=sigma)
 
     def set_E_c(self, half_width=0., method='parallel', weight='constant', sigma=1.0):
-        self.E_c = self.compute_E_c(half_width=half_width, method=method, weight=weight, sigma=sigma)
+        self.compute_E_c(half_width=half_width, method=method, weight=weight, sigma=sigma)
 
     def set_K_c(self):
-        assert len(self.E_c) > 0, "You should first set E_c using the function 'set_E_c'."
-        self.K_c = [ get_K_c(X) for X in self.E_c ]
+        assert len(self._E_c) > 0, "You should first set E_c using the function 'set_E_c'."
+        for day in range(self.n_realizations):
+            self.K_c[day] = get_K_c(self._E_c[day])
 
     def set_R_true(self, R_true):
         self.R_true = R_true
@@ -320,13 +318,14 @@ def E_ijk(realization_i, realization_j, realization_k, a, b, T, L_i, L_j, weight
     elif weight == 'gaussian':
         trend_i = L_i * sigma * sqrt(2 * pi) * (norm.sf(a) - norm.sf(b))
         trend_j = L_j * sigma * sqrt(2 * pi) * (norm.sf(a) - norm.sf(b))
-    C = .5 * (A_ij(realization_i, realization_j, -(b - a), b - a, T, L_j, weight=weight, sigma=sigma)
-              + A_ij(realization_j, realization_i, -(b - a), b - a, T, L_i, weight=weight, sigma=sigma))
-    J = .5 * (I_ij(realization_i, realization_j, b - a, T, L_j, weight=weight, sigma=sigma)
-              + I_ij(realization_j, realization_i, b - a, T, L_i, weight=weight, sigma=sigma))
+    C = .5 * (A_ij(realization_i, realization_j, -(b-a), b-a, T, L_j, weight=weight, sigma=sigma)
+              + A_ij(realization_j, realization_i, -(b-a), b-a, T, L_i, weight=weight, sigma=sigma))
+    J = .5 * (I_ij(realization_i, realization_j, b-a, T, L_j, weight=weight, sigma=sigma)
+              + I_ij(realization_j, realization_i, b-a, T, L_i, weight=weight, sigma=sigma))
 
     for t in range(n_k):
         tau = realization_k[t]
+
         if tau + a < 0: continue
         # work on realization_i
         while u < n_i:
@@ -345,6 +344,7 @@ def E_ijk(realization_i, realization_j, realization_k, a, b, T, L_i, L_j, weight
             else:
                 break
         if v == n_i: continue
+
         # work on realization_j
         while x < n_j:
             if realization_j[x] <= tau + a:
