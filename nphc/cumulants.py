@@ -363,9 +363,9 @@ def E_ijk(realization_i, realization_j, realization_k, a, b, T, L_i, L_j, weight
                 break
         if y == n_j: continue
         filtered_times_i = filter_fun(time_delta_i, sigma, mode=weight)
-        delta_i = np.dot(time_delta_i, filtered_times_i)
+        delta_i = np.dot(indicator_i, filtered_times_i)
         filtered_times_j = filter_fun(time_delta_j, sigma, mode=weight)
-        delta_j = np.dot(time_delta_j, filtered_times_j)
+        delta_j = np.dot(indicator_j, filtered_times_j)
         res += (delta_i - trend_i) * (delta_j - trend_j) - ((b - a) * C - 2 * J)
     res /= T
     return res
