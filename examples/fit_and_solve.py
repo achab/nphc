@@ -1,6 +1,7 @@
 from nphc.cumulants import Cumulants
 from nphc.main import NPHC
 import numpy as np
+from scipy.linalg import inv
 import mlpp.simulation as hk
 
 
