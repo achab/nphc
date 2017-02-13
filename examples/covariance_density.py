@@ -17,12 +17,12 @@ if __name__ == "__main__":
     import mlpp.simulation as hk
     import matplotlib.pyplot as plt
 
-    T = 1e6
+    T = 1e7
 
     hawkes = hk.SimuHawkes(n_nodes=1, end_time=T, verbose=False)
     kernel = hk.HawkesKernelExp(1 / 4, 4)
     hawkes.set_kernel(0, 0, kernel)
-    hawkes.set_baseline(0, 1.5)
+    hawkes.set_baseline(0, 0.01)
     hawkes.simulate()
 
     N = hawkes.timestamps[0]
