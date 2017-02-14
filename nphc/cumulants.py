@@ -7,6 +7,7 @@ import numpy as np
 
 
 class Cumulants(object):
+
     def __init__(self, realizations=[], half_width=100.):
         if all(isinstance(x, list) for x in realizations):
             self.realizations = realizations
@@ -108,14 +109,16 @@ class Cumulants(object):
                     J = np.zeros((d, d))
                     for i in range(d):
                         for j in range(d):
-                            C[i,j], J[i, j] = A_and_I_ij_rect(realization[i], realization[j], h_w, self.time[day], self.L[day][j])
+                            z = A_and_I_ij_rect(realization[i], realization[j], h_w, self.time[day], self.L[day][j])
+                            C[i,j] = z.real
+                            J[i,j] = z.imag
                 elif method == 'parallel':
                     l = Parallel(-1)(
                             delayed(A_and_I_ij_rect)(realization[i], realization[j], h_w, self.time[day], self.L[day][j])
                             for i in range(d) for j in range(d))
-                    C_and_J = np.array(l).reshape(2, d, d)
-                    C = C_and_J[0]
-                    J = C_and_J[1]
+                    C_and_J = np.array(l).reshape(d, d)
+                    C = C_and_J.real
+                    J = C_and_J.imag
                 # we keep the symmetric part to remove edge effects
                 C[:] = 0.5 * (C + C.T)
                 J[:] = 0.5 * (J + J.T)
@@ -583,7 +586,7 @@ def A_and_I_ij_rect(realization_i, realization_j, half_width, T, L_j):
         res_J += sub_res - trend_J_j
     res_C /= T
     res_J /= T
-    return res_C, res_J
+    return res_C + res_J * 1j
 
 
 @autojit
