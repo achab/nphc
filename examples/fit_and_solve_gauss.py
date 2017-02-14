@@ -21,7 +21,3 @@ nphc.fit(h.timestamps,half_wifth=10,filter="rectangular",method="classic",mu_tru
 ### Solve (=> minimize the objective function ###
 #################################################
 R_pred = nphc.solve(alpha=.9,training_epochs=300,display_step=20,learning_rate=1e-2,optimizer='adam')
-
-# print final error of estimation
-G_pred = np.eye(d) - inv(R_pred)
-print(rel_err(Alpha,G_pred))

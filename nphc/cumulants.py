@@ -600,6 +600,7 @@ def A_and_I_ij_gauss(realization_i, realization_j, half_width, T, L_j, sigma=1.0
     res_C = 0
     res_J = 0
     u = 0
+    
     trend_C_j = L_j * sigma * sqrt(2 * pi) * (norm.sf(-half_width) - norm.sf(half_width))
     trend_J_j = sigma ** 2 * (1 - exp(-.5 * (half_width / sigma) ** 2)) * L_j
 
