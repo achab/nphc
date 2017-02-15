@@ -15,7 +15,7 @@ import mlpp.simulation as hk
 ### Fit (=> compute the cumulants) ###
 ######################################
 nphc = NPHC()
-nphc.fit(h.timestamps,half_wifth=10,filter="rectangular",method="classic",mu_true=mus,R_true=inv(np.eye(d)-Alpha))
+nphc.fit(h.timestamps,half_wifth=10,filtr="rectangular",method="classic",mu_true=mus,R_true=inv(np.eye(d)-Alpha))
 
 #################################################
 ### Solve (=> minimize the objective function ###

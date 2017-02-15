@@ -37,7 +37,7 @@ h.simulate()
 ### Fit (=> compute the cumulants) ###
 ######################################
 nphc = NPHC()
-nphc.fit(h.timestamps,half_wifth=10,filter="rectangular",method="classic",mu_true=mus,R_true=inv(np.eye(d)-Alpha))
+nphc.fit(h.timestamps,half_wifth=10,filtr="rectangular",method="classic",mu_true=mus,R_true=inv(np.eye(d)-Alpha))
 # print mean error of cumulants estimation
 from nphc.utils.metrics import rel_err
 print("mean rel_err on L = ", np.mean( [rel_err(nphc.L_th, L) for L in nphc.L] ))
