@@ -67,7 +67,7 @@ class Cumulants(object):
                     L[i] = len(process) / self.time[day]
             self.L[day] = L.copy()
 
-    # def compute_C(self, half_width=0., method='parallel', filter='rectangular', sigma=1.0):
+    # def compute_C(self, half_width=0., method='parallel', filtr='rectangular', sigma=1.0):
     #     if half_width == 0.:
     #         h_w = self.half_width
     #     else:
@@ -81,11 +81,11 @@ class Cumulants(object):
     #             for i in range(d):
     #                 for j in range(d):
     #                     C[i, j] = A_ij_rect(realization[i], realization[j], -h_w, h_w, self.time[day], self.L[day][j],
-    #                                    filter=filter, sigma=sigma)
+    #                                    filtr=filtr, sigma=sigma)
     #         elif method == 'parallel':
     #             l = Parallel(-1)(
     #                     delayed(A_ij_rect)(realization[i], realization[j], -h_w, h_w, self.time[day], self.L[day][j],
-    #                                   filter=filter, sigma=sigma)
+    #                                   filtr=filtr, sigma=sigma)
     #                     for i in range(d) for j in range(d))
     #             C = np.array(l).reshape(d, d)
     #         # we keep the symmetric part to remove edge effects
@@ -93,14 +93,14 @@ class Cumulants(object):
     #         self.C[day] = C.copy()
 
 
-    def compute_C_and_J(self, half_width=0., method='parallel', filter='rectangular', sigma=1.0):
+    def compute_C_and_J(self, half_width=0., method='parallel', filtr='rectangular', sigma=1.0):
         if half_width == 0.:
             h_w = self.half_width
         else:
             h_w = half_width
         d = self.dim
 
-        if filter == "rectangular":
+        if filtr == "rectangular":
 
             for day in range(len(self.realizations)):
                 realization = self.realizations[day]
@@ -125,26 +125,29 @@ class Cumulants(object):
                 self.C[day] = C.copy()
                 self._J[day] = J.copy()
 
-        elif filter == "gaussian":
+        elif filtr == "gaussian":
 
             for day in range(len(self.realizations)):
                 realization = self.realizations[day]
                 if method == 'classic':
+                    C = np.zeros((d,d))
                     J = np.zeros((d, d))
                     for i in range(d):
                         for j in range(d):
-                            J[i, j] = I_ij(realization[i], realization[j], h_w, self.time[day], self.L[day][j],
-                                           filter=filter,
-                                           sigma=sigma)
+                            z = A_and_I_ij_gauss(realization[i], realization[j], h_w, self.time[day], self.L[day][j], sigma)
+                            C[i,j] = z.real
+                            J[i,j] = z.imag
                 elif method == 'parallel':
                     l = Parallel(-1)(
-                            delayed(I_ij)(realization[i], realization[j], h_w, self.time[day], self.L[day][j],
-                                          filter=filter,
-                                          sigma=sigma)
+                            delayed(A_and_I_ij_gauss)(realization[i], realization[j], h_w, self.time[day], self.L[day][j], sigma)
                             for i in range(d) for j in range(d))
-                    J = np.array(l).reshape(d, d)
+                    C_and_J = np.array(l).reshape(d, d)
+                    C = C_and_J.real
+                    J = C_and_J.imag
                 # we keep the symmetric part to remove edge effects
+                C[:] = 0.5 * (C + C.T)
                 J[:] = 0.5 * (J + J.T)
+                self.C[day] = C.copy()
                 self._J[day] = J.copy()
 
         else:
@@ -152,14 +155,14 @@ class Cumulants(object):
             raise ValueError(
                 "In `compute_C_and_J`: the filtering function should be either `rectangular` or `gaussian`.")
 
-    def compute_E_c(self, half_width=0., method='parallel', filter='rectangular', sigma=1.0):
+    def compute_E_c(self, half_width=0., method='parallel', filtr='rectangular', sigma=1.0):
         if half_width == 0.:
             h_w = self.half_width
         else:
             h_w = half_width
         d = self.dim
 
-        if filter == "rectangular":
+        if filtr == "rectangular":
 
             for day in range(len(self.realizations)):
                 realization = self.realizations[day]
@@ -182,7 +185,7 @@ class Cumulants(object):
                     E_c[:, :, 1] = np.array(l2).reshape(d, d)
                 self._E_c[day] = E_c.copy()
 
-        elif filter == "gaussian":
+        elif filtr == "gaussian":
 
             for day in range(len(self.realizations)):
                 realization = self.realizations[day]
@@ -230,13 +233,13 @@ class Cumulants(object):
         assert self.R_true is not None, "You should provide R_true."
         self.K_c_th = get_K_c_th(self.L_th, self.C_th, self.R_true)
 
-    def compute_cumulants(self, half_width=0., method="parallel", filter='rectangular', sigma=0.):
+    def compute_cumulants(self, half_width=0., method="parallel", filtr='rectangular', sigma=0.):
         self.compute_L()
         print("L is computed")
-        if filter == "gaussian" and sigma == 0.: sigma = half_width/5.
-        self.compute_C_and_J(half_width=half_width, method=method, filter=filter, sigma=sigma)
+        if filtr == "gaussian" and sigma == 0.: sigma = half_width/5.
+        self.compute_C_and_J(half_width=half_width, method=method, filtr=filtr, sigma=sigma)
         print("C is computed")
-        self.compute_E_c(half_width=half_width, method=method, filter=filter, sigma=sigma)
+        self.compute_E_c(half_width=half_width, method=method, filtr=filtr, sigma=sigma)
         self.K_c = [get_K_c(self._E_c[day]) for day in range(self.n_realizations)]
         print("K_c is computed")
         if self.R_true is not None and self.mu_true is not None:
@@ -290,10 +293,10 @@ def get_K_c_th(L, C, R):
 ##########
 
 #@autojit
-#def filter_fun(X, sigma, filter='rectangular'):
-#    if filter == 'rectangular':
+#def filtr_fun(X, sigma, filtr='rectangular'):
+#    if filtr == 'rectangular':
 #        return np.ones_like(X)
-#    elif filter == 'gaussian':
+#    elif filtr == 'gaussian':
 #        return sigma * sqrt(2 * pi) * norm.pdf(X, scale=sigma)
 #    else:
 #        return np.zeros_like(X)
@@ -442,8 +445,8 @@ def E_ijk_gauss(realization_i, realization_j, realization_k, a, b, T, L_i, L_j, 
     n_j = realization_j.shape[0]
     n_k = realization_k.shape[0]
 
-    trend_i = L_i * (b - a)
-    trend_j = L_j * (b - a)
+    trend_i = L_i * sigma * sqrt(2 * pi) * (norm.cdf(b/sigma) - norm.cdf(a/sigma))
+    trend_j = L_j * sigma * sqrt(2 * pi) * (norm.cdf(b/sigma) - norm.cdf(a/sigma))
 
     for t in range(n_k):
         tau = realization_k[t]
@@ -456,12 +459,10 @@ def E_ijk_gauss(realization_i, realization_j, realization_k, a, b, T, L_i, L_j, 
             else:
                 break
         v = u
-        time_delta_i = np.zeros(n_i)
-        indicator_i = np.zeros(n_i)
+        sub_res_i = 0.
         while v < n_i:
             if realization_i[v] < tau + b:
-                time_delta_i[v] = realization_i[v] - tau
-                indicator_i[v] = 1.
+                sub_res_i += exp(-.5*((realization_i[v]-tau)/sigma)**2)
                 v += 1
             else:
                 break
@@ -474,62 +475,56 @@ def E_ijk_gauss(realization_i, realization_j, realization_k, a, b, T, L_i, L_j, 
             else:
                 break
         y = x
-        time_delta_j = np.zeros(n_j)
-        indicator_j = np.zeros(n_j)
+        sub_res_j = 0.
         while y < n_j:
             if realization_j[y] < tau + b:
-                time_delta_j[y] = realization_j[y] - tau
-                indicator_j[y] = 1.
+                sub_res_j += exp(-.5*((realization_j[y]-tau)/sigma)**2)
                 y += 1
             else:
                 break
         if y == n_j: continue
-        filtered_times_i = filter_fun(time_delta_i, sigma, filter=filter)
-        delta_i = np.dot(indicator_i, filtered_times_i)
-        filtered_times_j = filter_fun(time_delta_j, sigma, filter=filter)
-        delta_j = np.dot(indicator_j, filtered_times_j)
-        res += (delta_i - trend_i) * (delta_j - trend_j) - J_ij
+        res += (sub_res_i - trend_i) * (sub_res_j - trend_j) - J_ij
     res /= T
     return res
 
-
-@autojit
-def I_ij(realization_i, realization_j, half_width, T, L_j, filter='rectangular', sigma=1.0):
-    """
-    Computes the integral \int_{(0,H)} t c^{ij} (t) dt. This integral equals
-    \frac{1}{T} \sum_{\tau \in Z^i} \sum_{\tau' \in Z^j} [ (\tau - \tau') 1_{ \tau - H < \tau' < \tau } - H^2 / 2 \Lambda^j ]
-    """
-    n_i = realization_i.shape[0]
-    n_j = realization_j.shape[0]
-    res = 0
-    u = 0
-    if filter == 'rectangular':
-        trend_j = .5 * (half_width ** 2) * L_j
-    elif filter == 'gaussian':
-        trend_j = sigma ** 2 * (1 - exp(-.5 * (half_width / sigma) ** 2)) * L_j
-
-    for t in range(n_i):
-        tau = realization_i[t]
-        tau_minus_half_width = tau - half_width
-        if tau_minus_half_width < 0: continue
-        while u < n_j:
-            if realization_j[u] <= tau_minus_half_width:
-                u += 1
-            else:
-                break
-        v = u
-        sub_res = 0.
-        while v < n_j:
-            tau_minus_tau_p = tau - realization_j[v]
-            if tau_minus_tau_p > 0:
-                sub_res += tau_minus_tau_p
-                v += 1
-            else:
-                break
-        if v == n_j: continue
-        res += sub_res - trend_j
-    res /= T
-    return res
+#
+# @autojit
+# def I_ij(realization_i, realization_j, half_width, T, L_j, filtr='rectangular', sigma=1.0):
+    # """
+    # Computes the integral \int_{(0,H)} t c^{ij} (t) dt. This integral equals
+    # \frac{1}{T} \sum_{\tau \in Z^i} \sum_{\tau' \in Z^j} [ (\tau - \tau') 1_{ \tau - H < \tau' < \tau } - H^2 / 2 \Lambda^j ]
+    # """
+    # n_i = realization_i.shape[0]
+    # n_j = realization_j.shape[0]
+    # res = 0
+    # u = 0
+    # if filtr == 'rectangular':
+        # trend_j = .5 * (half_width ** 2) * L_j
+    # elif filtr == 'gaussian':
+        # trend_j = sigma ** 2 * (1 - exp(-.5 * (half_width / sigma) ** 2)) * L_j
+#
+    # for t in range(n_i):
+        # tau = realization_i[t]
+        # tau_minus_half_width = tau - half_width
+        # if tau_minus_half_width < 0: continue
+        # while u < n_j:
+            # if realization_j[u] <= tau_minus_half_width:
+                # u += 1
+            # else:
+                # break
+        # v = u
+        # sub_res = 0.
+        # while v < n_j:
+            # tau_minus_tau_p = tau - realization_j[v]
+            # if tau_minus_tau_p > 0:
+                # sub_res += tau_minus_tau_p
+                # v += 1
+            # else:
+                # break
+        # if v == n_j: continue
+        # res += sub_res - trend_j
+    # res /= T
+    # return res
 
 
 @autojit
@@ -545,7 +540,7 @@ def A_and_I_ij_rect(realization_i, realization_j, half_width, T, L_j):
     u = 0
     width = 2 * half_width
     trend_C_j = L_j * width
-    trend_J_j = L_j * half_width ** 2
+    trend_J_j = L_j * width ** 2
 
     for t in range(n_i):
         tau = realization_i[t]
@@ -599,7 +594,7 @@ def A_and_I_ij_gauss(realization_i, realization_j, half_width, T, L_j, sigma=1.0
     res_C = 0
     res_J = 0
     u = 0
-    width = 2 * half_width
+    width = sqrt(2) * half_width
     trend_C_j = L_j * sigma * sqrt(2 * pi) * (norm.cdf(half_width/sigma) - norm.cdf(-half_width/sigma))
     trend_J_j = L_j * sigma**2 * 2 * pi * (norm.cdf(half_width/(sqrt(2)*sigma)) - norm.cdf(-half_width/(sqrt(2)*sigma)))
 
