@@ -191,17 +191,17 @@ class Cumulants(object):
                     for i in range(d):
                         for j in range(d):
                             E_c[i, j, 0] = E_ijk_gauss(realization[i], realization[j], realization[j], -h_w, h_w,
-                                                       self.time[day], self.L[day][i], self.L[day][j], sigma=sigma)
+                                                       self.time[day], self.L[day][i], self.L[day][j], self._J[day][i, j], sigma=sigma)
                             E_c[i, j, 1] = E_ijk_gauss(realization[j], realization[j], realization[i], -h_w, h_w,
-                                                       self.time[day], self.L[day][j], self.L[day][j], sigma=sigma)
+                                                       self.time[day], self.L[day][j], self.L[day][j], self._J[day][j, j], sigma=sigma)
                 elif method == 'parallel':
                     l1 = Parallel(-1)(
                             delayed(E_ijk_gauss)(realization[i], realization[j], realization[j], -h_w, h_w,
-                                                 self.time[day], self.L[day][i], self.L[day][j], sigma=sigma) for i in
+                                                 self.time[day], self.L[day][i], self.L[day][j], self._J[day][i, j], sigma=sigma) for i in
                             range(d) for j in range(d))
                     l2 = Parallel(-1)(
                             delayed(E_ijk_gauss)(realization[j], realization[j], realization[i], -h_w, h_w,
-                                                 self.time[day], self.L[day][j], self.L[day][j], sigma=sigma) for i in
+                                                 self.time[day], self.L[day][j], self.L[day][j], self._J[day][j, j], sigma=sigma) for i in
                             range(d) for j in range(d))
                     E_c[:, :, 0] = np.array(l1).reshape(d, d)
                     E_c[:, :, 1] = np.array(l2).reshape(d, d)
@@ -230,10 +230,10 @@ class Cumulants(object):
         assert self.R_true is not None, "You should provide R_true."
         self.K_c_th = get_K_c_th(self.L_th, self.C_th, self.R_true)
 
-    def compute_cumulants(self, half_width=0., method="parallel", filter='rectangular', sigma=1.0):
+    def compute_cumulants(self, half_width=0., method="parallel", filter='rectangular', sigma=0.):
         self.compute_L()
         print("L is computed")
-        # self.compute_C(half_width=half_width, method=method, filter=filter, sigma=sigma)
+        if filter == "gaussian" and sigma == 0.: sigma = half_width/5.
         self.compute_C_and_J(half_width=half_width, method=method, filter=filter, sigma=sigma)
         print("C is computed")
         self.compute_E_c(half_width=half_width, method=method, filter=filter, sigma=sigma)
@@ -429,7 +429,7 @@ def E_ijk_rect(realization_i, realization_j, realization_k, a, b, T, L_i, L_j, J
 
 
 @autojit
-def E_ijk_gauss(realization_i, realization_j, realization_k, a, b, T, L_i, L_j, C_ij, J_ij, sigma=1.0):
+def E_ijk_gauss(realization_i, realization_j, realization_k, a, b, T, L_i, L_j, J_ij, sigma=1.0):
     """
     Computes the mean of the centered product of i's and j's jumps between \tau + a and \tau + b, that is
     \frac{1}{T} \sum_{\tau \in Z^k} ( N^i_{\tau + b} - N^i_{\tau + a} - \Lambda^i * ( b - a ) )
@@ -488,7 +488,7 @@ def E_ijk_gauss(realization_i, realization_j, realization_k, a, b, T, L_i, L_j, 
         delta_i = np.dot(indicator_i, filtered_times_i)
         filtered_times_j = filter_fun(time_delta_j, sigma, filter=filter)
         delta_j = np.dot(indicator_j, filtered_times_j)
-        res += (delta_i - trend_i) * (delta_j - trend_j) - ((b - a) * C_ij - 2 * J_ij)
+        res += (delta_i - trend_i) * (delta_j - trend_j) - J_ij
     res /= T
     return res
 
@@ -599,16 +599,19 @@ def A_and_I_ij_gauss(realization_i, realization_j, half_width, T, L_j, sigma=1.0
     res_C = 0
     res_J = 0
     u = 0
-
-    trend_C_j = L_j * sigma * sqrt(2 * pi) * (norm.sf(-half_width) - norm.sf(half_width))
-    trend_J_j = sigma ** 2 * (1 - exp(-.5 * (half_width / sigma) ** 2)) * L_j
+    width = 2 * half_width
+    trend_C_j = L_j * sigma * sqrt(2 * pi) * (norm.cdf(half_width/sigma) - norm.cdf(-half_width/sigma))
+    trend_J_j = L_j * sigma**2 * 2 * pi * (norm.cdf(half_width/(sqrt(2)*sigma)) - norm.cdf(-half_width/(sqrt(2)*sigma)))
 
     for t in range(n_i):
         tau = realization_i[t]
         tau_minus_half_width = tau - half_width
+        tau_minus_width = tau - width
+
         if tau_minus_half_width < 0: continue
+
         while u < n_j:
-            if realization_j[u] <= tau_minus_half_width:
+            if realization_j[u] <= tau_minus_width:
                 u += 1
             else:
                 break
@@ -616,24 +619,21 @@ def A_and_I_ij_gauss(realization_i, realization_j, half_width, T, L_j, sigma=1.0
         w = u
         sub_res_C = 0.
         sub_res_J = 0.
-
         while v < n_j:
-            tau_minus_tau_p = tau - realization_j[v]
-            if tau_minus_tau_p > 0:
-                sub_res_J += tau_minus_tau_p
+            tau_p_minus_tau = realization_j[v] - tau
+            if tau_p_minus_tau < -half_width:
+                sub_res_J += sigma*sqrt(pi)*exp(-.25*(tau_p_minus_tau/sigma)**2)
+                v += 1
+            elif tau_p_minus_tau < half_width:
+                sub_res_C += exp(-.5*(tau_p_minus_tau/sigma)**2)
+                sub_res_J += sigma*sqrt(pi)*exp(-.25*(tau_p_minus_tau/sigma)**2)
+                v += 1
+            elif tau_p_minus_tau < width:
+                sub_res_J += sigma*sqrt(pi)*exp(-.25*(tau_p_minus_tau/sigma)**2)
                 v += 1
             else:
                 break
-
-        tau_plus_half_width = tau + half_width
-        while w < n_j:
-            if realization_j[w] < tau_plus_half_width:
-                sub_res_C += exp(-(realization_j[w]-tau)**2/(2*sigma**2)) / sqrt(2*pi)
-                w += 1
-            else:
-                break
-
-        if v == n_j or w == n_j: continue
+        if v == n_j: continue
         res_C += sub_res_C - trend_C_j
         res_J += sub_res_J - trend_J_j
     res_C /= T
