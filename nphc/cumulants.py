@@ -168,20 +168,16 @@ class Cumulants(object):
                     for i in range(d):
                         for j in range(d):
                             E_c[i, j, 0] = E_ijk_rect(realization[i], realization[j], realization[j], -h_w, h_w,
-                                                      self.time[day], self.L[day][i], self.L[day][j], self.C[day][i, j],
-                                                      self._J[day][i, j])
+                                                      self.time[day], self.L[day][i], self.L[day][j], self._J[day][i, j])
                             E_c[i, j, 1] = E_ijk_rect(realization[j], realization[j], realization[i], -h_w, h_w,
-                                                      self.time[day], self.L[day][j], self.L[day][j], self.C[day][j, j],
-                                                      self._J[day][j, j])
+                                                      self.time[day], self.L[day][j], self.L[day][j], self._J[day][j, j])
                 elif method == 'parallel':
                     l1 = Parallel(-1)(
                             delayed(E_ijk_rect)(realization[i], realization[j], realization[j], -h_w, h_w,
-                                                self.time[day], self.L[day][i], self.L[day][j], self.C[day][i, j],
-                                                self._J[day][i, j]) for i in range(d) for j in range(d))
+                                                self.time[day], self.L[day][i], self.L[day][j], self._J[day][i, j]) for i in range(d) for j in range(d))
                     l2 = Parallel(-1)(
                             delayed(E_ijk_rect)(realization[j], realization[j], realization[i], -h_w, h_w,
-                                                self.time[day], self.L[day][j], self.L[day][j], self.C[day][j, j],
-                                                self._J[day][j, j]) for i in range(d) for j in range(d))
+                                                self.time[day], self.L[day][j], self.L[day][j], self._J[day][j, j]) for i in range(d) for j in range(d))
                     E_c[:, :, 0] = np.array(l1).reshape(d, d)
                     E_c[:, :, 1] = np.array(l2).reshape(d, d)
                 self._E_c[day] = E_c.copy()
@@ -293,14 +289,14 @@ def get_K_c_th(L, C, R):
 ## Useful fonctions to set_ empirical integrated cumulants
 ##########
 
-@autojit
-def filter_fun(X, sigma, filter='rectangular'):
-    if filter == 'rectangular':
-        return np.ones_like(X)
-    elif filter == 'gaussian':
-        return sigma * sqrt(2 * pi) * norm.pdf(X, scale=sigma)
-    else:
-        return np.zeros_like(X)
+#@autojit
+#def filter_fun(X, sigma, filter='rectangular'):
+#    if filter == 'rectangular':
+#        return np.ones_like(X)
+#    elif filter == 'gaussian':
+#        return sigma * sqrt(2 * pi) * norm.pdf(X, scale=sigma)
+#    else:
+#        return np.zeros_like(X)
 
 
 # @jit(double(double[:],double[:],int32,int32,double,double,double), nogil=True, nopython=True)
@@ -351,7 +347,7 @@ def A_ij_gauss(realization_i, realization_j, a, b, T, L_j, sigma=1.0):
     n_i = realization_i.shape[0]
     n_j = realization_j.shape[0]
 
-    trend_j = L_j * sigma * sqrt(2 * pi) * (norm.sf(a) - norm.sf(b))
+    trend_j = L_j * sigma * sqrt(2 * pi) * (norm.cdf(b/sigma) - norm.cdf(a/sigma))
 
     for t in range(n_i):
         # count the number of jumps
@@ -362,26 +358,22 @@ def A_ij_gauss(realization_i, realization_j, a, b, T, L_j, sigma=1.0):
                 u += 1
             else:
                 break
-        time_delta = np.zeros(n_j)
-        indicator = np.zeros(n_j)
         v = u
+        sub_res = 0.
         while v < n_j:
             if realization_j[v] < tau + b:
-                time_delta[v] = realization_j[v] - tau
-                indicator[v] = 1.
+                sub_res += exp(-.5*((realization_j[v]-tau)/sigma)**2)
                 v += 1
             else:
                 break
         if v == n_j: continue
-        filtered_times = filter_fun(time_delta, sigma, filter=filter)
-        delta = np.dot(indicator, filtered_times)
-        res += delta - trend_j
+        res += sub_res - trend_j
     res /= T
     return res
 
 
 @autojit
-def E_ijk_rect(realization_i, realization_j, realization_k, a, b, T, L_i, L_j, C_ij, J_ij):
+def E_ijk_rect(realization_i, realization_j, realization_k, a, b, T, L_i, L_j, J_ij):
     """
     Computes the mean of the centered product of i's and j's jumps between \tau + a and \tau + b, that is
     \frac{1}{T} \sum_{\tau \in Z^k} ( N^i_{\tau + b} - N^i_{\tau + a} - \Lambda^i * ( b - a ) )
@@ -431,7 +423,7 @@ def E_ijk_rect(realization_i, realization_j, realization_k, a, b, T, L_i, L_j, C
                 break
         if y == n_j or v == n_i: continue
 
-        res += (v - u - trend_i) * (y - x - trend_j) - ((b - a) * C_ij - 2 * J_ij)
+        res += (v - u - trend_i) * (y - x - trend_j) - J_ij
     res /= T
     return res
 
@@ -551,38 +543,44 @@ def A_and_I_ij_rect(realization_i, realization_j, half_width, T, L_j):
     res_C = 0
     res_J = 0
     u = 0
-    trend_C_j = L_j * 2 * half_width
-    trend_J_j = .5 * (half_width ** 2) * L_j
+    width = 2 * half_width
+    trend_C_j = L_j * width
+    trend_J_j = L_j * half_width ** 2
 
     for t in range(n_i):
         tau = realization_i[t]
         tau_minus_half_width = tau - half_width
+        tau_minus_width = tau - width
+
         if tau_minus_half_width < 0: continue
+
         while u < n_j:
-            if realization_j[u] <= tau_minus_half_width:
+            if realization_j[u] <= tau_minus_width:
                 u += 1
             else:
                 break
         v = u
         w = u
         sub_res = 0.
-
         while v < n_j:
-            tau_minus_tau_p = tau - realization_j[v]
-            if tau_minus_tau_p > 0:
-                sub_res += tau_minus_tau_p
+            tau_p_minus_tau = realization_j[v] - tau
+            if tau_p_minus_tau < -half_width:
+                sub_res += width + tau_p_minus_tau
+                v += 1
+            elif tau_p_minus_tau < 0:
+                sub_res += width + tau_p_minus_tau
+                w += 1
+                v += 1
+            elif tau_p_minus_tau < half_width:
+                sub_res += width - tau_p_minus_tau
+                w += 1
+                v += 1
+            elif tau_p_minus_tau < width:
+                sub_res += width - tau_p_minus_tau
                 v += 1
             else:
                 break
-
-        tau_plus_half_width = tau + half_width
-        while w < n_j:
-            if realization_j[w] < tau_plus_half_width:
-                w += 1
-            else:
-                break
-
-        if v == n_j or w == n_j: continue
+        if v == n_j: continue
         res_C += w - u - trend_C_j
         res_J += sub_res - trend_J_j
     res_C /= T
