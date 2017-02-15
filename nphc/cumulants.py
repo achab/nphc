@@ -1,7 +1,7 @@
 from numba import autojit, jit, double, int32, int64, float64
 from scipy.linalg import inv, pinv, eigh
 from joblib import Parallel, delayed
-from math import sqrt, pi, exp, cos
+from math import sqrt, pi, exp
 from scipy.stats import norm
 import numpy as np
 
@@ -567,13 +567,6 @@ def A_and_I_ij_rect(realization_i, realization_j, half_width, T, L_j):
         w = u
         sub_res = 0.
 
-        tau_plus_half_width = tau + half_width
-        while w < n_j:
-            if realization_j[w] < tau_plus_half_width:
-                w += 1
-            else:
-                break
-
         while v < n_j:
             tau_minus_tau_p = tau - realization_j[v]
             if tau_minus_tau_p > 0:
@@ -581,6 +574,14 @@ def A_and_I_ij_rect(realization_i, realization_j, half_width, T, L_j):
                 v += 1
             else:
                 break
+
+        tau_plus_half_width = tau + half_width
+        while w < n_j:
+            if realization_j[w] < tau_plus_half_width:
+                w += 1
+            else:
+                break
+
         if v == n_j or w == n_j: continue
         res_C += w - u - trend_C_j
         res_J += sub_res - trend_J_j
@@ -600,7 +601,7 @@ def A_and_I_ij_gauss(realization_i, realization_j, half_width, T, L_j, sigma=1.0
     res_C = 0
     res_J = 0
     u = 0
-    
+
     trend_C_j = L_j * sigma * sqrt(2 * pi) * (norm.sf(-half_width) - norm.sf(half_width))
     trend_J_j = sigma ** 2 * (1 - exp(-.5 * (half_width / sigma) ** 2)) * L_j
 
@@ -615,26 +616,28 @@ def A_and_I_ij_gauss(realization_i, realization_j, half_width, T, L_j, sigma=1.0
                 break
         v = u
         w = u
-        sub_res = 0.
+        sub_res_C = 0.
+        sub_res_J = 0.
 
         while v < n_j:
             tau_minus_tau_p = tau - realization_j[v]
             if tau_minus_tau_p > 0:
-                sub_res += tau_minus_tau_p
+                sub_res_J += tau_minus_tau_p
                 v += 1
             else:
                 break
 
         tau_plus_half_width = tau + half_width
         while w < n_j:
-            if realization_j[v] < tau_plus_half_width:
+            if realization_j[w] < tau_plus_half_width:
+                sub_res_C += exp(-(realization_j[w]-tau)**2/(2*sigma**2)) / sqrt(2*pi)
                 w += 1
             else:
                 break
 
         if v == n_j or w == n_j: continue
-        res_C += (w - u) - trend_C_j
-        res_J += sub_res - trend_J_j
+        res_C += sub_res_C - trend_C_j
+        res_J += sub_res_J - trend_J_j
     res_C /= T
     res_J /= T
-    return res_C, res_J
+    return res_C + res_J * 1j
