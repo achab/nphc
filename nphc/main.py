@@ -193,6 +193,9 @@ class NPHC(object):
 
             print("Optimization Finished!")
 
+            self.final_cost = np.average([sess.run(cost, feed_dict={L: L_, C: C_, K_c: K_c_}) \
+                              for (L_, C_, K_c_) in zip(self.L, self.C, self.K_c)])
+
             return sess.run(R)
 
 
