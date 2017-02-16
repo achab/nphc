@@ -109,16 +109,7 @@ class Cumulants(object):
             raise ValueError("In `compute_C_and_J`: `filtr` should either equal `rectangular` or `gaussian`.")
 
         if method == 'parallel_by_day':
-            def worker_day_C_J(realization, T, L):
-                C = np.zeros((d,d))
-                J = np.zeros((d, d))
-                for i, j in product(range(d), repeat=2):
-                    z = A_and_I_ij(realization[i], realization[j], h_w, T, L[j], sigma)
-                    C[i,j] = z.real
-                    J[i,j] = z.imag
-                return C + J * 1j
-
-            l = Parallel(-1)(delayed(worker_day_C_j)(realization, T, L) for (realization, T, L) in zip(self.realizations, self.time, self.L))
+            l = Parallel(-1)(delayed(worker_day_C_J)(A_and_I_ij, realization, h_w, T, L, sigma, d) for (realization, T, L) in zip(self.realizations, self.time, self.L))
             self.C = [z.real for z in l]
             self._J = [z.imag for z in l]
 
@@ -171,16 +162,7 @@ class Cumulants(object):
             raise ValueError("In `compute_E_c`: `filtr` should either equal `rectangular` or `gaussian`.")
 
         if method == 'parallel_by_day':
-            def worker_day_E(realization, T, L, J):
-                E_c = np.zeros((d, d, 2))
-                for i, j in product(range(d), repeat=2):
-                    E_c[i, j, 0] = E_ijk(realization[i], realization[j], realization[j], -h_w, h_w,
-                                              T, L[i], L[j], J[i, j], sigma)
-                    E_c[i, j, 1] = E_ijk(realization[j], realization[j], realization[i], -h_w, h_w,
-                                              T, L[j], L[j], J[j, j], sigma)
-                return E_c
-
-            self._E_c = Parallel(-1)(delayed(worker_day_E)(realization, T, L, J) for (realization, T, L, J) in zip(self.realizations, self.time, self.L, self._J)
+            self._E_c = Parallel(-1)(delayed(worker_day_E)(E_ijk, realization, h_w, T, L, J, sigma, d) for (realization, T, L, J) in zip(self.realizations, self.time, self.L, self._J))
 
         elif method == 'parallel_by_component':
             for day in range(len(self.realizations)):
@@ -371,7 +353,6 @@ def A_ij_gauss(realization_i, realization_j, a, b, T, L_j, sigma=1.0):
         res += sub_res - trend_j
     res /= T
     return res
-
 
 @autojit
 def E_ijk_rect(realization_i, realization_j, realization_k, a, b, T, L_i, L_j, J_ij, sigma=1.0):
@@ -632,3 +613,22 @@ def A_and_I_ij_gauss(realization_i, realization_j, half_width, T, L_j, sigma=1.0
     res_C /= T
     res_J /= T
     return res_C + res_J * 1j
+
+
+def worker_day_C_J(fun, realization, h_w, T, L, sigma, d):
+    C = np.zeros((d, d))
+    J = np.zeros((d, d))
+    for i, j in product(range(d), repeat=2):
+        z = fun(realization[i], realization[j], h_w, T, L[j], sigma)
+        C[i,j] = z.real
+        J[i,j] = z.imag
+    return C + J * 1j
+
+def worker_day_E(fun, realization, h_w, T, L, J, sigma, d):
+    E_c = np.zeros((d, d, 2))
+    for i, j in product(range(d), repeat=2):
+        E_c[i, j, 0] = fun(realization[i], realization[j], realization[j], -h_w, h_w,
+                                  T, L[i], L[j], J[i, j], sigma)
+        E_c[i, j, 1] = fun(realization[j], realization[j], realization[i], -h_w, h_w,
+                                  T, L[j], L[j], J[j, j], sigma)
+    return E_c

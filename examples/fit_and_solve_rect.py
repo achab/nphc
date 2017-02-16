@@ -10,8 +10,9 @@ import mlpp.simulation as hk
 beta = 1.
 mu = 0.01
 d = 10
-T = 1e7
+T = 1e6
 H = 10
+n_days = 20 
 
 mus = mu * np.ones(d)
 Alpha = np.zeros((d,d))
@@ -28,16 +29,19 @@ for i in range(5,10):
             Beta[i][j] = beta
 Alpha /= 6
 
+ticks = []
 kernels = [[hk.HawkesKernelExp(a, b) for (a, b) in zip(a_list, b_list)] for (a_list, b_list) in zip(Alpha, Beta)]
-h = hk.SimuHawkes(kernels=kernels, baseline=list(mus), end_time=T)
-h.simulate()
+for _ in range(n_days):
+    h = hk.SimuHawkes(kernels=kernels, baseline=list(mus), end_time=T)
+    h.simulate()
+    ticks.append(h.timestamps)
 
 
 ######################################
 ### Fit (=> compute the cumulants) ###
 ######################################
 nphc = NPHC()
-nphc.fit(h.timestamps,half_wifth=10,filtr="rectangular",method="classic",mu_true=mus,R_true=inv(np.eye(d)-Alpha))
+nphc.fit(ticks,half_wifth=10,filtr="rectangular",method="parallel_by_day",mu_true=mus,R_true=inv(np.eye(d)-Alpha))
 # print mean error of cumulants estimation
 from nphc.utils.metrics import rel_err
 print("mean rel_err on L = ", np.mean( [rel_err(nphc.L_th, L) for L in nphc.L] ))
