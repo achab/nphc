@@ -62,14 +62,14 @@ def GetPriceAndTrades(df):
 def GetPriceComponents(df, edges):
     """ Separate components based on the magnitude of price change they generate"""
 
-    mask = lambda x, y: (df.OrderType==0).values * (np.abs(df.Volume.values)>x) * (np.abs(df.Volume.values)<=y)
+    mask = lambda x, y: (np.abs(df.PriceMove.values)>x) * (np.abs(df.PriceMove.values)<=y)
     out = []
-    for ii in range(len(vol_bins)-1):
-        out += [np.copy(df.loc[mask(vol_bins[ii], vol_bins[ii+1]), 'Time'].values)]
+    for ii in range(len(edges)-1):
+        out += [np.copy(df.loc[mask(edges[ii], edges[ii+1]), 'Time'].values)]
     return out
 
 
-def GetComponents(df, vol_bins):
+def GetVolumeComponents(df, vol_bins):
     """ Given df representing one day of data, returns list of array representing
         trades time for each volume component"""
 
