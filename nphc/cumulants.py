@@ -231,7 +231,7 @@ class Cumulants(object):
         assert self.R_true is not None, "You should provide R_true."
         self.K_c_th = get_K_c_th(self.L_th, self.C_th, self.R_true)
 
-    def compute_cumulants(self, half_width=0., method="parallel", filtr='rectangular', sigma=0.):
+    def compute_cumulants(self, half_width=0., method="parallel_by_day", filtr='rectangular', sigma=0.):
         self.compute_L()
         print("L is computed")
         if filtr == "gaussian" and sigma == 0.: sigma = half_width/5.
