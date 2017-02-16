@@ -3,6 +3,7 @@ from scipy.linalg import inv, pinv, eigh
 from joblib import Parallel, delayed
 from math import sqrt, pi, exp
 from scipy.stats import norm
+from itertools import product
 import numpy as np
 
 
@@ -93,7 +94,7 @@ class Cumulants(object):
     #         self.C[day] = C.copy()
 
 
-    def compute_C_and_J(self, half_width=0., method='parallel', filtr='rectangular', sigma=1.0):
+    def compute_C_and_J(self, half_width=0., method='parallel_by_day', filtr='rectangular', sigma=1.0):
         if half_width == 0.:
             h_w = self.half_width
         else:
@@ -101,49 +102,50 @@ class Cumulants(object):
         d = self.dim
 
         if filtr == "rectangular":
-
-            for day in range(len(self.realizations)):
-                realization = self.realizations[day]
-                if method == 'classic':
-                    C = np.zeros((d,d))
-                    J = np.zeros((d, d))
-                    for i in range(d):
-                        for j in range(d):
-                            z = A_and_I_ij_rect(realization[i], realization[j], h_w, self.time[day], self.L[day][j])
-                            C[i,j] = z.real
-                            J[i,j] = z.imag
-                elif method == 'parallel':
-                    l = Parallel(-1)(
-                            delayed(A_and_I_ij_rect)(realization[i], realization[j], h_w, self.time[day], self.L[day][j])
-                            for i in range(d) for j in range(d))
-                    C_and_J = np.array(l).reshape(d, d)
-                    C = C_and_J.real
-                    J = C_and_J.imag
-                # we keep the symmetric part to remove edge effects
-                C[:] = 0.5 * (C + C.T)
-                J[:] = 0.5 * (J + J.T)
-                self.C[day] = C.copy()
-                self._J[day] = J.copy()
-
+            A_and_I_ij = A_and_I_ij_rect
         elif filtr == "gaussian":
+            A_and_I_ij = A_and_I_ij_gauss
+        else:
+            raise ValueError("In `compute_C_and_J`: `filtr` should either equal `rectangular` or `gaussian`.")
 
+        if method == 'parallel_by_day':
+            def worker_day_C_J(realization, T, L):
+                C = np.zeros((d,d))
+                J = np.zeros((d, d))
+                for i, j in product(range(d), repeat=2):
+                    z = A_and_I_ij(realization[i], realization[j], h_w, T, L[j], sigma)
+                    C[i,j] = z.real
+                    J[i,j] = z.imag
+                return C + J * 1j
+
+            l = Parallel(-1)(delayed(worker_day_C_j)(realization, T, L) for (realization, T, L) in zip(self.realizations, self.time, self.L))
+            self.C = [z.real for z in l]
+            self._J = [z.imag for z in l]
+
+        elif method == 'parallel_by_component':
             for day in range(len(self.realizations)):
                 realization = self.realizations[day]
-                if method == 'classic':
-                    C = np.zeros((d,d))
-                    J = np.zeros((d, d))
-                    for i in range(d):
-                        for j in range(d):
-                            z = A_and_I_ij_gauss(realization[i], realization[j], h_w, self.time[day], self.L[day][j], sigma)
-                            C[i,j] = z.real
-                            J[i,j] = z.imag
-                elif method == 'parallel':
-                    l = Parallel(-1)(
-                            delayed(A_and_I_ij_gauss)(realization[i], realization[j], h_w, self.time[day], self.L[day][j], sigma)
-                            for i in range(d) for j in range(d))
-                    C_and_J = np.array(l).reshape(d, d)
-                    C = C_and_J.real
-                    J = C_and_J.imag
+                l = Parallel(-1)(
+                        delayed(A_and_I_ij)(realization[i], realization[j], h_w, self.time[day], self.L[day][j], sigma)
+                        for i in range(d) for j in range(d))
+                C_and_J = np.array(l).reshape(d, d)
+                C = C_and_J.real
+                J = C_and_J.imag
+                # we keep the symmetric part to remove edge effects
+                C[:] = 0.5 * (C + C.T)
+                J[:] = 0.5 * (J + J.T)
+                self.C[day] = C.copy()
+                self._J[day] = J.copy()
+
+        elif method == 'classic':
+            for day in range(len(self.realizations)):
+                realization = self.realizations[day]
+                C = np.zeros((d,d))
+                J = np.zeros((d, d))
+                for i, j in product(range(d), repeat=2):
+                    z = A_and_I_ij(realization[i], realization[j], h_w, self.time[day], self.L[day][j], sigma)
+                    C[i,j] = z.real
+                    J[i,j] = z.imag
                 # we keep the symmetric part to remove edge effects
                 C[:] = 0.5 * (C + C.T)
                 J[:] = 0.5 * (J + J.T)
@@ -151,11 +153,10 @@ class Cumulants(object):
                 self._J[day] = J.copy()
 
         else:
+            raise ValueError("In `compute_C_and_J`: `method` should either equal `parallel_by_day`, `parallel_by_component` or `classic`.")
 
-            raise ValueError(
-                "In `compute_C_and_J`: the filtering function should be either `rectangular` or `gaussian`.")
 
-    def compute_E_c(self, half_width=0., method='parallel', filtr='rectangular', sigma=1.0):
+    def compute_E_c(self, half_width=0., method='parallel_by_day', filtr='rectangular', sigma=1.0):
         if half_width == 0.:
             h_w = self.half_width
         else:
@@ -163,51 +164,48 @@ class Cumulants(object):
         d = self.dim
 
         if filtr == "rectangular":
+            E_ijk = E_ijk_rect
+        elif filtr == "gaussian":
+            E_ijk = E_ijk_gauss
+        else:
+            raise ValueError("In `compute_E_c`: `filtr` should either equal `rectangular` or `gaussian`.")
 
+        if method == 'parallel_by_day':
+            def worker_day_E(realization, T, L, J):
+                E_c = np.zeros((d, d, 2))
+                for i, j in product(range(d), repeat=2):
+                    E_c[i, j, 0] = E_ijk(realization[i], realization[j], realization[j], -h_w, h_w,
+                                              T, L[i], L[j], J[i, j], sigma)
+                    E_c[i, j, 1] = E_ijk(realization[j], realization[j], realization[i], -h_w, h_w,
+                                              T, L[j], L[j], J[j, j], sigma)
+                return E_c
+
+            self._E_c = Parallel(-1)(delayed(worker_day_E)(realization, T, L, J) for (realization, T, L, J) in zip(self.realizations, self.time, self.L, self._J)
+
+        elif method == 'parallel_by_component':
             for day in range(len(self.realizations)):
                 realization = self.realizations[day]
                 E_c = np.zeros((d, d, 2))
-                if method == 'classic':
-                    for i in range(d):
-                        for j in range(d):
-                            E_c[i, j, 0] = E_ijk_rect(realization[i], realization[j], realization[j], -h_w, h_w,
-                                                      self.time[day], self.L[day][i], self.L[day][j], self._J[day][i, j])
-                            E_c[i, j, 1] = E_ijk_rect(realization[j], realization[j], realization[i], -h_w, h_w,
-                                                      self.time[day], self.L[day][j], self.L[day][j], self._J[day][j, j])
-                elif method == 'parallel':
-                    l1 = Parallel(-1)(
-                            delayed(E_ijk_rect)(realization[i], realization[j], realization[j], -h_w, h_w,
-                                                self.time[day], self.L[day][i], self.L[day][j], self._J[day][i, j]) for i in range(d) for j in range(d))
-                    l2 = Parallel(-1)(
-                            delayed(E_ijk_rect)(realization[j], realization[j], realization[i], -h_w, h_w,
-                                                self.time[day], self.L[day][j], self.L[day][j], self._J[day][j, j]) for i in range(d) for j in range(d))
-                    E_c[:, :, 0] = np.array(l1).reshape(d, d)
-                    E_c[:, :, 1] = np.array(l2).reshape(d, d)
+                l1 = Parallel(-1)(
+                        delayed(E_ijk)(realization[i], realization[j], realization[j], -h_w, h_w,
+                                            self.time[day], self.L[day][i], self.L[day][j], self._J[day][i, j], sigma) for i in range(d) for j in range(d))
+                l2 = Parallel(-1)(
+                        delayed(E_ijk)(realization[j], realization[j], realization[i], -h_w, h_w,
+                                            self.time[day], self.L[day][j], self.L[day][j], self._J[day][j, j], sigma) for i in range(d) for j in range(d))
+                E_c[:, :, 0] = np.array(l1).reshape(d, d)
+                E_c[:, :, 1] = np.array(l2).reshape(d, d)
                 self._E_c[day] = E_c.copy()
 
-        elif filtr == "gaussian":
-
+        elif method == 'classic':
             for day in range(len(self.realizations)):
                 realization = self.realizations[day]
                 E_c = np.zeros((d, d, 2))
-                if method == 'classic':
-                    for i in range(d):
-                        for j in range(d):
-                            E_c[i, j, 0] = E_ijk_gauss(realization[i], realization[j], realization[j], -h_w, h_w,
-                                                       self.time[day], self.L[day][i], self.L[day][j], self._J[day][i, j], sigma=sigma)
-                            E_c[i, j, 1] = E_ijk_gauss(realization[j], realization[j], realization[i], -h_w, h_w,
-                                                       self.time[day], self.L[day][j], self.L[day][j], self._J[day][j, j], sigma=sigma)
-                elif method == 'parallel':
-                    l1 = Parallel(-1)(
-                            delayed(E_ijk_gauss)(realization[i], realization[j], realization[j], -h_w, h_w,
-                                                 self.time[day], self.L[day][i], self.L[day][j], self._J[day][i, j], sigma=sigma) for i in
-                            range(d) for j in range(d))
-                    l2 = Parallel(-1)(
-                            delayed(E_ijk_gauss)(realization[j], realization[j], realization[i], -h_w, h_w,
-                                                 self.time[day], self.L[day][j], self.L[day][j], self._J[day][j, j], sigma=sigma) for i in
-                            range(d) for j in range(d))
-                    E_c[:, :, 0] = np.array(l1).reshape(d, d)
-                    E_c[:, :, 1] = np.array(l2).reshape(d, d)
+                for i in range(d):
+                    for j in range(d):
+                        E_c[i, j, 0] = E_ijk(realization[i], realization[j], realization[j], -h_w, h_w,
+                                                  self.time[day], self.L[day][i], self.L[day][j], self._J[day][i, j], sigma)
+                        E_c[i, j, 1] = E_ijk(realization[j], realization[j], realization[i], -h_w, h_w,
+                                                  self.time[day], self.L[day][j], self.L[day][j], self._J[day][j, j], sigma)
                 self._E_c[day] = E_c.copy()
 
         else:
@@ -376,7 +374,7 @@ def A_ij_gauss(realization_i, realization_j, a, b, T, L_j, sigma=1.0):
 
 
 @autojit
-def E_ijk_rect(realization_i, realization_j, realization_k, a, b, T, L_i, L_j, J_ij):
+def E_ijk_rect(realization_i, realization_j, realization_k, a, b, T, L_i, L_j, J_ij, sigma=1.0):
     """
     Computes the mean of the centered product of i's and j's jumps between \tau + a and \tau + b, that is
     \frac{1}{T} \sum_{\tau \in Z^k} ( N^i_{\tau + b} - N^i_{\tau + a} - \Lambda^i * ( b - a ) )
@@ -528,7 +526,7 @@ def E_ijk_gauss(realization_i, realization_j, realization_k, a, b, T, L_i, L_j, 
 
 
 @autojit
-def A_and_I_ij_rect(realization_i, realization_j, half_width, T, L_j):
+def A_and_I_ij_rect(realization_i, realization_j, half_width, T, L_j, sigma=1.0):
     """
     Computes the integral \int_{(0,H)} t c^{ij} (t) dt. This integral equals
     \frac{1}{T} \sum_{\tau \in Z^i} \sum_{\tau' \in Z^j} [ (\tau - \tau') 1_{ \tau - H < \tau' < \tau } - H^2 / 2 \Lambda^j ]
