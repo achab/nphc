@@ -18,8 +18,7 @@ class Cumulants(object):
         self.n_realizations = len(self.realizations)
         self.time = np.zeros(self.n_realizations)
         for day, realization in enumerate(self.realizations):
-            T_day = float(max(x[-1] for x in realization if len(x) > 0)) -
-            float(min(x[0] for x in realization if len(x) > 0))
+            T_day = float(max(x[-1] for x in realization if len(x) > 0)) - float(min(x[0] for x in realization if len(x) > 0))
             self.time[day] = T_day
         self.L = np.zeros((self.n_realizations, self.dim))
         self.C = np.zeros((self.n_realizations, self.dim, self.dim))
