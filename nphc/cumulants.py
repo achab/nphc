@@ -364,15 +364,9 @@ def E_ijk_rect(realization_i, realization_j, realization_k, a, b, T, L_i, L_j, J
     res = 0
     u = 0
     x = 0
-    #n_i = realization_i.shape[0]
-    #n_j = realization_j.shape[0]
-    #n_k = realization_k.shape[0]
-    n_i = len(realization_i)
-    n_j = len(realization_j)
-    n_k = len(realization_k)
-    if n_i == 0: return 0.
-    if n_j == 0: return 0.
-    if n_k == 0: return 0.
+    n_i = realization_i.shape[0]
+    n_j = realization_j.shape[0]
+    n_k = realization_k.shape[0]
 
     trend_i = L_i * (b - a)
     trend_j = L_j * (b - a)
@@ -518,12 +512,8 @@ def A_and_I_ij_rect(realization_i, realization_j, half_width, T, L_j, sigma=1.0)
     Computes the integral \int_{(0,H)} t c^{ij} (t) dt. This integral equals
     \frac{1}{T} \sum_{\tau \in Z^i} \sum_{\tau' \in Z^j} [ (\tau - \tau') 1_{ \tau - H < \tau' < \tau } - H^2 / 2 \Lambda^j ]
     """
-    #n_i = realization_i.shape[0]
-    n_i = len(realization_i)
-    if n_i == 0: return 0.
-    #n_j = realization_j.shape[0]
-    n_j = len(realization_j)
-    if n_j == 0: return 0.
+    n_i = realization_i.shape[0]
+    n_j = realization_j.shape[0]
     res_C = 0
     res_J = 0
     u = 0
@@ -629,16 +619,18 @@ def worker_day_C_J(fun, realization, h_w, T, L, sigma, d):
     C = np.zeros((d, d))
     J = np.zeros((d, d))
     for i, j in product(range(d), repeat=2):
-        z = fun(realization[i], realization[j], h_w, T, L[j], sigma)
-        C[i,j] = z.real
-        J[i,j] = z.imag
+        if len(realization[i])*len(realization[j]) != 0:
+            z = fun(realization[i], realization[j], h_w, T, L[j], sigma)
+            C[i,j] = z.real
+            J[i,j] = z.imag
     return C + J * 1j
 
 def worker_day_E(fun, realization, h_w, T, L, J, sigma, d):
     E_c = np.zeros((d, d, 2))
     for i, j in product(range(d), repeat=2):
-        E_c[i, j, 0] = fun(realization[i], realization[j], realization[j], -h_w, h_w,
+        if len(realization[i])*len(realization[j]) != 0:
+            E_c[i, j, 0] = fun(realization[i], realization[j], realization[j], -h_w, h_w,
                                   T, L[i], L[j], J[i, j], sigma)
-        E_c[i, j, 1] = fun(realization[j], realization[j], realization[i], -h_w, h_w,
+            E_c[i, j, 1] = fun(realization[j], realization[j], realization[i], -h_w, h_w,
                                   T, L[j], L[j], J[j, j], sigma)
     return E_c
