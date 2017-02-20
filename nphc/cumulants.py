@@ -110,10 +110,8 @@ class Cumulants(object):
 
         if method == 'parallel_by_day':
             l = Parallel(-1)(delayed(worker_day_C_J)(A_and_I_ij, realization, h_w, T, L, sigma, d) for (realization, T, L) in zip(self.realizations, self.time, self.L))
-            C = [z.real for z in l]
-            self.C = 0.5 * (C + C.T)
-            J = [z.imag for z in l]
-            self._J = 0.5 * (J + J.T)
+            self.C = [0.5*(z.real+z.real.T) for z in l]
+            self._J = [0.5*(z.imag+z.imag.T) for z in l]
 
         elif method == 'parallel_by_component':
             for day in range(len(self.realizations)):
