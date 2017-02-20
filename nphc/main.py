@@ -60,7 +60,7 @@ class NPHC(object):
         object.__init__(self)
 
 
-    def fit(self, realizations=[], half_wifth=100., filtr='rectangular', method="parallel", mu_true=None, R_true=None):
+    def fit(self, realizations=[], half_width=100., filtr='rectangular', method="parallel", mu_true=None, R_true=None):
         """
         Set the corresponding realization(s) of the process.
         Compute the cumulants.
@@ -79,10 +79,10 @@ class NPHC(object):
         else:
             self.realizations = [realizations]
 
-        cumul = Cumulants(realizations, half_width=half_wifth)
+        cumul = Cumulants(realizations, half_width=half_width)
         cumul.mu_true = mu_true
         cumul.R_true = R_true
-        cumul.compute_cumulants(half_wifth,filtr=filtr,method=method,sigma=half_wifth/5.)
+        cumul.compute_cumulants(half_width,filtr=filtr,method=method,sigma=half_width/5.)
 
         self.L = cumul.L.copy()
         self.C = cumul.C.copy()
