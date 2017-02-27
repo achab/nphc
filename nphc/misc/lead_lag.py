@@ -1,5 +1,6 @@
-import numpy as np
+from math import sqrt
 from numba import jit
+import numpy as np
 
 @jit
 def hayashi_yoshida_cross_corr(times_X, values_X, times_Y, values_Y, lag=0.):
@@ -31,5 +32,7 @@ def hayashi_yoshida_cross_corr(times_X, values_X, times_Y, values_Y, lag=0.):
                 r_Y = values_Y[k] - values_Y[k-1]
                 r_XY += r_X * r_Y
                 k += 1
+            else:
+                break
 
     return r_XY / sqrt(r_X_sq * r_Y_sq)
