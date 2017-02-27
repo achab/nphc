@@ -30,5 +30,6 @@ def hayashi_yoshida_cross_corr(times_X, values_X, times_Y, values_Y, lag=0.):
             if times_Y[k-1] - lag < t:
                 r_Y = values_Y[k] - values_Y[k-1]
                 r_XY += r_X * r_Y
+                k += 1
 
     return r_XY / sqrt(r_X_sq * r_Y_sq)
