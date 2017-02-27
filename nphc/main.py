@@ -59,6 +59,8 @@ class NPHC(object):
 
         object.__init__(self)
 
+        # we will store here the optimal cost reached
+        self.optcost = None
 
     def fit(self, realizations=[], half_width=100., filtr='rectangular', method="parallel", mu_true=None, R_true=None):
         """
@@ -98,7 +100,7 @@ class NPHC(object):
 
 
     def solve(self, alpha=0., l_l1=0., l_l2=0., initial_point=None, training_epochs=1000, learning_rate=1e6, optimizer='momentum', \
-         display_step = 100):
+         display_step = 100, use_average=False):
         """
 
         Parameters
@@ -120,7 +122,6 @@ class NPHC(object):
             self.alpha = alpha
         self.l_l1 = l_l1
         self.l_l2 = l_l2
-
 
         cumulants_list = [self.L, self.C, self.K_c]
         d = len(self.L[0])
@@ -147,8 +148,13 @@ class NPHC(object):
 
         reg_l1 = tf.contrib.layers.l1_regularizer(self.l_l1)
         reg_l2 = tf.contrib.layers.l2_regularizer(self.l_l2)
-        if self.l_l1*self.l_l2 > 0:
+
+        if (self.l_l2 * self.l_l1 > 0):
             cost = tf.cast(cost, tf.float32) + reg_l1(R) + reg_l2(R)
+        elif (self.l_l1 > 0):
+            cost = tf.cast(cost, tf.float32) + reg_l1(R)
+        elif (self.l_l2 > 0):
+            cost = tf.cast(cost, tf.float32) + reg_l2(R)
         else:
             cost = tf.cast(cost, tf.float32)
 
@@ -168,6 +174,12 @@ class NPHC(object):
         # Initialize the variables
         init = tf.initialize_all_variables()
 
+        # always use the average cumulants over all realizations
+        if use_average:
+            L_avg = np.mean(self.L, axis=0)
+            C_avg = np.mean(self.C, axis=0)
+            K_avg = np.mean(self.K_c, axis=0)
+
         # Launch the graph
         with tf.Session() as sess:
             sess.run(init)
@@ -183,9 +195,12 @@ class NPHC(object):
                                            for (L_, C_, K_c_) in zip(self.L, self.C, self.K_c)])
                     print("Epoch:", '%04d' % (epoch), "log10(cost)=", "{:.9f}".format(np.log10(avg_cost)))
 
-                # Fit training using batch data
-                i = np.random.randint(0,len(self.realizations))
-                sess.run(optimizer, feed_dict={L: self.L[i], C: self.C[i], K_c: self.K_c[i]})
+                if use_average:
+                    sess.run(optimizer, feed_dict={L: L_avg, C: C_avg, K_c: K_avg})
+                else:
+                    # Fit training using batch data
+                    i = np.random.randint(0,len(self.realizations))
+                    sess.run(optimizer, feed_dict={L: self.L[i], C: self.C[i], K_c: self.K_c[i]})
 
                 # Write logs at every iteration
                 #summary_str = sess.run(merged_summary_op, feed_dict={L: cumul.L, C: cumul.C, K_c: cumul.K_c})
@@ -193,6 +208,12 @@ class NPHC(object):
 
             print("Optimization Finished!")
 
+            # save final value of the objective function
+            if use_average:
+                self.optcost = sess.run(cost, feed_dict={L: L_, C: C_, K_c: K_c_})
+            else:
+                self.optcost = np.average([sess.run(cost, feed_dict={L: L_, C: C_, K_c: K_c_})
+                                           for (L_, C_, K_c_) in zip(self.L, self.C, self.K_c)])
             return sess.run(R)
 
 
