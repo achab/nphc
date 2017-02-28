@@ -4,6 +4,11 @@ import numpy as np
 
 @jit
 def hayashi_yoshida_cross_corr(times_X, values_X, times_Y, values_Y, lag=0.):
+    """
+    This implementation of Lead-Lag Cross-Correlation is based
+    on the algorithm given in "High Frequency Lead/lag Relationships
+    Empirical Facts" by N. Huth and F. Abergel, on page 6
+    """
     n_X = len(times_X)
     n_Y = len(times_Y)
     # init variables
