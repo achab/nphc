@@ -4,11 +4,10 @@ import datetime
 import gzip, pickle
 import glob
 
-dir_name = 'top20_9months_start_2008_08'
+dir_name = 'top150_7months_start_2008-10'
 
 def date_from_start(x):
-    return datetime.datetime(2008,8,1) + datetime.timedelta(seconds=int(x))
-
+    return datetime.datetime(2008,10,1) + datetime.timedelta(seconds=int(x))
 
 def worker(filename):
     """
