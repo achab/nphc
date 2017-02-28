@@ -10,7 +10,7 @@ import mlpp.simulation as hk
 beta = 1.
 mu = 0.01
 d = 10
-T = 1e6
+T = 1e5
 H = 10
 n_days = 20 
 
