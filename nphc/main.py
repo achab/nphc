@@ -99,7 +99,7 @@ class NPHC(object):
             self.K_c_th = None
 
 
-    def solve(self, alpha=0., l_l1=0., l_l2=0., initial_point=None, training_epochs=1000, learning_rate=1e6, optimizer='momentum', \
+    def solve(self, alpha=-1, l_l1=0., l_l2=0., initial_point=None, training_epochs=1000, learning_rate=1e6, optimizer='momentum', \
          display_step = 100, use_average=False):
         """
 
@@ -116,7 +116,7 @@ class NPHC(object):
                 The optimizer used to minimize the objective function. We use optimizers from TensorFlow.
         """
 
-        if alpha == 0.:
+        if alpha == -1:
             self.alpha = 1./(1. + (norm(np.mean([C for C in self.C]))**2) / (norm(np.mean([K_c for K_c in self.K_c]))**2) )
         else:
             self.alpha = alpha
