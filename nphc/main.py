@@ -117,7 +117,7 @@ class NPHC(object):
         """
 
         if alpha == -1:
-            self.alpha = 1./(1. + (norm(np.mean([C for C in self.C]))**2) / (norm(np.mean([K_c for K_c in self.K_c]))**2) )
+            self.alpha = 1./(1. + (norm(np.mean([C for C in self.C],axis=0))**2) / (norm(np.mean([K_c for K_c in self.K_c],axis=0))**2) )
         else:
             self.alpha = alpha
         self.l_l1 = l_l1
