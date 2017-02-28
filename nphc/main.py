@@ -139,8 +139,7 @@ class NPHC(object):
         R = tf.Variable(R0, name='R')
 
         # Construct model
-        activation_3 = tf.matmul(C,tf.square(R),transpose_b=True) +
-        2.0*tf.matmul(R,tf.multiply(R,C),transpose_b=True) \
+        activation_3 = tf.matmul(C,tf.square(R),transpose_b=True) + 2.0*tf.matmul(R,tf.multiply(R,C),transpose_b=True) \
                        - 2.0*tf.matmul(R,tf.matmul(tf.diag(L),tf.square(R),transpose_b=True))
         activation_2 = tf.matmul(R,tf.matmul(tf.diag(L),R,transpose_b=True))
 
