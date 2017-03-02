@@ -214,7 +214,8 @@ class NPHC(object):
                     sess.run(optimizer, feed_dict={L: self.L[i], C: self.C[i], K_c: self.K_c[i]})
                     to_be_projected = np.dot(C_avg_sqrt_inv,np.dot(sess.run(R),np.diag(L_avg_sqrt)))
                     U, S, V = np.linalg.svd(to_be_projected)
-                    R.assign(np.dot(U,V))
+                    R_projected = np.dot( C_avg_sqrt, np.dot( np.dot(U,V), np.diag(L_avg_sqrt_inv) ) )
+                    R.assign(R_projected)
                 else:
                     # Fit training using batch data
                     i = np.random.randint(0,len(self.realizations))
