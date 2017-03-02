@@ -138,6 +138,8 @@ class NPHC(object):
 
         R = tf.Variable(R0, name='R')
 
+        I = tf.diag(tf.ones(d))
+
         # Construct model
         activation_3 = tf.matmul(C,tf.square(R),transpose_b=True) + 2.0*tf.matmul(R,R*C,transpose_b=True) \
                        - 2.0*tf.matmul(R,tf.matmul(tf.diag(L),tf.square(R),transpose_b=True))
@@ -150,11 +152,11 @@ class NPHC(object):
         reg_l2 = tf.contrib.layers.l2_regularizer(self.l_l2)
 
         if (self.l_l2 * self.l_l1 > 0):
-            cost = tf.cast(cost, tf.float32) + reg_l1(R) + reg_l2(R)
+            cost = tf.cast(cost, tf.float32) + reg_l1((I - tf.matrix_inverse(R))) + reg_l2((I - tf.matrix_inverse(R)))
         elif (self.l_l1 > 0):
-            cost = tf.cast(cost, tf.float32) + reg_l1(R)
+            cost = tf.cast(cost, tf.float32) + reg_l1((I - tf.matrix_inverse(R)))
         elif (self.l_l2 > 0):
-            cost = tf.cast(cost, tf.float32) + reg_l2(R)
+            cost = tf.cast(cost, tf.float32) + reg_l2((I - tf.matrix_inverse(R)))
         else:
             cost = tf.cast(cost, tf.float32)
 
