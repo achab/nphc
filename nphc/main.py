@@ -100,7 +100,7 @@ class NPHC(object):
 
 
     def solve(self, alpha=-1, l_l1=0., l_l2=0., initial_point=None, training_epochs=1000, learning_rate=1e6, optimizer='momentum', \
-         display_step = 100, use_average=False, use_projection=False):
+         display_step = 100, use_average=False, use_projection=True):
         """
 
         Parameters
@@ -116,10 +116,13 @@ class NPHC(object):
                 The optimizer used to minimize the objective function. We use optimizers from TensorFlow.
         """
 
-        if alpha == -1:
+        if use_projection:
+            self.alpha = 0.
+        elif alpha == -1:
             self.alpha = 1./(1. + (norm(np.mean([C for C in self.C],axis=0))**2) / (norm(np.mean([K_c for K_c in self.K_c],axis=0))**2) )
         else:
             self.alpha = alpha
+
         self.l_l1 = l_l1
         self.l_l2 = l_l2
 
