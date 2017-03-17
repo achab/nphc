@@ -133,15 +133,14 @@ class NPHC(object):
         else:
             start_point = initial_point.copy()
 
-        R0 = tf.constant(start_point.astype(np.float32), shape=[d,d])
+        R0 = tf.constant(start_point.astype(np.float64), shape=[d,d])
+        L = tf.placeholder(tf.float64, d, name='L')
+        C = tf.placeholder(tf.float64, (d,d), name='C')
+        K_c = tf.placeholder(tf.float64, (d,d), name='K_c')
 
-        L = tf.placeholder(tf.float32, d, name='L')
-        C = tf.placeholder(tf.float32, (d,d), name='C')
-        K_c = tf.placeholder(tf.float32, (d,d), name='K_c')
+        R = tf.Variable(R0, name='R', dtype=tf.float64)
 
-        R = tf.Variable(R0, name='R')
-
-        I = tf.diag(tf.ones(d))
+        I = tf.diag(tf.ones(d,dtype=tf.float64))
 
         # Construct model
         activation_3 = tf.matmul(C,tf.square(R),transpose_b=True) + 2.0*tf.matmul(R,R*C,transpose_b=True) \
@@ -155,13 +154,13 @@ class NPHC(object):
         reg_l2 = tf.contrib.layers.l2_regularizer(self.l_l2)
 
         if (self.l_l2 * self.l_l1 > 0):
-            cost = tf.cast(cost, tf.float32) + reg_l1((I - tf.matrix_inverse(R))) + reg_l2((I - tf.matrix_inverse(R)))
+            cost = tf.cast(cost, tf.float64) + reg_l1((I - tf.matrix_inverse(R))) + reg_l2((I - tf.matrix_inverse(R)))
         elif (self.l_l1 > 0):
-            cost = tf.cast(cost, tf.float32) + reg_l1((I - tf.matrix_inverse(R)))
+            cost = tf.cast(cost, tf.float64) + reg_l1((I - tf.matrix_inverse(R)))
         elif (self.l_l2 > 0):
-            cost = tf.cast(cost, tf.float32) + reg_l2((I - tf.matrix_inverse(R)))
+            cost = tf.cast(cost, tf.float64) + reg_l2((I - tf.matrix_inverse(R)))
         else:
-            cost = tf.cast(cost, tf.float32)
+            cost = tf.cast(cost, tf.float64)
 
         if optimizer == 'momentum':
             optimizer = tf.train.MomentumOptimizer(learning_rate, momentum=0.9).minimize(cost)
@@ -200,7 +199,7 @@ class NPHC(object):
 
             # Training cycle
             for epoch in range(training_epochs):
-
+                    
                 if epoch % display_step == 0:
                     avg_cost = np.average([sess.run(cost, feed_dict={L: L_, C: C_, K_c: K_c_})
                                            for (L_, C_, K_c_) in zip(self.L, self.C, self.K_c)])
@@ -208,6 +207,7 @@ class NPHC(object):
 
                 if use_average:
                     sess.run(optimizer, feed_dict={L: L_avg, C: C_avg, K_c: K_avg})
+
                 elif use_projection:
                     # Fit training using batch data
                     i = np.random.randint(0,len(self.realizations))
@@ -227,12 +227,6 @@ class NPHC(object):
 
             print("Optimization Finished!")
 
-            # save final value of the objective function
-            if use_average:
-                self.optcost = sess.run(cost, feed_dict={L: L_, C: C_, K_c: K_c_})
-            else:
-                self.optcost = np.average([sess.run(cost, feed_dict={L: L_, C: C_, K_c: K_c_})
-                                           for (L_, C_, K_c_) in zip(self.L, self.C, self.K_c)])
             return sess.run(R)
 
 
