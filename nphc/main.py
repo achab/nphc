@@ -140,7 +140,8 @@ class NPHC(object):
 
         R = tf.Variable(R0, name='R', dtype=tf.float64)
 
-        I = tf.diag(tf.ones(d,dtype=tf.float64))
+        #I = tf.diag(tf.ones(d,dtype=tf.float64))
+        I = tf.Variable(initial_value=np.eye(d), dtype=tf.float64)
 
         # Construct model
         activation_3 = tf.matmul(C,tf.square(R),transpose_b=True) + 2.0*tf.matmul(R,R*C,transpose_b=True) \
@@ -189,6 +190,8 @@ class NPHC(object):
             from scipy.linalg import inv, sqrtm
             C_avg_sqrt = sqrtm(C_avg)
             C_avg_sqrt_inv = inv(C_avg_sqrt)
+            print("L_avg.shape = ",L_avg_sqrt.shape)
+            print("C_avg.shape = ",C_avg_sqrt.shape)
 
         # Launch the graph
         with tf.Session() as sess:
