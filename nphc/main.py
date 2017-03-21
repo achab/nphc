@@ -163,22 +163,6 @@ class NPHC(object):
         else:
             cost = tf.cast(cost, tf.float64)
 
-        if optimizer == 'momentum':
-            optimizer = tf.train.MomentumOptimizer(learning_rate, momentum=0.9).minimize(cost)
-        elif optimizer == 'adam':
-            optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
-        elif optimizer == 'adagrad':
-            optimizer = tf.train.AdagradOptimizer(learning_rate).minimize(cost)
-        elif optimizer == 'rmsprop':
-            optimizer = tf.train.RMSPropOptimizer(learning_rate).minimize(cost)
-        elif optimizer == 'adadelta':
-            optimizer = tf.train.AdadeltaOptimizer(learning_rate).minimize(cost)
-        else:
-            optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost)
-
-        # Initialize the variables
-        init = tf.global_variables_initializer()
-
         # always use the average cumulants over all realizations
         if use_average or use_projection or projection_stable_G or positive_baselines:
             L_avg = np.mean(self.L, axis=0)
@@ -196,8 +180,24 @@ class NPHC(object):
 
         if positive_baselines:
             neg_baselines = - tf.matmul(tf.matmul(np.diag(L_avg),R,transpose_b=True),\
-                                        np.dot(C_avg_inv,L_avg))
+                                        np.dot(C_avg_inv,L_avg.reshape(d,1)))
             cost += l_mu * tf.reduce_sum(tf.nn.relu(neg_baselines))
+
+        if optimizer == 'momentum':
+            optimizer = tf.train.MomentumOptimizer(learning_rate, momentum=0.9).minimize(cost)
+        elif optimizer == 'adam':
+            optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
+        elif optimizer == 'adagrad':
+            optimizer = tf.train.AdagradOptimizer(learning_rate).minimize(cost)
+        elif optimizer == 'rmsprop':
+            optimizer = tf.train.RMSPropOptimizer(learning_rate).minimize(cost)
+        elif optimizer == 'adadelta':
+            optimizer = tf.train.AdadeltaOptimizer(learning_rate).minimize(cost)
+        else:
+            optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost)
+
+        # Initialize the variables
+        init = tf.global_variables_initializer()
 
         # Launch the graph
         with tf.Session() as sess:
