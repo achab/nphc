@@ -223,7 +223,7 @@ class NPHC(object):
                     to_be_projected = np.dot(C_avg_sqrt_inv,np.dot(sess.run(R),np.diag(L_avg_sqrt)))
                     U, S, V = np.linalg.svd(to_be_projected)
                     R_projected = np.dot( C_avg_sqrt, np.dot( np.dot(U,V), np.diag(L_avg_sqrt_inv) ) )
-                    R.assign(R_projected)
+                    R.assign(R_projected).run()
                 else:
                     # Fit training using batch data
                     i = np.random.randint(0,len(self.realizations))
@@ -235,7 +235,7 @@ class NPHC(object):
                     S[S >= .99] = .99
                     G_projected = np.dot( U, np.dot(np.diag(S), V) )
                     R_projected = np.dot(C_avg, np.dot( np.eye(d) - G_projected.T, np.diag(1./L_avg) ) )
-                    R.assign(R_projected)
+                    R.assign(R_projected).run()
 
                 # Write logs at every iteration
                 #summary_str = sess.run(merged_summary_op, feed_dict={L: cumul.L, C: cumul.C, K_c: cumul.K_c})
