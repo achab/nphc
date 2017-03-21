@@ -179,8 +179,9 @@ class NPHC(object):
             C_avg_inv = inv(C_avg)
 
         if positive_baselines:
-            neg_baselines = - tf.matmul(tf.matmul(np.diag(L_avg),R,transpose_b=True),\
-                                        np.dot(C_avg_inv,L_avg.reshape(d,1)))
+            #neg_baselines = - tf.matmul(tf.matmul(np.diag(L_avg),R,transpose_b=True),\
+            #                            np.dot(C_avg_inv,L_avg.reshape(d,1)))
+            neg_baselines = - tf.matmul(tf.matrix_inverse(R), L_avg.reshape(d,1))
             cost += l_mu * tf.reduce_sum(tf.nn.relu(neg_baselines))
 
         if optimizer == 'momentum':
