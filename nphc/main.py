@@ -100,7 +100,7 @@ class NPHC(object):
 
 
     def solve(self, alpha=-1, l_l1=0., l_l2=0., initial_point=None, training_epochs=1000, learning_rate=1e6, optimizer='momentum', \
-         display_step = 100, use_average=False, use_projection=True, stable_G=False):
+         display_step = 100, use_average=False, use_projection=True, stable_G=False, positive_baselines=False, l_mu=0.):
         """
 
         Parameters
@@ -180,7 +180,7 @@ class NPHC(object):
         init = tf.global_variables_initializer()
 
         # always use the average cumulants over all realizations
-        if use_average or use_projection or stable_G:
+        if use_average or use_projection or stable_G or positive_baselines:
             L_avg = np.mean(self.L, axis=0)
             C_avg = np.mean(self.C, axis=0)
             K_avg = np.mean(self.K_c, axis=0)
@@ -190,8 +190,12 @@ class NPHC(object):
             from scipy.linalg import inv, sqrtm
             C_avg_sqrt = sqrtm(C_avg)
             C_avg_sqrt_inv = inv(C_avg_sqrt)
-        if stable_G:
+        if stable_G or positive_baselines:
             C_avg_inv = inv(C_avg)
+
+        if positive_baselines:
+            neg_baselines = - tf.matmul(R,np.dot(C_avg_inv,L_avg.reshape(d,1)),transpose_a=True)
+            cost += l_mu * tf.reduce_sum(tf.nn.relu(neg_baselines))
 
 
         # Launch the graph
