@@ -191,12 +191,12 @@ class NPHC(object):
             C_avg_sqrt = sqrtm(C_avg)
             C_avg_sqrt_inv = inv(C_avg_sqrt)
         if projection_stable_G or positive_baselines:
+            from scipy.linalg import inv
             C_avg_inv = inv(C_avg)
 
         if positive_baselines:
             neg_baselines = - tf.matmul(R,np.dot(C_avg_inv,L_avg.reshape(d,1)),transpose_a=True)
             cost += l_mu * tf.reduce_sum(tf.nn.relu(neg_baselines))
-
 
         # Launch the graph
         with tf.Session() as sess:
