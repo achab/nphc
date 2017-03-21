@@ -210,12 +210,12 @@ class NPHC(object):
             # Training cycle
             for epoch in range(training_epochs):
 
-                print("neg baselines: ", tf.reduce_sum(tf.nn.relu()))
-                    
                 if epoch % display_step == 0:
                     avg_cost = np.average([sess.run(cost, feed_dict={L: L_, C: C_, K_c: K_c_})
                                            for (L_, C_, K_c_) in zip(self.L, self.C, self.K_c)])
                     print("Epoch:", '%04d' % (epoch), "log10(cost)=", "{:.9f}".format(np.log10(avg_cost)))
+                    print("neg baselines: ", tf.reduce_sum(tf.nn.relu(neg_baselines)).eval())
+
 
                 if use_average:
                     sess.run(optimizer, feed_dict={L: L_avg, C: C_avg, K_c: K_avg})
