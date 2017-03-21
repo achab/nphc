@@ -177,20 +177,22 @@ class NPHC(object):
             optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost)
 
         # Initialize the variables
-        init = tf.initialize_all_variables()
+        init = tf.global_variables_initializer()
 
         # always use the average cumulants over all realizations
         if use_average or use_projection or stable_G:
             L_avg = np.mean(self.L, axis=0)
             C_avg = np.mean(self.C, axis=0)
             K_avg = np.mean(self.K_c, axis=0)
-        if use_projection or stable_G:
+        if use_projection:
             L_avg_sqrt = np.sqrt(L_avg)
             L_avg_sqrt_inv = 1./L_avg_sqrt
             from scipy.linalg import inv, sqrtm
-            C_avg_inv = inv(C_avg)
             C_avg_sqrt = sqrtm(C_avg)
             C_avg_sqrt_inv = inv(C_avg_sqrt)
+        if stable_G:
+            C_avg_inv = inv(C_avg)
+
 
         # Launch the graph
         with tf.Session() as sess:
@@ -224,7 +226,7 @@ class NPHC(object):
                     sess.run(optimizer, feed_dict={L: self.L[i], C: self.C[i], K_c: self.K_c[i]})
 
                 if stable_G:
-                    to_be_projected = np.eye(d) - np.dot( np.dot(L_avg, sess.run(tf.transpose(R)), C_avg_inv) )
+                    to_be_projected = np.eye(d) - np.dot( np.dot(np.diag(L_avg), sess.run(tf.transpose(R))), C_avg_inv)
                     U, S, V = np.linalg.svd(to_be_projected)
                     S[S > 1] = .99
                     G_projected = np.dot( U, np.dot(np.diag(S), V) )
