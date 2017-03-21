@@ -195,7 +195,8 @@ class NPHC(object):
             C_avg_inv = inv(C_avg)
 
         if positive_baselines:
-            neg_baselines = - tf.matmul(R,np.dot(C_avg_inv,L_avg.reshape(d,1)),transpose_a=True)
+            neg_baselines = - tf.matmul(tf.matmul(np.diag(L_avg),R,transpose_b=True),\
+                                        np.dot(C_avg_inv,L_avg))
             cost += l_mu * tf.reduce_sum(tf.nn.relu(neg_baselines))
 
         # Launch the graph
@@ -207,6 +208,8 @@ class NPHC(object):
 
             # Training cycle
             for epoch in range(training_epochs):
+
+                print("neg baselines: ", tf.reduce_sum(tf.nn.relu()))
                     
                 if epoch % display_step == 0:
                     avg_cost = np.average([sess.run(cost, feed_dict={L: L_, C: C_, K_c: K_c_})
