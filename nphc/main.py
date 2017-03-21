@@ -100,7 +100,7 @@ class NPHC(object):
 
 
     def solve(self, alpha=-1, l_l1=0., l_l2=0., initial_point=None, training_epochs=1000, learning_rate=1e6, optimizer='momentum', \
-         display_step = 100, use_average=False, use_projection=True, stable_G=False, positive_baselines=False, l_mu=0.):
+         display_step = 100, use_average=False, use_projection=False, projection_stable_G=False, positive_baselines=False, l_mu=0.):
         """
 
         Parameters
@@ -180,7 +180,7 @@ class NPHC(object):
         init = tf.global_variables_initializer()
 
         # always use the average cumulants over all realizations
-        if use_average or use_projection or stable_G or positive_baselines:
+        if use_average or use_projection or projection_stable_G or positive_baselines:
             L_avg = np.mean(self.L, axis=0)
             C_avg = np.mean(self.C, axis=0)
             K_avg = np.mean(self.K_c, axis=0)
@@ -190,7 +190,7 @@ class NPHC(object):
             from scipy.linalg import inv, sqrtm
             C_avg_sqrt = sqrtm(C_avg)
             C_avg_sqrt_inv = inv(C_avg_sqrt)
-        if stable_G or positive_baselines:
+        if projection_stable_G or positive_baselines:
             C_avg_inv = inv(C_avg)
 
         if positive_baselines:
@@ -230,7 +230,7 @@ class NPHC(object):
                     i = np.random.randint(0,len(self.realizations))
                     sess.run(optimizer, feed_dict={L: self.L[i], C: self.C[i], K_c: self.K_c[i]})
 
-                if stable_G:
+                if projection_stable_G:
                     to_be_projected = np.eye(d) - np.dot( np.dot(np.diag(L_avg), sess.run(tf.transpose(R))), C_avg_inv)
                     U, S, V = np.linalg.svd(to_be_projected)
                     S[S >= .99] = .99
