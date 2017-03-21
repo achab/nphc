@@ -232,7 +232,7 @@ class NPHC(object):
                 if stable_G:
                     to_be_projected = np.eye(d) - np.dot( np.dot(np.diag(L_avg), sess.run(tf.transpose(R))), C_avg_inv)
                     U, S, V = np.linalg.svd(to_be_projected)
-                    S[S > 1] = .99
+                    S[S >= .99] = .99
                     G_projected = np.dot( U, np.dot(np.diag(S), V) )
                     R_projected = np.dot(C_avg, np.dot( np.eye(d) - G_projected.T, np.diag(1./L_avg) ) )
                     R.assign(R_projected)
