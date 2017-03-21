@@ -224,7 +224,7 @@ class NPHC(object):
                     sess.run(optimizer, feed_dict={L: self.L[i], C: self.C[i], K_c: self.K_c[i]})
 
                 if stable_G:
-                    to_be_projected = np.eye(d) - np.dot( np.dot(L_avg, sess.run(R).T, C_avg_inv) )
+                    to_be_projected = np.eye(d) - np.dot( np.dot(L_avg, sess.run(tf.transpose(R)), C_avg_inv) )
                     U, S, V = np.linalg.svd(to_be_projected)
                     S[S > 1] = .99
                     G_projected = np.dot( U, np.dot(np.diag(S), V) )
