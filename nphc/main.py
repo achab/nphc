@@ -100,7 +100,7 @@ class NPHC(object):
 
 
     def solve(self, alpha=-1, l_l1=0., l_l2=0., initial_point=None, training_epochs=1000, learning_rate=1e6, optimizer='momentum', \
-         display_step = 100, use_average=False, use_projection=True):
+         display_step = 100, use_average=False, use_projection=True, stable_G=False):
         """
 
         Parameters
@@ -180,18 +180,17 @@ class NPHC(object):
         init = tf.initialize_all_variables()
 
         # always use the average cumulants over all realizations
-        if use_average or use_projection:
+        if use_average or use_projection or stable_G:
             L_avg = np.mean(self.L, axis=0)
             C_avg = np.mean(self.C, axis=0)
             K_avg = np.mean(self.K_c, axis=0)
-        if use_projection:
+        if use_projection or stable_G:
             L_avg_sqrt = np.sqrt(L_avg)
             L_avg_sqrt_inv = 1./L_avg_sqrt
             from scipy.linalg import inv, sqrtm
+            C_avg_inv = inv(C_avg)
             C_avg_sqrt = sqrtm(C_avg)
             C_avg_sqrt_inv = inv(C_avg_sqrt)
-            print("L_avg.shape = ",L_avg_sqrt.shape)
-            print("C_avg.shape = ",C_avg_sqrt.shape)
 
         # Launch the graph
         with tf.Session() as sess:
@@ -223,6 +222,14 @@ class NPHC(object):
                     # Fit training using batch data
                     i = np.random.randint(0,len(self.realizations))
                     sess.run(optimizer, feed_dict={L: self.L[i], C: self.C[i], K_c: self.K_c[i]})
+
+                if stable_G:
+                    to_be_projected = np.eye(d) - np.dot( np.dot(L_avg, sess.run(R).T, C_avg_inv) )
+                    U, S, V = np.linalg.svd(to_be_projected)
+                    S[S > 1] = .99
+                    G_projected = np.dot( U, np.dot(np.diag(S), V) )
+                    R_projected = np.dot(C_avg, np.dot( np.eye(d) - G_projected.T, np.diag(1./L_avg) ) )
+                    R.assign(R_projected)
 
                 # Write logs at every iteration
                 #summary_str = sess.run(merged_summary_op, feed_dict={L: cumul.L, C: cumul.C, K_c: cumul.K_c})
