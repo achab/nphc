@@ -7,4 +7,4 @@ This python package ([webpage](https://github.com/achab/nphc)) implements our tw
  on Machine Learning, August 2017, Sidney, Australia. 2017
 
 >Massil Achab, Emmanuel Bacry, Jean-Francois Muzy, Marcello Rambaldi.
-[Analysis of order book flows using a nonparametric estimation of the branching ratio matrix](https://arxiv.org/abs/1607.06333). To appear in Quantitative Finance. 2017
+[Analysis of order book flows using a nonparametric estimation of the branching ratio matrix](https://arxiv.org/abs/1706.00341). To appear in Quantitative Finance. 2017
